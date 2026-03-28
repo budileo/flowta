@@ -385,6 +385,9 @@ window.exportPdf = function() {
     kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
     allReviews  = JSON.parse(localStorage.getItem('flowta_reviews'))      || [];
 
+    // Polyfill name for existing logic
+    allReviews.forEach(r => r.name = r.reviewerName || 'Anonim');
+
     // Sort newest first
     allReviews.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
 

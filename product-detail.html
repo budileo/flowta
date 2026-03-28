@@ -1241,7 +1241,8 @@
             const dateStr = `${d.getDate().toString().padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
 
             // Initial for avatar
-            const initial = Array.from(review.name.trim())[0].toUpperCase();
+            const validName = review.reviewerName || 'Anonim';
+            const initial = Array.from(validName.trim())[0].toUpperCase();
 
             // Category rows
             const cats = [
@@ -1273,7 +1274,7 @@
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-bold text-white text-base shadow">${initial}</div>
                     <div>
-                        <p class="text-sm font-bold text-slate-800 dark:text-white leading-snug">${escRev(review.name)}</p>
+                        <p class="text-sm font-bold text-slate-800 dark:text-white leading-snug">${escRev(validName)}</p>
                         <p class="text-[11px] text-slate-500 font-medium">Penerima Pesanan</p>
                     </div>
                 </div>
