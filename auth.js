@@ -166,8 +166,8 @@
         window.location.href = 'login.html';
     };
 
-    // DOM Ready
-    document.addEventListener('DOMContentLoaded', async () => {
+    // DOM Level UI Injections
+    const initUI = async () => {
         if (!currentUser) return;
 
         // Update sidebar profile
@@ -189,7 +189,7 @@
         });
 
         // Department switcher (Pemilik Sistem only)
-        if (currentUser.role === 'Pemilik Sistem' && depts.length > 0) {
+        if (currentUser.role === 'Pemilik Sistem' && depts && depts.length > 0) {
             const header = document.querySelector('header');
             const headerActions = header ? header.querySelector('.flex.items-center.gap-3') : null;
             if (headerActions && !headerActions.querySelector('[data-flowta-dept-switcher]')) {
@@ -247,5 +247,11 @@
             `;
             document.head.appendChild(style);
         }
-    });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initUI);
+    } else {
+        initUI();
+    }
 })();
