@@ -5,7 +5,7 @@
  */
 
 const SUPABASE_URL = 'https://bmljbfqmrslqctaibayl.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_pV-8PmT4fkd2AbJa8uy_lA_hSf_ZF5E';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtbGpiZnFtcnNscWN0YWliYXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ2NjE3ODEsImV4cCI6MjA5MDIzNzc4MX0.FZ2cdmcmXfHAlCtQ6m0mTqSKLB4VsnaFz4-rXQrf8C0';
 
 // Initialize the client — will be set after supabase lib loads
 let _supabase = null;
