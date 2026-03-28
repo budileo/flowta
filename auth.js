@@ -8,7 +8,7 @@
     const ACTIVE_DEPT_KEY  = 'flowta_active_dept';
 
     const curPath = window.location.pathname.split('/').pop();
-    const isLoginPath = curPath === 'login.html' || curPath === '' || curPath === '/';
+    const isLoginPath = curPath === 'login.html';
     const isTrackerPath = curPath === 'tracker.html';
 
     // Tracker page doesn't need auth
