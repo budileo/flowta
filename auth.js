@@ -7,8 +7,10 @@
     const CURRENT_USER_KEY = 'flowta_currentUser';
     const ACTIVE_DEPT_KEY  = 'flowta_active_dept';
 
-    const curPath = window.location.pathname.split('/').pop() || 'index.html';
-    const isLoginPath = curPath === 'login.html';
+    // Detect current page — handle root "/" rewrite to login.html
+    const rawPath = window.location.pathname;
+    const curPath = rawPath.split('/').pop() || '';
+    const isLoginPath = (curPath === 'login.html' || rawPath === '/' || curPath === '');
     const isTrackerPath = curPath === 'tracker.html';
 
     // Tracker page doesn't need auth
@@ -16,7 +18,11 @@
 
     // Wait for db.js to be ready
     if (typeof window.db === 'undefined') {
-        console.error('db.js not loaded before auth.js');
+        console.error('[Flowta Auth] db.js not loaded before auth.js');
+        // If not on login page and db is missing, redirect to login as safety
+        if (!isLoginPath) {
+            window.location.href = 'login.html';
+        }
         return;
     }
 
@@ -30,7 +36,7 @@
             try {
                 currentUser = await window.db.getUserById(activeUserId);
             } catch (err) {
-                console.error('Auth check failed:', err);
+                console.error('[Flowta Auth] Session check failed:', err);
                 currentUser = null;
             }
             if (currentUser) {
@@ -39,17 +45,18 @@
             } else {
                 // Invalid/stale token — clean up
                 localStorage.removeItem(CURRENT_USER_KEY);
+                localStorage.removeItem(ACTIVE_DEPT_KEY);
             }
         }
-        // On login page with no valid session: just stop here
-        // The login form handler in login.html will handle the login itself
+        // On login page with no valid session: just stop here.
+        // The login form handler in login.html will handle the actual login.
         window.flowtaSyncReady = true;
         window.dispatchEvent(new Event('flowta-sync-ready'));
         return;
     }
 
     // ──────────────── PROTECTED PAGES LOGIC ────────────────
-    // Fast synchronous fail if no token stored at all
+    // Fast fail if no token stored at all
     if (!activeUserId) {
         window.location.href = 'login.html';
         return;
@@ -63,13 +70,14 @@
     try {
         currentUser = await window.db.getUserById(activeUserId);
     } catch (err) {
-        console.error('Auth verification failed:', err);
+        console.error('[Flowta Auth] Verification failed:', err);
         currentUser = null;
     }
 
     if (!currentUser) {
         // Token is invalid or user was deleted — force re-login
         localStorage.removeItem(CURRENT_USER_KEY);
+        localStorage.removeItem(ACTIVE_DEPT_KEY);
         window.location.href = 'login.html';
         return;
     }
@@ -83,7 +91,7 @@
     try {
         depts = await window.db.getDepartments();
     } catch (err) {
-        console.error('Failed to load departments:', err);
+        console.error('[Flowta Auth] Failed to load departments:', err);
         depts = [];
     }
 
@@ -102,12 +110,16 @@
     window.flowtaActiveDept = activeDeptId;
 
     // ══ SYNC LAYER: Pull from Supabase → localStorage ══
-    window.db.hookLocalStorageWrites(activeDeptId);
-    await window.db.syncFromSupabase(activeDeptId);
+    try {
+        window.db.hookLocalStorageWrites(activeDeptId);
+        await window.db.syncFromSupabase(activeDeptId);
+    } catch (err) {
+        console.error('[Flowta Auth] Sync failed:', err);
+    }
     window.flowtaSyncReady = true;
     window.dispatchEvent(new Event('flowta-sync-ready'));
 
-    // TOKEN BILLING — hybrid sync/async approach
+    // TOKEN BILLING
     window.consumeToken = async function(activityCode, spkInfo = null) {
         if (!window.flowtaUser) return false;
         
@@ -115,19 +127,19 @@
         const cost = parseFloat(rates[activityCode] || 0);
         if (cost <= 0) return true;
         
-        const rawGet = localStorage.getItem.bind(localStorage);
-        let depts = JSON.parse(rawGet('flowta_departments') || '[]');
-        const deptIdx = depts.findIndex(d => d.id === window.flowtaActiveDept);
+        const rawGet = Storage.prototype.getItem.bind(localStorage);
+        let localDepts = JSON.parse(rawGet('flowta_departments') || '[]');
+        const deptIdx = localDepts.findIndex(d => d.id === window.flowtaActiveDept);
         if (deptIdx === -1) return true;
         
-        const currentToken = parseFloat(depts[deptIdx].token || 0);
+        const currentToken = parseFloat(localDepts[deptIdx].token || 0);
         if (currentToken < cost) {
             alert(`Akses Ditolak: Token Departemen tidak mencukupi untuk '${activityCode}' (Tarif: ${cost} Token). Hubungi Pemilik Sistem untuk Top Up.`);
             return false;
         }
         
-        depts[deptIdx].token = currentToken - cost;
-        localStorage.setItem('flowta_departments', JSON.stringify(depts));
+        localDepts[deptIdx].token = currentToken - cost;
+        localStorage.setItem('flowta_departments', JSON.stringify(localDepts));
         
         let tokenHist = JSON.parse(localStorage.getItem('flowta_token_history') || '[]');
         tokenHist.unshift({
@@ -167,7 +179,6 @@
         // Logout button injection
         const asideEls = document.querySelectorAll('.p-4.mt-auto.border-t');
         asideEls.forEach(container => {
-            // Prevent double-injection
             if (container.querySelector('[data-flowta-logout]')) return;
             const logoutBtn = document.createElement('button');
             logoutBtn.className = 'mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-rose-500 hover:bg-rose-500/10 text-xs font-bold transition';
@@ -179,7 +190,6 @@
 
         // Department switcher (Pemilik Sistem only)
         if (currentUser.role === 'Pemilik Sistem' && depts.length > 0) {
-            // Find the header action bar (the one in <header>)
             const header = document.querySelector('header');
             const headerActions = header ? header.querySelector('.flex.items-center.gap-3') : null;
             if (headerActions && !headerActions.querySelector('[data-flowta-dept-switcher]')) {
@@ -208,13 +218,11 @@
         const isPemilik = currentUser.role === 'Pemilik Sistem';
         const isStaf = currentUser.role === 'Staf';
 
-        // Hide Fase menu from non-Pemilik
         if (!isPemilik) {
             const phaseLink = Array.from(document.querySelectorAll('a')).find(el => el.href.includes('phase.html'));
             if (phaseLink) phaseLink.style.display = 'none';
         }
 
-        // Token check for non-Pemilik
         if (!isPemilik && currentUser.deptId) {
             try {
                 const freshDepts = await window.db.getDepartments();
@@ -224,11 +232,10 @@
                     window.logout();
                 }
             } catch (err) {
-                console.error('Token check failed:', err);
+                console.error('[Flowta Auth] Token check failed:', err);
             }
         }
 
-        // Hide QC & Batal for Staf
         if (isStaf) {
             const style = document.createElement('style');
             style.textContent = `
