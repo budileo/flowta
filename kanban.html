@@ -799,6 +799,9 @@
                     new Sortable(col, {
                         group: 'shared',
                         animation: 150,
+                        delay: 150,
+                        delayOnTouchOnly: true,
+                        touchStartThreshold: 5,
                         ghostClass: 'opacity-40',
                         onEnd: function (evt) {
                             const itemEl = evt.item;  // dragged HTMLElement
