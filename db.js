@@ -421,16 +421,16 @@ const db = {
             ]);
 
             // Store to localStorage using raw setter (bypass hooks)
-            const rawSet = localStorage._origSetItem || localStorage.setItem.bind(localStorage);
-            rawSet.call(localStorage, 'flowta_kanban_cards', JSON.stringify(cards));
-            rawSet.call(localStorage, 'flowta_history', JSON.stringify(history));
-            rawSet.call(localStorage, 'flowta_qc', JSON.stringify(qc));
-            rawSet.call(localStorage, 'flowta_phases', JSON.stringify(phases));
-            rawSet.call(localStorage, 'flowta_reviews', JSON.stringify(reviews));
-            rawSet.call(localStorage, 'flowta_token_history', JSON.stringify(tokenHistory));
-            rawSet.call(localStorage, 'flowta_users', JSON.stringify(users));
-            rawSet.call(localStorage, 'flowta_departments', JSON.stringify(departments));
-            rawSet.call(localStorage, 'flowta_token_rates', JSON.stringify(rates));
+            const rawSet = (k, v) => Storage.prototype.setItem.call(localStorage, k, v);
+            rawSet('flowta_kanban_cards', JSON.stringify(cards));
+            rawSet('flowta_history', JSON.stringify(history));
+            rawSet('flowta_qc', JSON.stringify(qc));
+            rawSet('flowta_phases', JSON.stringify(phases));
+            rawSet('flowta_reviews', JSON.stringify(reviews));
+            rawSet('flowta_token_history', JSON.stringify(tokenHistory));
+            rawSet('flowta_users', JSON.stringify(users));
+            rawSet('flowta_departments', JSON.stringify(departments));
+            rawSet('flowta_token_rates', JSON.stringify(rates));
 
             console.log('[Flowta Sync] ✓ Data loaded from Supabase');
             return true;
@@ -447,9 +447,7 @@ const db = {
      */
     hookLocalStorageWrites(deptId) {
         const self = this;
-        const origSet = localStorage._origSetItem || localStorage.setItem.bind(localStorage);
-        // Save original for raw access
-        localStorage._origSetItem = origSet;
+        const origSet = Storage.prototype.setItem;
 
         const SYNCED_KEYS = {
             'flowta_kanban_cards': 'cards',
