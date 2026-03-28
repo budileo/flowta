@@ -616,7 +616,7 @@
             // Show toast or alert ideally, but we'll just reload or silently close for now
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             const colorMap = {
                 'primary': 'indigo',
                 'emerald': 'emerald',

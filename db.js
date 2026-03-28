@@ -396,8 +396,235 @@ const db = {
     },
 
     // --- Utility ---
-    genId
+    genId,
+
+    // ═══════════════════════════════════════════════════════════════
+    // SYNC LAYER: Bridges localStorage ↔ Supabase
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Pull ALL data from Supabase into localStorage for the active department.
+     * Called once on page load by auth.js.
+     */
+    async syncFromSupabase(deptId) {
+        try {
+            const [cards, history, qc, phases, reviews, tokenHistory, users, departments, rates] = await Promise.all([
+                this.getCards(deptId),
+                this.getHistory(deptId),
+                this.getQcRecords(deptId),
+                this.getPhases(deptId),
+                this.getReviews(deptId),
+                this.getTokenHistory(deptId),
+                this.getUsers(),
+                this.getDepartments(),
+                this.getTokenRates()
+            ]);
+
+            // Store to localStorage using raw setter (bypass hooks)
+            const rawSet = localStorage._origSetItem || localStorage.setItem.bind(localStorage);
+            rawSet.call(localStorage, 'flowta_kanban_cards', JSON.stringify(cards));
+            rawSet.call(localStorage, 'flowta_history', JSON.stringify(history));
+            rawSet.call(localStorage, 'flowta_qc', JSON.stringify(qc));
+            rawSet.call(localStorage, 'flowta_phases', JSON.stringify(phases));
+            rawSet.call(localStorage, 'flowta_reviews', JSON.stringify(reviews));
+            rawSet.call(localStorage, 'flowta_token_history', JSON.stringify(tokenHistory));
+            rawSet.call(localStorage, 'flowta_users', JSON.stringify(users));
+            rawSet.call(localStorage, 'flowta_departments', JSON.stringify(departments));
+            rawSet.call(localStorage, 'flowta_token_rates', JSON.stringify(rates));
+
+            console.log('[Flowta Sync] ✓ Data loaded from Supabase');
+            return true;
+        } catch (err) {
+            console.error('[Flowta Sync] Failed to sync from Supabase:', err);
+            return false;
+        }
+    },
+
+    /**
+     * Hook localStorage.setItem to auto-push changes to Supabase in background.
+     * This means ALL existing page code (that writes to localStorage) will
+     * automatically sync to the database without modifications.
+     */
+    hookLocalStorageWrites(deptId) {
+        const self = this;
+        const origSet = localStorage._origSetItem || localStorage.setItem.bind(localStorage);
+        // Save original for raw access
+        localStorage._origSetItem = origSet;
+
+        const SYNCED_KEYS = {
+            'flowta_kanban_cards': 'cards',
+            'flowta_history': 'history',
+            'flowta_qc': 'qc',
+            'flowta_phases': 'phases',
+            'flowta_reviews': 'reviews',
+            'flowta_token_history': 'tokenHistory',
+            'flowta_users': 'users',
+            'flowta_departments': 'departments'
+        };
+
+        // Debounce map to avoid rapid-fire writes
+        const debounceTimers = {};
+
+        localStorage.setItem = function(key, value) {
+            // Always write to localStorage first (instant)
+            origSet.call(localStorage, key, value);
+
+            // If it's a synced key, push to Supabase in background
+            if (SYNCED_KEYS[key]) {
+                clearTimeout(debounceTimers[key]);
+                debounceTimers[key] = setTimeout(() => {
+                    self._pushToSupabase(key, value, deptId).catch(err => {
+                        console.error(`[Flowta Sync] Push failed for ${key}:`, err);
+                    });
+                }, 300); // 300ms debounce
+            }
+        };
+        console.log('[Flowta Sync] ✓ localStorage write hooks installed');
+    },
+
+    /**
+     * Push a single localStorage key's data to Supabase.
+     * Handles the mapping between localStorage format and Supabase tables.
+     */
+    async _pushToSupabase(key, value, deptId) {
+        let items;
+        try { items = JSON.parse(value); } catch { return; }
+        if (!Array.isArray(items)) return;
+
+        const sb = getSupabase();
+        if (!sb) return;
+
+        switch (key) {
+            case 'flowta_kanban_cards': {
+                // Upsert all cards for this dept
+                const rows = items.filter(c => !c.deptId || c.deptId === deptId).map(c => ({
+                    id: c.id, phase_id: c.phaseId, title: c.title, type: c.type || '',
+                    client: c.client || '', spk_number: c.spkNumber || '',
+                    project_type: c.projectType || c.tagDesc || 'NORMAL',
+                    tag_desc: c.tagDesc || '', tag_color: c.tagColor || 'indigo',
+                    due_date_desc: c.dueDateDesc || '', due_color: c.dueColor || 'slate',
+                    due_date: c.dueDate || '', priority: c.priority || 'Normal',
+                    priority_icon: c.priorityIcon || 'drag_handle',
+                    status: c.status || 'PROSES', description: c.description || '',
+                    dept_id: c.deptId || deptId
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('kanban_cards').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] kanban_cards push error:', error);
+                }
+                break;
+            }
+            case 'flowta_history': {
+                const rows = items.filter(h => !h.deptId || h.deptId === deptId).map(h => ({
+                    id: h.id, card_id: h.cardId, type: h.type,
+                    timestamp: h.timestamp, username: h.user || 'Sistem',
+                    description: h.desc || '', dept_id: h.deptId || deptId
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('activity_history').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] history push error:', error);
+                }
+                break;
+            }
+            case 'flowta_qc': {
+                const rows = items.filter(r => !r.deptId || r.deptId === deptId).map(r => ({
+                    id: r.id, card_id: r.cardId, phase_id: r.phaseId, type: r.type || '',
+                    timestamp: r.timestamp, username: r.user || 'Sistem',
+                    description: r.desc || '', result: r.result || '', notes: r.notes || '',
+                    dept_id: r.deptId || deptId
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('qc_records').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] qc push error:', error);
+                }
+                break;
+            }
+            case 'flowta_phases': {
+                const rows = items.filter(p => !p.deptId || p.deptId === deptId).map((p, i) => ({
+                    id: p.id, title: p.title, description: p.desc || '',
+                    icon: p.icon || 'build', color_class: p.colorClass || 'primary',
+                    status: p.status || 'BELUM MULAI', status_color: p.statusColor || 'slate',
+                    sort_order: i, dept_id: p.deptId || deptId
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('phases').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] phases push error:', error);
+                }
+                break;
+            }
+            case 'flowta_reviews': {
+                const rows = items.map(r => ({
+                    id: r.id || genId('REV'), card_id: r.cardId, rating: r.rating || 5,
+                    comment: r.comment || '', reviewer_name: r.reviewerName || r.name || 'Anonim',
+                    timestamp: r.timestamp, dept_id: r.deptId || deptId
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('reviews').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] reviews push error:', error);
+                }
+                break;
+            }
+            case 'flowta_token_history': {
+                const rows = items.filter(t => !t.deptId || t.deptId === deptId).map(t => ({
+                    id: t.id, user_id: t.userId, user_name: t.userName || '',
+                    activity: t.activity || '', spk_info: t.spkInfo || {},
+                    nominal: t.nominal || 0, type: t.type || 'usage',
+                    timestamp: t.timestamp, dept_id: t.deptId || deptId
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('token_history').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] token_history push error:', error);
+                }
+                break;
+            }
+            case 'flowta_users': {
+                const rows = items.map(u => ({
+                    id: u.id, name: u.name, username: u.username,
+                    password: u.password, role: u.role, dept_id: u.deptId || null
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('users').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] users push error:', error);
+                }
+                break;
+            }
+            case 'flowta_departments': {
+                const rows = items.map(d => ({
+                    id: d.id, name: d.name, phone: d.phone || '', wa: d.wa || '',
+                    email: d.email || '', token: d.token ?? 999, address: d.address || '',
+                    description: d.desc || '', logo: d.logo || ''
+                }));
+                if (rows.length > 0) {
+                    const { error } = await sb.from('departments').upsert(rows, { onConflict: 'id' });
+                    if (error) console.error('[Sync] departments push error:', error);
+                }
+                break;
+            }
+        }
+    },
+
+    /**
+     * Handle card deletion sync - when a card is removed from localStorage,
+     * also remove from Supabase
+     */
+    async syncDeleteCard(cardId) {
+        await this.deleteCard(cardId);
+    }
 };
 
 // Make globally available
 window.db = db;
+
+/**
+ * Helper: wait for Supabase sync to complete.
+ * Usage in page scripts: await window.waitForSync();
+ * If sync already done, resolves immediately.
+ */
+window.waitForSync = function() {
+    return new Promise(resolve => {
+        if (window.flowtaSyncReady) return resolve();
+        window.addEventListener('flowta-sync-ready', () => resolve(), { once: true });
+        // Fallback timeout — if auth.js didn't run (e.g. login page), resolve after 3s
+        setTimeout(resolve, 3000);
+    });
+};

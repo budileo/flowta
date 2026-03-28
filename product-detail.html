@@ -744,7 +744,7 @@
         };
         // ===== END FUNGSI MODAL EDIT PRODUK =====
 
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             // ── Pasang event listener tombol Edit dan Close modal ──
             const btnEdit = document.getElementById('btn-edit-spk');
             if (btnEdit) btnEdit.addEventListener('click', function() { window.handleEditSpk(); });
@@ -1138,7 +1138,7 @@
         };
 
         // EVENT LISTENER UNTUK TOMBOL PRODUKSI SELESAI
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             const btnFinish = document.getElementById('btn-finish-production');
             if (btnFinish) {
                 const urlParams = new URLSearchParams(window.location.search);
@@ -1303,7 +1303,7 @@
         }
 
         // Hook into existing DOMContentLoaded (second listener — runs after card is loaded)
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             const cardId = new URLSearchParams(window.location.search).get('id');
             if (cardId) renderReviewOnDetail(cardId);
         });

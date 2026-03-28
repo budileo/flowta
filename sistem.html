@@ -550,7 +550,13 @@ function switchTab(tab) {
 }
 
 // Check role on load for sistem.html tabs
-document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+    
+    // Reload state after sync
+    departments = JSON.parse(localStorage.getItem(DEPT_KEY)) || [];
+    users       = JSON.parse(localStorage.getItem(USER_KEY)) || [];
+    cards       = JSON.parse(localStorage.getItem(CARD_KEY)) || [];
+
     if (window.flowtaUser && window.flowtaUser.role !== 'Pemilik Sistem') {
         const tabDept = document.getElementById('tab-dept');
         const tabSpk = document.getElementById('tab-spk');
@@ -1257,7 +1263,10 @@ function submitTopup(e) {
 // ============================================================
 //  INIT
 // ============================================================
-document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+    departments = JSON.parse(localStorage.getItem(DEPT_KEY)) || [];
+    users       = JSON.parse(localStorage.getItem(USER_KEY)) || [];
+    cards       = JSON.parse(localStorage.getItem(CARD_KEY)) || [];
     renderDept();
 });
 </script>

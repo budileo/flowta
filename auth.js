@@ -54,13 +54,58 @@
     }
     window.flowtaActiveDept = activeDeptId;
 
-    // TOKEN BILLING (delegates to db.js)
+    // ══ SYNC LAYER: Pull from Supabase → localStorage ══
+    // Install write hooks FIRST so any writes during sync get captured
+    window.db.hookLocalStorageWrites(activeDeptId);
+    // Then pull all cloud data into localStorage
+    await window.db.syncFromSupabase(activeDeptId);
+    // Signal that sync is complete (pages can listen for this)
+    window.flowtaSyncReady = true;
+    window.dispatchEvent(new Event('flowta-sync-ready'));
+
+    // TOKEN BILLING — hybrid sync/async approach
+    // Update localStorage immediately for instant UI feedback, then push to Supabase
     window.consumeToken = async function(activityCode, spkInfo = null) {
         if (!window.flowtaUser) return false;
-        return await window.db.consumeToken(
-            window.flowtaActiveDept, activityCode,
-            window.flowtaUser.id, window.flowtaUser.name, spkInfo
-        );
+        
+        // Read rates from localStorage (already synced)
+        const rates = JSON.parse(localStorage.getItem('flowta_token_rates') || '{}');
+        const cost = parseFloat(rates[activityCode] || 0);
+        if (cost <= 0) return true;
+        
+        // Read dept token from localStorage
+        const rawGet = localStorage.getItem.bind(localStorage);
+        let depts = JSON.parse(rawGet('flowta_departments') || '[]');
+        const deptIdx = depts.findIndex(d => d.id === window.flowtaActiveDept);
+        if (deptIdx === -1) return true;
+        
+        const currentToken = parseFloat(depts[deptIdx].token || 0);
+        if (currentToken < cost) {
+            alert(`Akses Ditolak: Token Departemen tidak mencukupi untuk '${activityCode}' (Tarif: ${cost} Token). Hubungi Pemilik Sistem untuk Top Up.`);
+            return false;
+        }
+        
+        // Deduct locally (instant)
+        depts[deptIdx].token = currentToken - cost;
+        localStorage.setItem('flowta_departments', JSON.stringify(depts));
+        
+        // Log token history locally
+        let tokenHist = JSON.parse(localStorage.getItem('flowta_token_history') || '[]');
+        tokenHist.unshift({
+            id: 'TOK-' + Date.now() + Math.round(Math.random() * 1000),
+            userId: window.flowtaUser.id,
+            userName: window.flowtaUser.name,
+            activity: activityCode,
+            spkInfo: spkInfo,
+            nominal: cost,
+            type: 'usage',
+            timestamp: new Date().toISOString(),
+            deptId: window.flowtaActiveDept
+        });
+        localStorage.setItem('flowta_token_history', JSON.stringify(tokenHist));
+        
+        // The localStorage hooks will auto-push both changes to Supabase
+        return true;
     };
 
     // Assign globally

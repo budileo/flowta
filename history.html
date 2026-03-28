@@ -617,7 +617,7 @@
         }
 
         // ====== INIT ======
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             updatePeriodLabel();
             renderHistory();
         });

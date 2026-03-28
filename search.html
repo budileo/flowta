@@ -473,7 +473,7 @@ function buildUsersUI(users, q) {
 }
 
 // ─── Init ────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
     const params = new URLSearchParams(window.location.search);
     const qParam = params.get('q') || '';
 

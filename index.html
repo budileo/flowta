@@ -368,7 +368,7 @@
             return h > 0 ? `${d} hri ${h} jam` : `${d} hri`;
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             // Load Data
             let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
             let histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
@@ -685,7 +685,7 @@
             renderPhaseDistribution();
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
             if (window.flowtaUser) {
                 document.getElementById('greeting-box').classList.remove('hidden');
                 document.getElementById('greeting-name').textContent = window.flowtaUser.name;

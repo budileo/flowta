@@ -380,7 +380,7 @@ window.exportPdf = function() {
 };
 
 // ─── Init ────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
     kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
     allReviews  = JSON.parse(localStorage.getItem('flowta_reviews'))      || [];
 

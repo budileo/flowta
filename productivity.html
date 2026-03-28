@@ -693,7 +693,7 @@
     }
 
     // ==================== INIT ====================
-    document.addEventListener('DOMContentLoaded', () => {
+     document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
         setPeriod(30);
     });
 </script>
