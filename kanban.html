@@ -631,28 +631,15 @@
             const kanbanBoard = document.getElementById('kanban-board');
             let phasesData = JSON.parse(localStorage.getItem('flowta_phases'));
             
-            // If empty (user never visited phase.html), initialize with standard mock data
+            // If empty (user never visited phase.html), initialize with empty array
             if(!phasesData || phasesData.length === 0) {
-                phasesData = [
-                    { id: 1, title: 'Desain & Pra-Cetak', desc: '', icon: 'brush', colorClass: 'indigo', status: 'AKTIF', statusColor: 'emerald' },
-                    { id: 2, title: 'Cetak Produksi', desc: '', icon: 'print', colorClass: 'amber', status: 'TERTUNDA', statusColor: 'amber' },
-                    { id: 3, title: 'Las & Rangka', desc: '', icon: 'precision_manufacturing', colorClass: 'indigo', status: 'BELUM MULAI', statusColor: 'slate' },
-                    { id: 4, title: 'Quality Control & Finishing', desc: '', icon: 'verified', colorClass: 'purple', status: 'BELUM MULAI', statusColor: 'slate' },
-                ];
+                phasesData = [];
             }
 
             // Load Kanban Cards from LocalStorage
             let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards'));
             if(!kanbanCards || kanbanCards.length === 0) {
-                // Determine valid phase IDs
-                const phaseId1 = phasesData[0] ? phasesData[0].id : 1;
-                const phaseId2 = phasesData[1] ? phasesData[1].id : 2;
-                kanbanCards = [
-                    { id: 'C1', phaseId: phaseId1, title: '#A01 Banner X', type: 'Large Format Printing', tagDesc: 'VVIP', tagColor: 'fuchsia', dueDateDesc: '1 Hari Terlambat', dueColor: 'rose', priority: 'High', priorityIcon: 'priority_high' },
-                    { id: 'C2', phaseId: phaseId1, title: '#B22 Sticker', type: 'Die-cut Vinyl', tagDesc: 'VIP', tagColor: 'amber', dueDateDesc: '2 Hari Tersisa', dueColor: 'orange', priority: 'Medium', priorityIcon: 'low_priority' },
-                    { id: 'C3', phaseId: phaseId2, title: '#C45 Box Design', type: 'Packaging', tagDesc: 'VIP', tagColor: 'amber', dueDateDesc: '4 Hari Tersisa', dueColor: 'emerald', priority: 'On Track', priorityIcon: 'check_circle' }
-                ];
-                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                kanbanCards = [];
             }
             
             // Ukuran Kartu Kanban Global

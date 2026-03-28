@@ -310,12 +310,7 @@
 
     <script>
         // Data Structure Layer
-        let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [
-            { id: 1, title: 'Desain & Pra-Cetak', desc: 'Pembuatan konsep desain dan persiapan file cetak', icon: 'brush', colorClass: 'indigo', status: 'AKTIF', statusColor: 'emerald' },
-            { id: 2, title: 'Cetak Produksi', desc: 'Proses mesin cetak large format (MMT, Stiker, Indoor)', icon: 'print', colorClass: 'amber', status: 'TERTUNDA', statusColor: 'amber' },
-            { id: 3, title: 'Las & Rangka', desc: 'Pembuatan struktur billboard dan neon box', icon: 'precision_manufacturing', colorClass: 'indigo', status: 'BELUM MULAI', statusColor: 'slate' },
-            { id: 4, title: 'Quality Control & Finishing', desc: 'Pengecekan kualitas akhir dan penempelan', icon: 'verified', colorClass: 'purple', status: 'BELUM MULAI', statusColor: 'slate' },
-        ];
+        let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [];
         
         // State
         let isEditing = false;
