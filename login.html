@@ -55,7 +55,8 @@
             transition: background-color 5000s ease-in-out 0s;
         }
     </style>
-    <!-- AUTH JS INJECTION -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
     <script src="auth.js"></script>
 </head>
 <body class="bg-background-dark font-display text-slate-100 min-h-screen selection:bg-primary/30 flex items-center justify-center relative overflow-hidden">
@@ -97,21 +98,31 @@
     </div>
 
     <script>
-        document.getElementById('login-form').addEventListener('submit', function(e) {
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const u = document.getElementById('username').value.trim();
             const p = document.getElementById('password').value;
             const err = document.getElementById('error-msg');
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Memverifikasi...';
 
-            const users = JSON.parse(localStorage.getItem('flowta_users')) || [];
-            const found = users.find(x => x.username === u && x.password === p);
-
-            if (found) {
-                localStorage.setItem('flowta_currentUser', found.id);
-                // Redirect will happen immediately or on reload, let's force it:
-                window.location.href = 'index.html';
-            } else {
+            try {
+                const found = await window.db.login(u, p);
+                if (found) {
+                    localStorage.setItem('flowta_currentUser', found.id);
+                    window.location.href = 'index.html';
+                } else {
+                    err.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Masuk Sekarang</span><span class="material-symbols-outlined text-[20px]">login</span>';
+                }
+            } catch(ex) {
+                console.error('Login error:', ex);
+                err.textContent = 'Gagal terhubung ke server. Periksa koneksi internet.';
                 err.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Masuk Sekarang</span><span class="material-symbols-outlined text-[20px]">login</span>';
             }
         });
     </script>

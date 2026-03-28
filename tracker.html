@@ -6,6 +6,8 @@
     <title>FLOWTA - Tracker Pesanan</title>
     <link rel="icon" type="image/png" href="logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <script>
@@ -304,7 +306,7 @@
             return h > 0 ? `${d} hri ${h} jam` : `${d} hri`;
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const cardId = urlParams.get('id');
             const loader = document.getElementById('loader');
@@ -312,18 +314,17 @@
             const notFound = document.getElementById('not-found');
             const trackerData = document.getElementById('tracker-data');
 
-            // Simulate slight network delay for effect
-            setTimeout(() => {
-                loader.classList.add('hidden');
-                contentArea.classList.remove('hidden');
+            // Load from Supabase
+            await new Promise(r => setTimeout(r, 400));
+            loader.classList.add('hidden');
+            contentArea.classList.remove('hidden');
 
                 if (!cardId) {
                     notFound.classList.remove('hidden');
                     return;
                 }
 
-                const kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
-                const card = kanbanCards.find(c => c.id === cardId);
+                const card = await window.db.getCardById(cardId);
 
                 if (!card) {
                     notFound.classList.remove('hidden');
@@ -345,7 +346,7 @@
                 }
                 
                 // Tgl. SPK Dibuat — dari event 'create' di histories
-                const allHist = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                const allHist = await window.db.getHistoryByCard(cardId);
                 const createEv = allHist.find(h => h.cardId === cardId && h.type === 'create');
                 const trCreatedEl = document.getElementById('tr-created');
                 if (trCreatedEl) {
@@ -378,14 +379,14 @@
                     statusEl.textContent = 'SELESAI / SIAP KIRIM';
                     statusEl.className = 'px-4 py-1.5 rounded-full text-sm font-bold bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/30';
                 } else {
-                    let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [];
+                    let phasesData = await window.db.getPhases();
                     const cp = phasesData.find(p => p.id === card.phaseId);
                     statusEl.textContent = cp ? cp.title.toUpperCase() : 'TAHAP PRODUKSI';
                     statusEl.className = 'px-4 py-1.5 rounded-full text-sm font-bold bg-primary/10 text-primary dark:text-blue-400 ring-1 ring-primary/30';
                 }
 
                 // History Timeline
-                const allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                const allHistories = allHist;
                 const cardHistories = allHistories.filter(h => h.cardId === cardId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 
                 // Duration Calculation
@@ -457,8 +458,8 @@
                 tlContainer.innerHTML = tlHtml;
 
                 // QC List
-                const allQcRecords = JSON.parse(localStorage.getItem('flowta_qc')) || [];
-                const cardQcRecords = allQcRecords.filter(q => q.cardId === cardId).sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const allQcRecords = await window.db.getQcByCard(cardId);
+                const cardQcRecords = allQcRecords.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
                 const qcContainer = document.getElementById('tr-qc-list');
                 
                 let qcHtml = '';
@@ -496,9 +497,9 @@
                 qcContainer.innerHTML = qcHtml;
 
                 // ─── REVIEW SECTION ──────────────────────────────────────────────────────
-                renderReviewSection(card, cardId);
+                await renderReviewSection(card, cardId);
 
-            }, 600);
+            // end of async load
         });
 
         // ─── Review Helpers ───────────────────────────────────────────────────────────
@@ -515,7 +516,7 @@
             return h + `</div><span class="text-xs font-bold text-slate-500 ml-1">${val}/5</span>`;
         }
 
-        function renderReviewSection(card, cardId) {
+        async function renderReviewSection(card, cardId) {
             const section = document.getElementById('review-section');
             const formWrap   = document.getElementById('review-form-wrap');
             const resultWrap = document.getElementById('review-result-wrap');
@@ -525,8 +526,8 @@
             section.classList.remove('hidden');
 
             // Check if already reviewed
-            const allReviews = JSON.parse(localStorage.getItem('flowta_reviews')) || [];
-            const existing   = allReviews.find(r => r.cardId === cardId);
+            const allReviews = await window.db.getReviewsByCard(cardId);
+            const existing   = allReviews.length > 0 ? allReviews[0] : null;
 
             if (existing) {
                 // Show result
@@ -536,7 +537,7 @@
                 formWrap.classList.remove('hidden');
                 formWrap.classList.add('flex', 'flex-col');
 
-                document.getElementById('review-form').addEventListener('submit', function(e) {
+                document.getElementById('review-form').addEventListener('submit', async function(e) {
                     e.preventDefault();
                     const errEl  = document.getElementById('rv-error');
                     const name   = document.getElementById('rv-name').value.trim();
@@ -559,10 +560,14 @@
                         timestamp: new Date().toISOString(),
                     };
 
-                    // Persist
-                    const reviews = JSON.parse(localStorage.getItem('flowta_reviews')) || [];
-                    reviews.push(review);
-                    localStorage.setItem('flowta_reviews', JSON.stringify(reviews));
+                    // Persist to Supabase
+                    await window.db.addReview({
+                        cardId: review.cardId,
+                        rating: Math.round((review.ratings.produk + review.ratings.layanan + review.ratings.pengiriman + review.ratings.waktu) / 4),
+                        comment: review.comment,
+                        reviewerName: review.name,
+                        deptId: card.deptId
+                    });
 
                     // Animate submit
                     const btn = this.querySelector('button[type=submit]');
