@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Quality Control</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel { background:rgba(30,41,59,.55); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.06); box-shadow:0 4px 6px -1px rgba(0,0,0,.15); }
+        .glass-nav   { background:rgba(15,23,42,.88); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,.05); }
+        ::-webkit-scrollbar{width:8px;height:8px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.3);border-radius:4px}
+        .table-row-hover:hover { background:rgba(255,255,255,.03); cursor:pointer; }
+        .legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; flex-shrink:0; }
+        /* Stage pill */
+        .pill-ok   { background:rgba(16,185,129,.12); color:#34d399; border:1px solid rgba(16,185,129,.25); }
+        .pill-miss { background:rgba(100,116,139,.12); color:#64748b; border:1px solid rgba(100,116,139,.2);        }
+    </style>
+    <script src="auth.js"></script>
+</head>
+<body class="bg-background-dark font-display text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+
+    <!-- ───────── SIDEBAR ───────── -->
+    <aside class="w-72 glass-nav hidden lg:flex flex-col h-full border-r border-slate-800">
+        <div class="p-6 flex items-center gap-3">
+            <img src="logo.png" alt="FLOWTA Logo" class="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+            <div>
+                <span class="font-bold text-xl tracking-tight leading-tight block">FLOWTA</span>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tata Kelola Manajemen</span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-2 mt-2 space-y-6">
+            <div class="space-y-1">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Workspace</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-amber-400 transition-all text-sm font-medium" href="index.html"><span class="material-symbols-outlined text-[20px]">grid_view</span><span>Dasbor</span></a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-amber-400 transition-all text-sm font-medium" href="kanban.html"><span class="material-symbols-outlined text-[20px]">view_kanban</span><span>Kanban</span></a>
+            </div>
+            <div class="space-y-1">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Produksi &amp; Kualitas</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-emerald-400 transition-all text-sm font-medium" href="products.html"><span class="material-symbols-outlined text-[20px]">inventory_2</span><span>Produk</span></a>
+                <!-- ACTIVE -->
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 shadow-sm text-sm font-medium" href="qc.html"><span class="material-symbols-outlined text-[20px]">fact_check</span><span>Quality Control</span></a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-emerald-400 transition-all text-sm font-medium" href="phase.html"><span class="material-symbols-outlined text-[20px]">schema</span><span>Fase</span></a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-amber-400 transition-all text-sm font-medium" href="reviews.html"><span class="material-symbols-outlined text-[20px]">reviews</span><span>Review</span></a>
+            </div>
+            <div class="space-y-1 mb-6">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Analitik &amp; Laporan</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-cyan-400 transition-all text-sm font-medium" href="productivity.html"><span class="material-symbols-outlined text-[20px]">engineering</span><span>User Productivity</span></a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-cyan-400 transition-all text-sm font-medium" href="history.html"><span class="material-symbols-outlined text-[20px]">history</span><span>Histori</span></a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-cyan-400 transition-all text-sm font-medium" href="laporan-produksi.html"><span class="material-symbols-outlined text-[20px]">summarize</span><span>Laporan Produksi</span></a>
+            </div>
+            <div class="space-y-1">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administrasi</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-primary transition-all text-sm font-medium" href="sistem.html"><span class="material-symbols-outlined text-[20px]">settings_applications</span><span>Sistem</span></a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-primary transition-all text-sm font-medium" href="manual.html"><span class="material-symbols-outlined text-[20px]">help_outline</span><span>Panduan</span></a>
+            </div>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors">
+                <div class="size-10 rounded-full bg-cover relative" style="background-image:url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7zCsRdVomcJzyX3rrrkP5f6UCo2OIq46qeFslE1JbYyB71cl5AMQBnfcZOxS0QKblQV0CHatRb3Dl77iV-jjPaen2uy6U8HeF480lJTcTLVBjWCUkkAGPnmTzo0ChJ1h7gugVoH5dqVlD1qm3zG1r7jnwadfuCHBMsYtvP_aTI0ly4vCvkDRq6SfZc3t7d98wmI-Wn9KApvCTepYQilaH7fMwnTBA47J019bafuZSuMKFKTQ1UcA3kAOhbKFxcuD1MJiVY2x2vcY')">
+                    <span class="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-[#0f172a]"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold truncate">Andi Supervisor</p>
+                    <p class="text-xs text-slate-400 truncate">Kepala Produksi</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ───────── MAIN ───────── -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+
+        <!-- Header -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4 flex-1">
+                <h1 class="text-lg font-bold flex items-center gap-2">
+                    <span class="material-symbols-outlined text-emerald-400">fact_check</span>
+                    Laporan Quality Control
+                </h1>
+                <div class="relative w-full max-w-md hidden md:block ml-8">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                    <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Pencarian Global... [Enter]" type="text" />
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                </button>
+                <div class="h-8 w-[1px] bg-slate-700 mx-1"></div>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">contrast</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8 max-w-full w-full space-y-8 pb-16">
+
+            <!-- Page title + Period filter -->
+            <div class="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight">Quality Control Overview</h2>
+                    <p class="text-slate-500 mt-1 text-sm" id="period-label">Memuat data…</p>
+                </div>
+                <!-- Period filter pills -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="setPeriod('today')"   id="p-today"   class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700">Hari Ini</button>
+                    <button onclick="setPeriod('week')"    id="p-week"    class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700">Minggu Ini</button>
+                    <button onclick="setPeriod('month')"   id="p-month"   class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">Bulan Ini</button>
+                    <button onclick="setPeriod('all')"     id="p-all"     class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-400 hover:bg-slate-700">Semua Data</button>
+                    <!-- Custom range -->
+                    <div class="flex items-center gap-1.5 bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-700">
+                        <span class="material-symbols-outlined text-slate-400 text-[15px]">date_range</span>
+                        <input id="range-from" type="date" class="bg-transparent text-xs text-slate-300 border-none outline-none w-28 cursor-pointer" title="Dari tanggal" />
+                        <span class="text-slate-600 text-xs">—</span>
+                        <input id="range-to"   type="date" class="bg-transparent text-xs text-slate-300 border-none outline-none w-28 cursor-pointer" title="Sampai tanggal" />
+                        <button onclick="if(window.consumeToken('Pencarian Data')) applyRange();" class="ml-1 px-2.5 py-1 rounded-lg bg-primary text-white text-[11px] font-bold hover:bg-indigo-500 transition-colors">Tampilkan</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── SUMMARY BADGES ── -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-slate-400 bg-slate-700/50 p-2 rounded-lg text-[20px]">inventory_2</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total SPK</p><p class="text-2xl font-black" id="b-total">—</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-emerald-400 bg-emerald-500/10 p-2 rounded-lg text-[20px]">verified</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sudah QC Penuh</p><p class="text-2xl font-black text-emerald-400" id="b-full">—</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-amber-400 bg-amber-500/10 p-2 rounded-lg text-[20px]">pending_actions</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sebagian QC</p><p class="text-2xl font-black text-amber-400" id="b-partial">—</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-rose-400 bg-rose-500/10 p-2 rounded-lg text-[20px]">cancel</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Belum QC</p><p class="text-2xl font-black text-rose-400" id="b-none">—</p></div>
+                </div>
+            </div>
+
+            <!-- ── CHARTS ── -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Donut Chart – Status QC -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="font-bold text-base mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-emerald-400 text-[18px]">donut_large</span>
+                        Distribusi Status QC
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-5">Proporsi SPK berdasarkan kelengkapan inspeksi QC</p>
+                    <div class="flex items-center gap-6">
+                        <div class="relative w-48 h-48 shrink-0 mx-auto">
+                            <canvas id="chart-donut"></canvas>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <span class="text-3xl font-black" id="donut-center-num">—</span>
+                                <span class="text-[10px] text-slate-500 uppercase tracking-wider font-bold">Total SPK</span>
+                            </div>
+                        </div>
+                        <div class="space-y-3 text-sm" id="donut-legend"></div>
+                    </div>
+                </div>
+
+                <!-- Bar Chart – Tahapan QC -->
+                <div class="glass-panel rounded-2xl p-6">
+                    <h3 class="font-bold text-base mb-1 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-[18px]">bar_chart</span>
+                        Kelengkapan Per Tahapan QC
+                    </h3>
+                    <p class="text-xs text-slate-500 mb-5">Jumlah SPK yang sudah menyelesaikan tiap tahap inspeksi</p>
+                    <canvas id="chart-bar" class="max-h-52"></canvas>
+                </div>
+            </div>
+
+            <!-- ── PROGRESS RING PER STAGE ── -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-panel rounded-xl p-5 text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pra Produksi</p>
+                    <div class="text-4xl font-black text-purple-400" id="pct-pra">—%</div>
+                    <div class="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div class="h-full rounded-full bg-purple-500 transition-all duration-700" id="bar-pra" style="width:0%"></div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2" id="lbl-pra">— / — SPK</p>
+                </div>
+                <div class="glass-panel rounded-xl p-5 text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Produksi</p>
+                    <div class="text-4xl font-black text-blue-400" id="pct-prod">—%</div>
+                    <div class="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div class="h-full rounded-full bg-blue-500 transition-all duration-700" id="bar-prod" style="width:0%"></div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2" id="lbl-prod">— / — SPK</p>
+                </div>
+                <div class="glass-panel rounded-xl p-5 text-center">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Hasil Akhir / Final</p>
+                    <div class="text-4xl font-black text-emerald-400" id="pct-final">—%</div>
+                    <div class="mt-3 h-2 rounded-full bg-slate-800 overflow-hidden">
+                        <div class="h-full rounded-full bg-emerald-500 transition-all duration-700" id="bar-final" style="width:0%"></div>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-2" id="lbl-final">— / — SPK</p>
+                </div>
+            </div>
+
+            <!-- ── DETAIL TABLE ── -->
+            <div class="glass-panel rounded-2xl p-6 overflow-x-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-base flex items-center gap-2">
+                        <span class="material-symbols-outlined text-slate-400 text-[18px]">table_view</span>
+                        Detail Per SPK
+                    </h3>
+                    <div class="flex gap-2">
+                        <button onclick="setFilter('all')"     id="f-all"     class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-700 text-slate-300 transition-all">Semua</button>
+                        <button onclick="setFilter('full')"    id="f-full"    class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-500 hover:bg-emerald-500/10 hover:text-emerald-400 transition-all">Sudah QC</button>
+                        <button onclick="setFilter('partial')" id="f-partial" class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-500 hover:bg-amber-500/10 hover:text-amber-400 transition-all">Sebagian</button>
+                        <button onclick="setFilter('none')"    id="f-none"    class="filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition-all">Belum QC</button>
+                    </div>
+                </div>
+                <table class="w-full text-left min-w-[1000px]">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                            <th class="pb-3 font-semibold w-8">#</th>
+                            <th class="pb-3 font-semibold">No. SPK &amp; Uraian <span class="normal-case font-normal text-slate-600">/ Dibuat Pada</span></th>
+                            <th class="pb-3 font-semibold">Status SPK</th>
+                            <th class="pb-3 font-semibold">Target Selesai <span class="normal-case font-normal text-slate-600">/ Tgl &amp; Jam</span></th>
+                            <th class="pb-3 font-semibold text-center">Pra Produksi</th>
+                            <th class="pb-3 font-semibold text-center">Produksi</th>
+                            <th class="pb-3 font-semibold text-center">Hasil Akhir</th>
+                            <th class="pb-3 font-semibold">Status QC</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800" id="qc-table-body"></tbody>
+                </table>
+                <div id="table-empty" class="hidden flex-col items-center justify-center py-16 text-center">
+                    <span class="material-symbols-outlined text-slate-700 text-6xl mb-3">fact_check</span>
+                    <p class="text-slate-500 font-semibold">Tidak ada data QC.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center py-4 text-slate-500 text-xs border-t border-slate-800/50">
+                Sistem Flowta — Budi Ariadi Tata Kelola 0811 767 4848 · Hak Cipta dilindungi Undang-Undang
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return d.getDate().toString().padStart(2,'0')+' '+m[d.getMonth()]+' '+d.getFullYear()+
+        ' '+d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+
+// ─── Data ───────────────────────────────────────────────────────────────────
+const QC_STAGES = ['Pra Produksi','Produksi','Hasil Akhir'];
+
+let allCards = [];
+let allQcRecs = [];
+let allHistories = [];
+// Enriched per-card QC info
+let enriched = [];
+let activeFilter = 'all';
+
+function enrichData() {
+    enriched = allCards.map(card => {
+        const recs = allQcRecs.filter(q => q.cardId === card.id);
+        const hasStage = {};
+        QC_STAGES.forEach(s => { hasStage[s] = recs.find(r => r.type === s) || null; });
+        const count = QC_STAGES.filter(s => hasStage[s]).length;
+        const qcStatus = count === 3 ? 'full' : count > 0 ? 'partial' : 'none';
+        return { card, recs, hasStage, qcStatus };
+    });
+}
+
+// ─── Summary Badges ──────────────────────────────────────────────────────────
+function renderBadges() {
+    const total   = enriched.length;
+    const full    = enriched.filter(e => e.qcStatus==='full').length;
+    const partial = enriched.filter(e => e.qcStatus==='partial').length;
+    const none    = enriched.filter(e => e.qcStatus==='none').length;
+    document.getElementById('b-total').textContent   = total;
+    document.getElementById('b-full').textContent    = full;
+    document.getElementById('b-partial').textContent = partial;
+    document.getElementById('b-none').textContent    = none;
+    document.getElementById('donut-center-num').textContent = total;
+    return { total, full, partial, none };
+}
+
+// ─── Progress bars per stage ─────────────────────────────────────────────────
+function renderProgress() {
+    const total = enriched.length || 1;
+    const stageCount = {};
+    QC_STAGES.forEach(s => {
+        stageCount[s] = enriched.filter(e => e.hasStage[s]).length;
+    });
+    [
+        { stage:'Pra Produksi', pct:'pct-pra', bar:'bar-pra', lbl:'lbl-pra' },
+        { stage:'Produksi',     pct:'pct-prod', bar:'bar-prod', lbl:'lbl-prod' },
+        { stage:'Hasil Akhir',  pct:'pct-final', bar:'bar-final', lbl:'lbl-final' },
+    ].forEach(r => {
+        const n   = stageCount[r.stage];
+        const pct = Math.round((n / enriched.length) * 100) || 0;
+        document.getElementById(r.pct).textContent = pct + '%';
+        document.getElementById(r.bar).style.width = pct + '%';
+        document.getElementById(r.lbl).textContent = n + ' / ' + enriched.length + ' SPK';
+    });
+}
+
+// ─── Charts ──────────────────────────────────────────────────────────────────
+let donutChart, barChart;
+
+function renderCharts(stats) {
+    const { full, partial, none } = stats;
+
+    // Legend
+    const legendData = [
+        { label:'Sudah QC Penuh', val:full,    color:'#10b981' },
+        { label:'Sebagian QC',    val:partial, color:'#f59e0b' },
+        { label:'Belum QC',       val:none,    color:'#f43f5e' },
+    ];
+    document.getElementById('donut-legend').innerHTML = legendData.map(l => `
+        <div class="flex items-center gap-2">
+            <span class="legend-dot" style="background:${l.color}"></span>
+            <span class="text-slate-400">${l.label}</span>
+            <span class="font-black text-white ml-auto pl-4">${l.val}</span>
+        </div>`).join('');
+
+    // Donut
+    const donutCtx = document.getElementById('chart-donut').getContext('2d');
+    if (donutChart) donutChart.destroy();
+    donutChart = new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: legendData.map(l => l.label),
+            datasets:[{
+                data: [full, partial, none],
+                backgroundColor: ['#10b981','#f59e0b','#f43f5e'],
+                borderColor: 'rgba(15,23,42,1)',
+                borderWidth: 3,
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            cutout: '72%',
+            plugins: { legend:{ display:false }, tooltip:{ callbacks:{
+                label: ctx => ` ${ctx.label}: ${ctx.raw} SPK`
+            }}},
+            animation: { animateRotate:true, duration:700 },
+        }
+    });
+
+    // Bar — stage completion
+    const stageLabels = ['Pra Produksi','Produksi','Hasil Akhir'];
+    const stageDone   = stageLabels.map(s => enriched.filter(e => e.hasStage[s]).length);
+    const stageMiss   = stageLabels.map((s,i) => enriched.length - stageDone[i]);
+    const barCtx = document.getElementById('chart-bar').getContext('2d');
+    if (barChart) barChart.destroy();
+    barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Pra Produksi','Produksi','Hasil Akhir'],
+            datasets:[
+                { label:'Sudah Inspeksi', data:stageDone, backgroundColor:'rgba(16,185,129,.75)', borderRadius:6, borderSkipped:false },
+                { label:'Belum Inspeksi', data:stageMiss, backgroundColor:'rgba(100,116,139,.22)', borderRadius:6, borderSkipped:false },
+            ]
+        },
+        options: {
+            responsive:true, maintainAspectRatio:true,
+            scales:{
+                x:{ stacked:true, grid:{ color:'rgba(255,255,255,.04)' }, ticks:{ color:'#94a3b8', font:{size:11} } },
+                y:{ stacked:true, grid:{ color:'rgba(255,255,255,.04)' }, ticks:{ color:'#94a3b8', precision:0 }, beginAtZero:true },
+            },
+            plugins:{ legend:{ labels:{ color:'#94a3b8', boxWidth:12, font:{size:11} } } },
+            animation:{ duration:700 },
+        }
+    });
+}
+
+// ─── Table ───────────────────────────────────────────────────────────────────
+function stagePill(rec) {
+    if (rec) return `<div class="flex flex-col items-center gap-0.5">
+        <span class="material-symbols-outlined text-emerald-400 text-[18px]" style="font-variation-settings:'FILL' 1">check_circle</span>
+        <span class="text-[10px] text-slate-500">${fmtDate(rec.timestamp).split(' ').slice(0,3).join(' ')}</span>
+        <span class="text-[10px] text-slate-600">@${esc(rec.user||'—')}</span>
+    </div>`;
+    return `<span class="material-symbols-outlined text-slate-700 text-[18px]">radio_button_unchecked</span>`;
+}
+
+function qcStatusBadge(status) {
+    if (status==='full')    return '<span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">✅ Sudah QC</span>';
+    if (status==='partial') return '<span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">⏳ Sebagian</span>';
+    return '<span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 text-xs font-bold border border-rose-500/20">❌ Belum QC</span>';
+}
+
+function spkStatusBadge(card) {
+    if (card.status==='SELESAI') return '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400">SELESAI</span>';
+    if (card.status==='BATAL')   return '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-500/10 text-rose-400">BATAL</span>';
+    return '<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/10 text-amber-400">AKTIF</span>';
+}
+
+function renderTable() {
+    const filtered = enriched.filter(e => activeFilter==='all' || e.qcStatus===activeFilter);
+    const tbody  = document.getElementById('qc-table-body');
+    const empty  = document.getElementById('table-empty');
+    if (!filtered.length) {
+        tbody.innerHTML = '';
+        empty.classList.remove('hidden'); empty.classList.add('flex');
+        return;
+    }
+    empty.classList.add('hidden'); empty.classList.remove('flex');
+    let html = '';
+    filtered.forEach((e, idx) => {
+        const card  = e.card;
+        const parts = (card.title||'').split(' ');
+        const spkNo   = parts[0] || '—';
+        const spkDesc = parts.slice(1).join(' ') || '—';
+        const rowOp = card.status==='BATAL' ? 'opacity-50' : card.status==='SELESAI' ? 'opacity-75' : '';
+
+        // SPK Dibuat Pada
+        const createEv = allHistories.find(h => h.cardId === card.id && h.type === 'create');
+        const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
+        const createdStr = createdAt ? fmtDate(createdAt) : '—';
+
+        // Target Selesai: label relatif + tanggal+jam aktual
+        const targetStr = card.dueDateDesc || '—';
+        let targetTdClass = 'text-slate-400';
+        if (targetStr.includes('Terlambat')) targetTdClass = 'text-rose-400 font-bold';
+        else if (targetStr.includes('Hari Ini')) targetTdClass = 'text-orange-400 font-bold';
+        const targetDatetimeStr = card.dueDate ? fmtDate(card.dueDate) : '—';
+
+        html += `<tr class="table-row-hover text-sm transition-colors ${rowOp}" onclick="window.location.href='product-detail.html?id=${esc(card.id)}'">
+            <td class="py-4 pr-2 text-xs text-slate-600 font-medium">${idx+1}</td>
+            <td class="py-4">
+                <div class="font-mono font-bold text-slate-300">${esc(spkNo)}</div>
+                <div class="text-xs text-slate-500 mt-0.5">${esc(spkDesc)}</div>
+                <div class="text-xs text-slate-600 mt-0.5">${esc(card.type||'—')}</div>
+                <div class="flex items-center gap-1 mt-1 text-[11px] text-indigo-400/80">
+                    <span class="material-symbols-outlined text-[12px]">person</span>
+                    <span>Dibuat: ${esc(createEv && createEv.user ? createEv.user : 'Sistem')}</span>
+                </div>
+                <div class="flex items-center gap-1 mt-1 text-[11px] text-indigo-400/80">
+                    <span class="material-symbols-outlined text-[12px]">schedule</span>
+                    <span>${esc(createdStr)}</span>
+                </div>
+            </td>
+            <td class="py-4">${spkStatusBadge(card)}</td>
+            <td class="py-4 text-xs whitespace-nowrap">
+                <div class="${targetTdClass} flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">flag</span>${esc(targetStr)}</div>
+                <div class="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
+                    <span class="material-symbols-outlined text-[12px]">calendar_month</span>
+                    <span>${esc(targetDatetimeStr)}</span>
+                </div>
+            </td>
+            <td class="py-4 text-center">${stagePill(e.hasStage['Pra Produksi'])}</td>
+            <td class="py-4 text-center">${stagePill(e.hasStage['Produksi'])}</td>
+            <td class="py-4 text-center">${stagePill(e.hasStage['Hasil Akhir'])}</td>
+            <td class="py-4">${qcStatusBadge(e.qcStatus)}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+// ─── Filter pills ────────────────────────────────────────────────────────────
+const filterStyle = {
+    all:     'bg-slate-700 text-slate-300',
+    full:    'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+    partial: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+    none:    'bg-rose-500/15 text-rose-400 border border-rose-500/30',
+};
+window.setFilter = function(f) {
+    activeFilter = f;
+    ['all','full','partial','none'].forEach(k => {
+        const btn = document.getElementById('f-'+k);
+        btn.className = 'filter-btn px-3 py-1.5 rounded-lg text-xs font-bold transition-all ' +
+            (k===f ? filterStyle[k] : 'bg-slate-800 text-slate-500 hover:bg-slate-700');
+    });
+    renderTable();
+};
+
+// ─── Period Filter ──────────────────────────────────────────────────────────
+const PERIOD_IDS = ['today','week','month','all'];
+let activePeriod = 'month';   // default Bulan Ini
+let customFrom = null, customTo = null;
+
+const periodStyle = {
+    active:   'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+    inactive: 'bg-slate-800 text-slate-400 hover:bg-slate-700',
+};
+
+function setPeriod(p) {
+    activePeriod = p;
+    customFrom = null; customTo = null;
+    PERIOD_IDS.forEach(k => {
+        document.getElementById('p-'+k).className =
+            'period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all ' +
+            (k===p ? periodStyle.active : periodStyle.inactive);
+    });
+    refresh();
+}
+window.setPeriod = setPeriod;
+
+function applyRange() {
+    const f = document.getElementById('range-from').value;
+    const t = document.getElementById('range-to').value;
+    if (!f || !t) { alert('Pilih tanggal awal dan akhir terlebih dahulu.'); return; }
+    customFrom = new Date(f + 'T00:00:00'); customTo = new Date(t + 'T23:59:59');
+    activePeriod = null;
+    PERIOD_IDS.forEach(k => {
+        document.getElementById('p-'+k).className =
+            'period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all ' + periodStyle.inactive;
+    });
+    refresh();
+}
+window.applyRange = applyRange;
+
+function getDateRange() {
+    const now = new Date();
+    if (customFrom && customTo) return { from: customFrom, to: customTo };
+    if (activePeriod === 'today') {
+        return { from: new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0),
+                 to:   new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59) };
+    }
+    if (activePeriod === 'week') {
+        const day = now.getDay(); // 0=Sun
+        const mon = new Date(now); mon.setDate(now.getDate() - (day===0?6:day-1)); mon.setHours(0,0,0,0);
+        const sun = new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+        return { from: mon, to: sun };
+    }
+    if (activePeriod === 'month') {
+        return { from: new Date(now.getFullYear(),now.getMonth(),1,0,0,0),
+                 to:   new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59) };
+    }
+    return { from: null, to: null }; // 'all'
+}
+
+function periodLabel() {
+    const m  = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    const now = new Date();
+    if (customFrom && customTo)
+        return `Menampilkan data ${customFrom.getDate()} ${m[customFrom.getMonth()]} ${customFrom.getFullYear()} — ${customTo.getDate()} ${m[customTo.getMonth()]} ${customTo.getFullYear()}`;
+    if (activePeriod==='today')  return `Hari ini, ${now.getDate()} ${m[now.getMonth()]} ${now.getFullYear()}`;
+    if (activePeriod==='week') {
+        const { from, to } = getDateRange();
+        return `Minggu ini: ${from.getDate()} ${m[from.getMonth()]} — ${to.getDate()} ${m[to.getMonth()]} ${now.getFullYear()}`;
+    }
+    if (activePeriod==='month') return `Bulan ${m[now.getMonth()]} ${now.getFullYear()}`;
+    return 'Semua periode';
+}
+
+// Filter cards by when the first QC record OR card creation falls in range
+function filterCardsByPeriod(cards, qcRecs, range) {
+    if (!range.from && !range.to) return cards; // "all"
+    return cards.filter(card => {
+        // Try: first QC record for this card; fallback to card.createdAt or first history entry
+        const cardQc = qcRecs.filter(q => q.cardId === card.id);
+        const ts = cardQc.length
+            ? cardQc.sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp))[0].timestamp
+            : (card.createdAt || card.updatedAt || null);
+        if (!ts) return false;
+        const d = new Date(ts);
+        return d >= range.from && d <= range.to;
+    });
+}
+
+// ─── Main refresh ────────────────────────────────────────────────────────────
+function refresh() {
+    document.getElementById('period-label').textContent = periodLabel();
+    const range = getDateRange();
+    const _allCards  = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+    allQcRecs = JSON.parse(localStorage.getItem('flowta_qc')) || [];
+    allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+    allCards = filterCardsByPeriod(_allCards, allQcRecs, range);
+    enrichData();
+    const stats = renderBadges();
+    renderProgress();
+    renderCharts(stats);
+    renderTable();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    // Pre-fill range inputs with current month bounds
+    const now = new Date();
+    const y = now.getFullYear(), mo = now.getMonth();
+    document.getElementById('range-from').value =
+        `${y}-${(mo+1).toString().padStart(2,'0')}-01`;
+    const lastDay = new Date(y,mo+1,0).getDate();
+    document.getElementById('range-to').value =
+        `${y}-${(mo+1).toString().padStart(2,'0')}-${lastDay.toString().padStart(2,'0')}`;
+
+    refresh(); // default = Bulan Ini
+});
+
+</script>
+</body>
+</html>

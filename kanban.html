@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Kanban</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+        
+        /* Modal Backdrop blur effect */
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(4px);
+        }
+        
+        /* List and Grid View specifically */
+        .kanban-column {
+            min-height: 150px;
+            height: 100%; /* Force column to stretch to accept drops */
+            padding-bottom: 2rem; /* Add padding at bottom to make dropzone bigger */
+        }
+        
+        .view-list {
+            flex-direction: column !important;
+        }
+        .view-list > .w-80 {
+            width: 100% !important;
+            flex-shrink: 1 !important;
+        }
+        .view-list .kanban-column {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1rem;
+            min-height: 80px;
+            padding-bottom: 0;
+        }
+
+        /* Heatmap */
+        .heatmap-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .heatmap-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+        .heatmap-bar {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+    <script src="auth.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR -->
+        <aside class="w-72 glass-nav hidden lg:flex flex-col h-full border-r border-slate-200 dark:border-slate-800 shrink-0">
+            <div class="p-6 flex items-center gap-3">
+                <img src="logo.png" alt="FLOWTA Logo" class="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+            <div class="flex flex-col">
+                <span class="font-bold text-xl tracking-tight leading-tight">FLOWTA</span>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tata Kelola Manajemen</span>
+            </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto px-4 py-2 mt-2">
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Workspace</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="index.html">
+                        <span class="material-symbols-outlined text-[20px]">grid_view</span>
+                        <span>Dasbor</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 transition-all font-medium" href="kanban.html">
+                        <span class="material-symbols-outlined text-[20px]">view_kanban</span>
+                        <span>Kanban</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Produksi & Kualitas</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="products.html">
+                        <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                        <span>Produk</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="qc.html">
+                        <span class="material-symbols-outlined text-[20px]">fact_check</span>
+                        <span>Quality Control</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="phase.html">
+                        <span class="material-symbols-outlined text-[20px]">schema</span>
+                        <span>Fase</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="reviews.html">
+                        <span class="material-symbols-outlined text-[20px]">reviews</span>
+                        <span>Review</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Analitik & Laporan</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="productivity.html">
+                        <span class="material-symbols-outlined text-[20px]">engineering</span>
+                        <span>User Productivity</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="history.html">
+                        <span class="material-symbols-outlined text-[20px]">history</span>
+                        <span>Histori</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="laporan-produksi.html">
+                        <span class="material-symbols-outlined text-[20px]">summarize</span>
+                        <span>Laporan Produksi</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administrasi</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="sistem.html">
+                        <span class="material-symbols-outlined text-[20px]">settings_applications</span>
+                        <span>Sistem</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="manual.html">
+                        <span class="material-symbols-outlined text-[20px]">help_outline</span>
+                        <span>Panduan</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
+                <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors">
+                    <div class="size-10 rounded-full bg-cover relative" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7zCsRdVomcJzyX3rrrkP5f6UCo2OIq46qeFslE1JbYyB71cl5AMQBnfcZOxS0QKblQV0CHatRb3Dl77iV-jjPaen2uy6U8HeF480lJTcTLVBjWCUkkAGPnmTzo0ChJ1h7gugVoH5dqVlD1qm3zG1r7jnwadfuCHBMsYtvP_aTI0ly4vCvkDRq6SfZc3t7d98wmI-Wn9KApvCTepYQilaH7fMwnTBA47J019bafuZSuMKFKTQ1UcA3kAOhbKFxcuD1MJiVY2x2vcY')">
+                        <span class="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-background-dark"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">Andi Supervisor</p>
+                        <p class="text-xs text-slate-400 truncate">Kepala Produksi</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+            
+            <!-- Dashboard Global Background Effect -->
+            <div class="absolute inset-0 z-0 overflow-hidden opacity-50 dark:opacity-30 pointer-events-none">
+                <div class="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]"></div>
+                <div class="absolute top-[60%] -left-[10%] w-[40%] h-[40%] rounded-full bg-amber-500/10 blur-[100px]"></div>
+            </div>
+
+            <!-- TOP HEADER -->
+            <header class="glass-nav relative z-30 px-8 py-4 flex flex-shrink-0 items-center justify-between">
+                <h2 class="text-xl font-bold flex items-center gap-3 text-slate-800 dark:text-white">
+                    <span class="material-symbols-outlined text-amber-500 p-2 bg-amber-500/10 rounded-lg">view_kanban</span>
+                    Production Kanban
+                </h2>
+                <div class="flex items-center gap-4">
+                    <div class="relative max-w-md hidden md:block">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                        <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="bg-slate-100 dark:bg-slate-800/70 border border-transparent dark:border-slate-700/50 rounded-xl pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner w-72" placeholder="Pencarian Global... [Enter]" type="text"/>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        </button>
+                        <button onclick="openSpkModal()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary hover:bg-indigo-500 text-white transition-all shadow-lg shadow-primary/20 font-medium">
+                            <span class="material-symbols-outlined text-[18px]">add</span>
+                            <span class="hidden sm:inline">SPK Baru</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Board Tabs -->
+            <div class="px-8 pt-6 relative z-10 shrink-0 flex items-center justify-between">
+                <div class="flex border-b border-slate-200 dark:border-slate-800 gap-8 overflow-x-auto no-scrollbar flex-1">
+                    <a class="border-b-2 border-primary text-primary pb-4 font-semibold text-sm whitespace-nowrap" href="#">SEMUA BOARD</a>
+                    <a class="border-b-2 border-transparent text-slate-500 pb-4 font-medium text-sm whitespace-nowrap hover:text-slate-700 dark:hover:text-cyan-400 transition-colors" href="laporan-produksi.html">LAPORAN PRODUKSI</a>
+                </div>
+                <!-- View Constraints & Toggles -->
+                <div class="flex items-center gap-4 mb-3">
+                    <!-- Size Toggles -->
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                        <button id="btn-size-sm" class="px-2 py-1 rounded text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white text-xs font-semibold transition-all" onclick="setCardSize('sm')">
+                            Kecil
+                        </button>
+                        <button id="btn-size-md" class="px-2 py-1 rounded text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white text-xs font-semibold transition-all" onclick="setCardSize('md')">
+                            Sedang
+                        </button>
+                        <button id="btn-size-lg" class="px-2 py-1 rounded bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white text-xs font-semibold transition-all" onclick="setCardSize('lg')">
+                            Besar
+                        </button>
+                    </div>
+                    <!-- View Toggles -->
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500">
+                        <button id="btn-board-view" class="p-1.5 rounded bg-white dark:bg-slate-700 shadow-sm flex items-center gap-1.5 text-slate-800 dark:text-white text-xs font-semibold transition-all">
+                            <span class="material-symbols-outlined text-[16px]">view_column</span> Board
+                        </button>
+                        <button id="btn-list-view" class="p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold transition-all">
+                            <span class="material-symbols-outlined text-[16px]">view_list</span> List
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Heatmap -->
+            <div class="px-8 py-4 relative z-10 shrink-0">
+                <div class="glass-panel rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-amber-400 text-[18px]">local_fire_department</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Activity Heatmap — Kepadatan Pekerjaan Per Fase</span>
+                        </div>
+                        <span class="text-[10px] text-slate-600 font-medium">SPK Aktif (tidak termasuk Selesai &amp; Batal)</span>
+                    </div>
+                    <div id="phase-heatmap" class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr))">
+                        <!-- Injected by renderHeatmap() -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kanban Grid Container -->
+            <div class="flex-1 px-8 py-4 overflow-x-auto overflow-y-auto flex gap-6 items-start kanban-board no-scrollbar relative z-10" id="kanban-board">
+                <!-- Columns injected here by JS -->
+            </div>
+        </main>
+    </div>
+
+    <!-- SPK Modal HTML (Hidden by default) -->
+    <div id="spkModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 modal-backdrop hidden opacity-0 transition-opacity duration-300">
+        <!-- Modal Container -->
+        <div class="glass-panel w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transform scale-95 transition-transform duration-300" id="spkModalContent">
+            <!-- Header -->
+            <header class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
+                <div class="flex items-center gap-3">
+                    <div class="bg-primary/20 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-primary text-2xl">add_box</span>
+                    </div>
+                    <div>
+                        <h2 class="text-slate-100 text-lg font-bold tracking-tight uppercase">FORM: TAMBAH / DUPLIKAT PRODUK</h2>
+                        <p class="text-slate-400 text-xs">Buat entri produk baru atau duplikasi dari data yang ada</p>
+                    </div>
+                </div>
+                <button onclick="closeSpkModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition-all">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                    Batal
+                </button>
+            </header>
+            
+            <!-- Form Content -->
+            <form id="spkForm" onsubmit="handleSpkSubmit(event)" class="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+                <div class="p-6 space-y-8 flex-1">
+                    <!-- Target Phase state hidden input -->
+                    <input type="hidden" id="spkTargetPhaseId" value="">
+
+                    <!-- Section 1: Production Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">No. Produksi</span>
+                                <div class="relative group">
+                                    <input id="spkNo" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all placeholder:text-slate-500" placeholder="Contoh: PROD-2026-001" type="text" value="PROD-2026-001" required/>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+                                        <span class="material-symbols-outlined text-xl">info</span>
+                                    </div>
+                                </div>
+                                <p class="mt-1.5 text-slate-500 text-xs italic">Otomatis/Manual</p>
+                            </label>
+                            
+                            <div class="space-y-3">
+                                <span class="text-slate-300 text-sm font-semibold block uppercase tracking-wider">Jenis Project</span>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="relative cursor-pointer group">
+                                        <input class="peer sr-only" name="project_type" type="radio" value="NORMAL" checked/>
+                                        <div class="p-3 text-center rounded-lg border border-slate-700 bg-slate-800/40 peer-checked:border-primary peer-checked:bg-primary/10 transition-all">
+                                            <span class="text-sm font-medium text-slate-400 group-hover:text-slate-200 peer-checked:text-primary">NORMAL</span>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer group">
+                                        <input class="peer sr-only" name="project_type" type="radio" value="VIP"/>
+                                        <div class="p-3 text-center rounded-lg border border-slate-700 bg-slate-800/40 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 transition-all">
+                                            <span class="text-sm font-medium text-slate-400 group-hover:text-slate-200 peer-checked:text-yellow-500">VIP</span>
+                                            <div class="absolute -top-2 -right-1 bg-yellow-500 text-[10px] px-1.5 rounded-full text-slate-900 font-bold">GOLD</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer group">
+                                        <input class="peer sr-only" name="project_type" type="radio" value="VVIP"/>
+                                        <div class="p-3 text-center rounded-lg border border-slate-700 bg-slate-800/40 peer-checked:border-purple-500 peer-checked:bg-purple-500/10 transition-all">
+                                            <span class="text-sm font-medium text-slate-400 group-hover:text-slate-200 peer-checked:text-purple-400">VVIP</span>
+                                            <div class="absolute -top-2 -right-1 bg-purple-500 text-[10px] px-1.5 rounded-full text-white font-bold">NEON</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Nama Produk / Klien</span>
+                                <input id="spkTitle" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="Masukkan nama klien atau proyek" type="text" required/>
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Item Produksi</span>
+                                <input id="spkItem" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="Misal: Large Format / Billboard" type="text" required/>
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Deskripsi</span>
+                                <textarea id="spkDesc" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all resize-none" placeholder="Detail spesifikasi produk..." rows="2"></textarea>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 2: Timeline -->
+                    <div class="bg-slate-800/30 p-5 rounded-xl border border-slate-700/50 space-y-6">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-primary">schedule</span>
+                            <h3 class="text-slate-200 text-sm font-bold uppercase tracking-wider">Penjadwalan Produksi</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- Start Date -->
+                            <div class="space-y-4">
+                                <span class="text-slate-400 text-xs font-bold uppercase">Tanggal Mulai (Otomatis)</span>
+                                <div class="flex gap-3">
+                                    <div class="flex-1 relative">
+                                        <input class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed" disabled type="date" id="spkStartDate" />
+                                    </div>
+                                    <div class="w-32 relative">
+                                        <input class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed" disabled type="time" value="08:00"/>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Target Date -->
+                            <div class="space-y-4">
+                                <span class="text-slate-200 text-xs font-bold uppercase">Target Selesai (Manual)</span>
+                                <div class="flex gap-3">
+                                    <div class="flex-1 relative">
+                                        <input id="spkDueDate" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" type="date" required/>
+                                    </div>
+                                    <div class="w-32 relative">
+                                        <input id="spkDueTime" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" type="time" value="17:00" required/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Footer -->
+                <footer class="px-6 py-5 border-t border-slate-700/50 bg-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 text-slate-400 text-xs">
+                        <div class="flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                            <span>System Online</span>
+                        </div>
+                        <span>•</span>
+                        <span>User: Andi Supervisor</span>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <button type="submit" class="flex-1 md:flex-none px-8 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">save</span>
+                            SIMPAN PRODUK
+                        </button>
+                    </div>
+                </footer>
+            </form>
+        </div>
+    </div>
+
+    <!-- QC Modal HTML (Hidden by default) -->
+    <div id="qcModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 modal-backdrop hidden opacity-0 transition-opacity duration-300">
+        <!-- Modal Container -->
+        <div class="glass-panel w-full max-w-md rounded-xl shadow-2xl overflow-hidden flex flex-col transform scale-95 transition-transform duration-300" id="qcModalContent">
+            <!-- Header -->
+            <header class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-500/20 p-2 rounded-lg text-emerald-500">
+                        <span class="material-symbols-outlined text-2xl">fact_check</span>
+                    </div>
+                    <div>
+                        <h2 class="text-slate-100 text-lg font-bold tracking-tight uppercase">FORM QUALITY CONTROL</h2>
+                        <p class="text-slate-400 text-xs">Catat riwayat dan status QC produksi</p>
+                    </div>
+                </div>
+                <button onclick="closeQcModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition-all">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                </button>
+            </header>
+            
+            <!-- Form Content -->
+            <form id="qcForm" onsubmit="handleQcSubmit(event)" class="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+                <input type="hidden" id="qcCardId" value="">
+                
+                <div class="p-6 space-y-6 flex-1">
+                    <!-- Info Alert -->
+                    <div class="bg-slate-800/50 border border-slate-700 rounded-lg p-4 flex gap-3">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        <div>
+                            <p class="text-slate-200 text-sm font-bold" id="qcDisplayTitle">Nama Produk</p>
+                            <p class="text-slate-400 text-xs mt-1">Fase Saat Ini: <span id="qcDisplayPhase" class="text-slate-300 font-medium">Nama Fase</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Input Pilihan QC -->
+                    <div class="space-y-3">
+                        <span class="text-slate-300 text-sm font-semibold block uppercase tracking-wider">Jenis Pemeriksaan QC</span>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-800/40 cursor-pointer hover:bg-slate-700/50 transition-colors">
+                                <input type="radio" name="qc_type" value="Pra Produksi" class="text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500 focus:ring-offset-slate-800" required>
+                                <span class="text-sm font-medium text-slate-300">QC Pra Produksi</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-800/40 cursor-pointer hover:bg-slate-700/50 transition-colors">
+                                <input type="radio" name="qc_type" value="Produksi" class="text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500 focus:ring-offset-slate-800" required>
+                                <span class="text-sm font-medium text-slate-300">QC Produksi</span>
+                            </label>
+                            <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-700 bg-slate-800/40 cursor-pointer hover:bg-slate-700/50 transition-colors">
+                                <input type="radio" name="qc_type" value="Hasil Akhir" class="text-emerald-500 bg-slate-900 border-slate-700 focus:ring-emerald-500 focus:ring-offset-slate-800" required>
+                                <span class="text-sm font-medium text-slate-300">QC Hasil Akhir</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Input Deskripsi -->
+                    <label class="block">
+                        <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Catatan / Deskripsi</span>
+                        <textarea id="qcDesc" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all resize-none" placeholder="Tuliskan detail temuan atau catatan QC..." rows="3" required></textarea>
+                    </label>
+                </div>
+                
+                <!-- Footer -->
+                <footer class="px-6 py-5 border-t border-slate-700/50 bg-slate-800/60 flex items-center justify-end gap-3">
+                    <button type="submit" class="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">save</span>
+                        SIMPAN QC
+                    </button>
+                </footer>
+            </form>
+        </div>
+
+    <!-- Javascript Layer -->
+    <script>
+        // Global logic accessible from inline handlers
+        window.openSpkModal = function(phaseId = null) {
+            const modal = document.getElementById('spkModal');
+            const cont = document.getElementById('spkModalContent');
+            
+            // Set today's date in disabled start date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('spkStartDate').value = today;
+            
+            // Generate arbitrary PO number based on timestamp
+            document.getElementById('spkNo').value = `PROD-${Date.now().toString().slice(-6)}`;
+            
+            if(phaseId) document.getElementById('spkTargetPhaseId').value = phaseId;
+            else document.getElementById('spkTargetPhaseId').value = "";
+            
+            modal.classList.remove('hidden');
+            // Slight delay for transition effect
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                cont.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeSpkModal = function() {
+            const modal = document.getElementById('spkModal');
+            const cont = document.getElementById('spkModalContent');
+            modal.classList.add('opacity-0');
+            cont.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('spkForm').reset();
+            }, 300);
+        };
+
+        window.openQcModal = function(cardId) {
+            const modal = document.getElementById('qcModal');
+            const cont = document.getElementById('qcModalContent');
+            
+            // Get card info to display
+            const kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+            const phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [];
+            const card = kanbanCards.find(c => c.id === cardId);
+            
+            if(card) {
+                document.getElementById('qcCardId').value = card.id;
+                document.getElementById('qcDisplayTitle').textContent = card.title;
+                
+                const phase = phasesData.find(p => p.id === card.phaseId);
+                const phaseName = phase ? phase.title : 'Unknown Phase';
+                document.getElementById('qcDisplayPhase').textContent = phaseName;
+            }
+            
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                cont.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeQcModal = function() {
+            const modal = document.getElementById('qcModal');
+            const cont = document.getElementById('qcModalContent');
+            modal.classList.add('opacity-0');
+            cont.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.getElementById('qcForm').reset();
+            }, 300);
+        };
+
+        window.handleQcSubmit = function(e) {
+            e.preventDefault();
+            
+            const cardId = document.getElementById('qcCardId').value;
+            const cardTitle = document.getElementById('qcDisplayTitle').textContent;
+            
+            let spkInfoObj = null;
+            const kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+            const card = kanbanCards.find(c => c.id === cardId);
+            if(card) {
+                const parts = card.title.split(' ');
+                spkInfoObj = { spkNo: parts[0], title: parts.slice(1).join(' '), item: card.type };
+            }
+            
+            if(!window.consumeToken('Simpan QC', spkInfoObj)) return;
+            
+            const qcTypeRadio = document.querySelector('input[name="qc_type"]:checked');
+            const qcType = qcTypeRadio ? qcTypeRadio.value : 'General QC';
+            const qcDesc = document.getElementById('qcDesc').value;
+            
+            // Log to QC records
+            const qcRecords = JSON.parse(localStorage.getItem('flowta_qc')) || [];
+            qcRecords.push({
+                id: 'QC-' + Date.now(),
+                cardId: cardId,
+                type: qcType,
+                desc: qcDesc,
+                timestamp: new Date().toISOString(),
+                user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem')
+            });
+            localStorage.setItem('flowta_qc', JSON.stringify(qcRecords));
+            
+            // LOG HISTORY: add QC History
+            const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+            histories.unshift({
+                id: 'HIST-' + Date.now(),
+                cardId: cardId,
+                type: 'review',
+                timestamp: new Date().toISOString(),
+                user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                desc: `<span class="font-medium text-emerald-500">Quality Control ${qcType}:</span> ${qcDesc}`
+            });
+            localStorage.setItem('flowta_history', JSON.stringify(histories));
+            
+            closeQcModal();
+            // Show toast or alert ideally, but we'll just reload or silently close for now
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const colorMap = {
+                'primary': 'indigo',
+                'emerald': 'emerald',
+                'amber': 'amber',
+                'secondary': 'rose',
+                'indigo': 'indigo',
+                'purple': 'purple',
+                'slate': 'slate' // Default fallback
+            };
+
+            const kanbanBoard = document.getElementById('kanban-board');
+            let phasesData = JSON.parse(localStorage.getItem('flowta_phases'));
+            
+            // If empty (user never visited phase.html), initialize with standard mock data
+            if(!phasesData || phasesData.length === 0) {
+                phasesData = [
+                    { id: 1, title: 'Desain & Pra-Cetak', desc: '', icon: 'brush', colorClass: 'indigo', status: 'AKTIF', statusColor: 'emerald' },
+                    { id: 2, title: 'Cetak Produksi', desc: '', icon: 'print', colorClass: 'amber', status: 'TERTUNDA', statusColor: 'amber' },
+                    { id: 3, title: 'Las & Rangka', desc: '', icon: 'precision_manufacturing', colorClass: 'indigo', status: 'BELUM MULAI', statusColor: 'slate' },
+                    { id: 4, title: 'Quality Control & Finishing', desc: '', icon: 'verified', colorClass: 'purple', status: 'BELUM MULAI', statusColor: 'slate' },
+                ];
+            }
+
+            // Load Kanban Cards from LocalStorage
+            let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards'));
+            if(!kanbanCards || kanbanCards.length === 0) {
+                // Determine valid phase IDs
+                const phaseId1 = phasesData[0] ? phasesData[0].id : 1;
+                const phaseId2 = phasesData[1] ? phasesData[1].id : 2;
+                kanbanCards = [
+                    { id: 'C1', phaseId: phaseId1, title: '#A01 Banner X', type: 'Large Format Printing', tagDesc: 'VVIP', tagColor: 'fuchsia', dueDateDesc: '1 Hari Terlambat', dueColor: 'rose', priority: 'High', priorityIcon: 'priority_high' },
+                    { id: 'C2', phaseId: phaseId1, title: '#B22 Sticker', type: 'Die-cut Vinyl', tagDesc: 'VIP', tagColor: 'amber', dueDateDesc: '2 Hari Tersisa', dueColor: 'orange', priority: 'Medium', priorityIcon: 'low_priority' },
+                    { id: 'C3', phaseId: phaseId2, title: '#C45 Box Design', type: 'Packaging', tagDesc: 'VIP', tagColor: 'amber', dueDateDesc: '4 Hari Tersisa', dueColor: 'emerald', priority: 'On Track', priorityIcon: 'check_circle' }
+                ];
+                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+            }
+            
+            // Ukuran Kartu Kanban Global
+            let currentCardSize = localStorage.getItem('flowta_card_size') || 'lg'; // 'sm', 'md', 'lg'
+
+            window.setCardSize = function(size) {
+                currentCardSize = size;
+                localStorage.setItem('flowta_card_size', size);
+                
+                // Update Button Visuals
+                const activeClasses = 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white';
+                const inactiveClasses = 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white';
+                
+                document.getElementById('btn-size-sm').className = `px-2 py-1 rounded text-xs font-semibold transition-all ${size === 'sm' ? activeClasses : inactiveClasses}`;
+                document.getElementById('btn-size-md').className = `px-2 py-1 rounded text-xs font-semibold transition-all ${size === 'md' ? activeClasses : inactiveClasses}`;
+                document.getElementById('btn-size-lg').className = `px-2 py-1 rounded text-xs font-semibold transition-all ${size === 'lg' ? activeClasses : inactiveClasses}`;
+                
+                renderKanban();
+            }
+
+            function renderKanban() {
+                let html = '';
+                const allQcRecords = JSON.parse(localStorage.getItem('flowta_qc')) || [];
+
+                phasesData.forEach((phase) => {
+                    let themeColor = colorMap[phase.colorClass] || phase.colorClass;
+                    let bgDot = `bg-${themeColor}-500`;
+                    let cardsHtml = '';
+                    
+                    const cards = kanbanCards.filter(c => c.phaseId === phase.id && c.status !== 'BATAL' && c.status !== 'SELESAI');
+                    
+                    if (cards.length === 0) {
+                        cardsHtml = `
+                            <div class="empty-state flex flex-col items-center justify-center py-12 px-6 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl opacity-50 pointer-events-none">
+                                <span class="material-symbols-outlined text-4xl text-slate-500 mb-3">${phase.icon}</span>
+                                <p class="text-xs font-medium text-slate-500 text-center">Belum ada SPK</p>
+                            </div>
+                        `;
+                    } else {
+                        // Dynamic Symmetry Variables
+                        let sz = {
+                            p: 'p-5', gapCol: 'gap-1', typeText: 'text-xs', tagBadge: 'text-xs px-2.5 py-1', titleText: 'text-lg mt-2',
+                            footerMt: 'mt-4 pt-4', qcBadge: 'px-1 py-0.5 text-[9px]', qcIcon: 'text-[10px]', 
+                            dueBadge: 'px-2 py-1 text-[11px]', actionIco: 'text-[16px]', actionP: 'p-2', 
+                            dueIcon: 'text-[14px]', gapMeta: 'gap-2', innerGap: 'gap-1.5'
+                        };
+                        
+                        if (currentCardSize === 'md') {
+                            sz = {
+                                p: 'p-3', gapCol: 'gap-0.5', typeText: 'text-[9px]', tagBadge: 'text-[9px] px-1.5 py-0.5', titleText: 'text-[13px] mt-1',
+                                footerMt: 'mt-2 pt-2', qcBadge: 'px-1 py-0.5 text-[8px]', qcIcon: 'text-[9px]', 
+                                dueBadge: 'px-1.5 py-0.5 text-[9px]', actionIco: 'text-[14px]', actionP: 'p-1', 
+                                dueIcon: 'text-[12px]', gapMeta: 'gap-1.5', innerGap: 'gap-1'
+                            };
+                        } else if (currentCardSize === 'sm') {
+                            sz = {
+                                p: 'p-2', gapCol: 'gap-0', typeText: 'text-[8px]', tagBadge: 'text-[7px] px-1 py-0.5 leading-none', titleText: 'text-[10px] mt-0.5 leading-tight',
+                                footerMt: 'mt-1 pt-1', qcBadge: 'px-0.5 py-px text-[7px]', qcIcon: 'text-[8px]', 
+                                dueBadge: 'px-1 py-0.5 text-[7px] leading-none', actionIco: 'text-[12px]', actionP: 'p-0.5', 
+                                dueIcon: 'text-[10px]', gapMeta: 'gap-1', innerGap: 'gap-0.5'
+                            };
+                        }
+                        cards.forEach(card => {
+                            const cardQc = allQcRecords.filter(q => q.cardId === card.id);
+                            let qcIndicatorHtml = '';
+                            
+                            if (cardQc.length > 0) {
+                                const hasPra = cardQc.some(q => q.type === 'Pra Produksi');
+                                const hasProd = cardQc.some(q => q.type === 'Produksi');
+                                const hasAkhir = cardQc.some(q => q.type === 'Hasil Akhir');
+                                
+                                let checks = '';
+                                if(hasPra) checks += `<div class="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 ${sz.qcBadge} rounded font-bold border border-emerald-500/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> PRA</div>`;
+                                if(hasProd) checks += `<div class="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 ${sz.qcBadge} rounded font-bold border border-emerald-500/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> PROD</div>`;
+                                if(hasAkhir) checks += `<div class="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 ${sz.qcBadge} rounded font-bold border border-emerald-500/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> FINAL</div>`;
+                                
+                                qcIndicatorHtml = `<div class="flex gap-0.5 pointer-events-none items-center">${checks}</div>`;
+                            } else {
+                                qcIndicatorHtml = `<div class="pointer-events-none"></div>`;
+                            }
+
+                            cardsHtml += `
+                                <div class="glass-panel border-t border-t-white/20 dark:border-t-white/10 dark:border-slate-700/50 rounded-xl ${sz.p} shadow-lg relative group hover:border-${themeColor}-500/50 transition-all duration-300 cursor-grab active:cursor-grabbing" data-card-id="${card.id}">
+                                    <div class="flex flex-col ${sz.gapCol}">
+                                        
+                                        <!-- Area ini yang memicu double click -->
+                                        <div ondblclick="window.location.href='product-detail.html?id=${card.id}'" title="Double click for details" class="cursor-pointer">
+                                            <div class="flex justify-between items-start">
+                                                <div class="flex flex-col gap-1 pointer-events-none">
+                                                    <span class="${sz.typeText} font-bold tracking-widest text-${themeColor}-400 uppercase leading-none">${card.type}</span>
+                                                </div>
+                                                <span class="${sz.tagBadge} rounded bg-${card.tagColor}-500/10 text-${card.tagColor}-500 font-bold uppercase ring-1 ring-${card.tagColor}-500/30 whitespace-nowrap">${card.tagDesc}</span>
+                                            </div>
+                                            <h4 class="text-slate-800 dark:text-white ${sz.titleText} font-bold pointer-events-none">${card.title}</h4>
+                                        </div>
+
+                                        <!-- Area bawah untuk aksi mandiri (non-navigasi dblclick) -->
+                                        <div class="${sz.footerMt} border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
+                                            ${qcIndicatorHtml}
+                                            <div class="flex items-center ${sz.gapMeta}">
+                                                <div class="flex items-center ${sz.innerGap} ${sz.dueBadge} rounded bg-${card.dueColor}-500/10 text-${card.dueColor}-600 dark:text-${card.dueColor}-400 ring-1 ring-${card.dueColor}-500/20 pointer-events-none font-semibold whitespace-nowrap">
+                                                    <span class="material-symbols-outlined ${sz.dueIcon}">event</span>
+                                                    <span class="uppercase tracking-wide leading-none">${card.dueDateDesc || 'No Due'}</span>
+                                                </div>
+                                                <div class="h-3 w-[1px] bg-slate-200 dark:bg-slate-700 mx-0.5"></div>
+                                                <div class="flex items-center gap-0.5 shrink-0">
+                                                    <!-- Buttons are now isolated from the dblclick wrapper -->
+                                                    <button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openQcModal('${card.id}');" class="${sz.actionP} relative z-50 rounded text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors flex items-center justify-center cursor-pointer" title="Quality Control">
+                                                        <span class="material-symbols-outlined ${sz.actionIco} pointer-events-none leading-none">fact_check</span>
+                                                    </button>
+                                                    <button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.location.href='product-detail.html?id=${card.id}&tab=comments';" class="${sz.actionP} relative z-50 rounded text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors flex items-center justify-center cursor-pointer" title="Komentar">
+                                                        <span class="material-symbols-outlined ${sz.actionIco} pointer-events-none leading-none">chat</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    html += `
+                        <!-- Column: ${phase.title} -->
+                        <div class="w-80 shrink-0 flex flex-col gap-4">
+                            <div class="flex items-center justify-between px-1 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full ${bgDot} shadow-sm shadow-${themeColor}-500/50"></span>
+                                    <h3 class="font-bold text-sm tracking-widest text-slate-700 dark:text-slate-400 uppercase truncate max-w-[180px]">${phase.title}</h3>
+                                    <span class="column-count bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs px-2 py-0.5 rounded-full font-bold shadow-sm">${cards.length}</span>
+                                </div>
+                                <button class="material-symbols-outlined text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">more_horiz</button>
+                            </div>
+                            <!-- Sortable Container -->
+                            <div class="flex flex-col gap-4 kanban-column flex-1" data-phase-id="${phase.id}">
+                                ${cardsHtml}
+                            </div>
+                            <button onclick="openSpkModal(${phase.id})" class="w-full py-3 border border-dashed border-slate-300 dark:border-slate-700 bg-white/30 dark:bg-slate-800/20 rounded-xl text-slate-500 text-sm font-medium hover:border-${themeColor}-500/50 hover:text-${themeColor}-500 hover:bg-${themeColor}-500/5 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-sm">add</span> Tambah Kartu
+                            </button>
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <a href="phase.html" class="w-80 shrink-0 h-[300px] border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white/20 dark:bg-slate-800/10 rounded-2xl flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all group">
+                        <span class="material-symbols-outlined text-4xl group-hover:scale-110 transition-transform">add_circle</span>
+                        <span class="text-sm font-semibold tracking-wide">Kelola Fase Baru</span>
+                    </a>
+                `;
+
+                kanbanBoard.innerHTML = html;
+                
+                // Initialize Sortable JS for each column
+                const columns = document.querySelectorAll('.kanban-column');
+                columns.forEach(col => {
+                    new Sortable(col, {
+                        group: 'shared',
+                        animation: 150,
+                        ghostClass: 'opacity-40',
+                        onEnd: function (evt) {
+                            const itemEl = evt.item;  // dragged HTMLElement
+                            const toCol = evt.to;    // target list
+                            const fromCol = evt.from;
+                            
+                            const cardId = itemEl.dataset.cardId;
+                            const newPhaseId = parseInt(toCol.dataset.phaseId);
+                            const oldPhaseId = parseInt(fromCol.dataset.phaseId);
+                            
+                            // Prevent logging if dropped in same column
+                            if(newPhaseId === oldPhaseId) return;
+                            
+                            let spkInfoObj = null;
+                            const cardObj = kanbanCards.find(c => c.id === cardId);
+                            if (cardObj) {
+                                const parts = cardObj.title.split(' ');
+                                spkInfoObj = { spkNo: parts[0], title: parts.slice(1).join(' '), item: cardObj.type };
+                            }
+                            
+                            if(!window.consumeToken('Drag Kanban', spkInfoObj)) {
+                                renderKanban();
+                                return;
+                            }
+                            
+                            // Find Phase Names for logging
+                            const oldPhase = phasesData.find(p => p.id === oldPhaseId);
+                            const newPhase = phasesData.find(p => p.id === newPhaseId);
+                            const oldPhaseName = oldPhase ? oldPhase.title : 'Fase Awal';
+                            const newPhaseName = newPhase ? newPhase.title : 'Fase Baru';
+                            
+                            // Update data
+                            const cardIndex = kanbanCards.findIndex(c => c.id === cardId);
+                            if (cardIndex !== -1) {
+                                kanbanCards[cardIndex].phaseId = newPhaseId;
+                                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                                
+                                // LOG HISTORY: Move Phase
+                                const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                                histories.unshift({
+                                    id: 'HIST-' + Date.now(),
+                                    cardId: cardId,
+                                    type: 'move',
+                                    timestamp: new Date().toISOString(),
+                                    user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                                    desc: `Produk dipindah fase dari <span class="font-medium line-through">${oldPhaseName}</span> ke <span class="font-medium text-amber-600 dark:text-amber-400">${newPhaseName}</span> oleh <span class="font-medium text-primary dark:text-blue-400">Sistem / Drag & Drop</span>`
+                                });
+                                localStorage.setItem('flowta_history', JSON.stringify(histories));
+                            }
+                            
+                            // Re-render completely to ensure accurate counts and empty states
+                            // Small delay to allow Sortable to finish its DOM manipulation safely
+                            setTimeout(() => {
+                                renderKanban();
+                            }, 50);
+                        },
+                    });
+                });
+            }
+            
+            // Expose render callback globally to handle form submission
+            window.handleSpkSubmit = function(e) {
+                e.preventDefault();
+                
+                const title = document.getElementById('spkTitle').value;
+                const spkNo = document.getElementById('spkNo').value;
+                const item = document.getElementById('spkItem').value;
+                
+                if(!window.consumeToken('Simpan Produk SPK', { spkNo, title, item })) return;
+                
+                // Project type color/text logic
+                const pTypeRadio = document.querySelector('input[name="project_type"]:checked');
+                const projectType = pTypeRadio ? pTypeRadio.value : 'NORMAL';
+                
+                let tagColor = 'indigo';
+                let tagDesc = projectType;
+                let priorityDesc = 'Normal';
+                let priorityIcon = 'drag_handle';
+                if(projectType === 'VIP') {
+                    tagColor = 'amber';
+                    priorityDesc = 'Medium';
+                    priorityIcon = 'low_priority';
+                } else if (projectType === 'VVIP') {
+                    tagColor = 'fuchsia';
+                    priorityDesc = 'High';
+                    priorityIcon = 'priority_high';
+                }
+                
+                // Calculate rough due date distance logic (simplified)
+                const dueDate = document.getElementById('spkDueDate').value;
+                let dueDesc = "Tidak Ditentukan";
+                let dueColor = "slate";
+                
+                if (dueDate) {
+                    const diffDays = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (diffDays < 0) {
+                        dueDesc = `${Math.abs(diffDays)} Hari Terlambat`;
+                        dueColor = "rose";
+                    } else if (diffDays === 0) {
+                        dueDesc = "Hari Ini";
+                        dueColor = "orange";
+                    } else {
+                        dueDesc = `${diffDays} Hari Tersisa`;
+                        dueColor = "emerald";
+                    }
+                }
+                
+                let targetPhase = document.getElementById('spkTargetPhaseId').value;
+                targetPhase = targetPhase ? parseInt(targetPhase) : phasesData[0]?.id;
+                
+                const newCard = {
+                    id: 'SPK-' + Date.now(),
+                    phaseId: targetPhase,
+                    title: `${spkNo} ${title}`,
+                    type: item,
+                    tagDesc: tagDesc,
+                    tagColor: tagColor,
+                    dueDateDesc: dueDesc,
+                    dueColor: dueColor,
+                    priority: priorityDesc,
+                    priorityIcon: priorityIcon
+                };
+                
+                kanbanCards.push(newCard);
+                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                
+                // LOG HISTORY: Create Product
+                const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                histories.unshift({
+                    id: 'HIST-' + Date.now(),
+                    cardId: newCard.id,
+                    type: 'create',
+                    timestamp: new Date().toISOString(),
+                    user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                    desc: `Produk dibuat oleh <span class="font-medium text-primary dark:text-blue-400">${window.flowtaUser ? window.flowtaUser.name : 'Sistem'} / Form SPK Baru</span>`
+                });
+                localStorage.setItem('flowta_history', JSON.stringify(histories));
+                
+                closeSpkModal();
+                renderKanban();
+            };
+
+            // ── Activity Heatmap ──────────────────────────────────────────
+            function renderHeatmap() {
+                const heatmapEl = document.getElementById('phase-heatmap');
+                if (!heatmapEl) return;
+
+                const maxLoad = 8; // SPK dianggap sangat padat jika ≥ 8
+
+                let html = '';
+                phasesData.forEach(phase => {
+                    const count = kanbanCards.filter(c =>
+                        c.phaseId === phase.id &&
+                        c.status !== 'BATAL' &&
+                        c.status !== 'SELESAI'
+                    ).length;
+
+                    const pct = Math.min(100, Math.round((count / maxLoad) * 100));
+
+                    // Color tier
+                    let colorBar, colorText, colorBg, colorBorder, intensityLabel;
+                    if (count === 0) {
+                        colorBar = 'bg-slate-700'; colorText = 'text-slate-500';
+                        colorBg = 'bg-slate-800/40'; colorBorder = 'border-slate-700/50';
+                        intensityLabel = 'Kosong';
+                    } else if (count <= 2) {
+                        colorBar = 'bg-emerald-500'; colorText = 'text-emerald-400';
+                        colorBg = 'bg-emerald-500/5'; colorBorder = 'border-emerald-500/20';
+                        intensityLabel = 'Rendah';
+                    } else if (count <= 4) {
+                        colorBar = 'bg-amber-400'; colorText = 'text-amber-400';
+                        colorBg = 'bg-amber-500/5'; colorBorder = 'border-amber-500/20';
+                        intensityLabel = 'Sedang';
+                    } else if (count <= 7) {
+                        colorBar = 'bg-orange-500'; colorText = 'text-orange-400';
+                        colorBg = 'bg-orange-500/5'; colorBorder = 'border-orange-500/20';
+                        intensityLabel = 'Tinggi';
+                    } else {
+                        colorBar = 'bg-rose-500'; colorText = 'text-rose-400';
+                        colorBg = 'bg-rose-500/10'; colorBorder = 'border-rose-500/30';
+                        intensityLabel = 'Kritis';
+                    }
+
+                    html += `
+                        <div class="heatmap-card ${colorBg} border ${colorBorder} rounded-lg p-3">
+                            <div class="flex items-start justify-between mb-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight max-w-[90px]">${phase.title}</span>
+                                <span class="${colorText} text-xl font-black leading-none">${count}</span>
+                            </div>
+                            <div class="w-full bg-slate-700/60 rounded-full h-1.5 mb-1.5">
+                                <div class="heatmap-bar ${colorBar} h-1.5 rounded-full" style="width:${pct}%"></div>
+                            </div>
+                            <span class="text-[9px] font-semibold ${colorText} uppercase tracking-wider">${intensityLabel}</span>
+                        </div>
+                    `;
+                });
+
+                heatmapEl.innerHTML = html;
+            }
+
+            renderKanban();
+            renderHeatmap();
+
+            // View Toggle Logic
+            const btnBoard = document.getElementById('btn-board-view');
+            const btnList = document.getElementById('btn-list-view');
+
+            btnBoard.addEventListener('click', () => {
+                kanbanBoard.classList.remove('view-list');
+                kanbanBoard.classList.add('flex-row', 'gap-6');
+                
+                // Update Button styling
+                btnBoard.className = 'p-1.5 rounded bg-white dark:bg-slate-700 shadow-sm flex items-center gap-1.5 text-slate-800 dark:text-white text-xs font-semibold transition-all';
+                btnList.className  = 'p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold transition-all';
+            });
+            
+            btnList.addEventListener('click', () => {
+                kanbanBoard.classList.add('view-list');
+                kanbanBoard.classList.remove('flex-row', 'gap-6');
+                
+                // Update Button styling
+                btnList.className  = 'p-1.5 rounded bg-white dark:bg-slate-700 shadow-sm flex items-center gap-1.5 text-slate-800 dark:text-white text-xs font-semibold transition-all';
+                btnBoard.className = 'p-1.5 rounded text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center gap-1.5 text-xs font-semibold transition-all';
+            });
+        });
+    </script>
+</body>
+</html>

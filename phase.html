@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Manajemen Fase - Flowta</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1", // Indigo for creative/digital feel
+                        "secondary": "#f43f5e", // Rose accent
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a", // Slate 900
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .glass-effect {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+    </style>
+    <script src="auth.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR -->
+        <aside class="w-72 glass-nav hidden lg:flex flex-col h-full border-r border-slate-200 dark:border-slate-800">
+            <div class="p-6 flex items-center gap-3">
+                <div class="size-10 bg-gradient-to-br from-primary to-indigo-800 rounded-lg flex items-center justify-center shadow-lg shadow-primary/30">
+                    <span class="material-symbols-outlined text-white font-light">campaign</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-bold text-xl tracking-tight leading-tight">Flowta</span>
+                    <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tata Kelola Management</span>
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto px-4 py-2 mt-2">
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Workspace</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="index.html">
+                        <span class="material-symbols-outlined text-[20px]">grid_view</span>
+                        <span>Dasbor</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="kanban.html">
+                        <span class="material-symbols-outlined text-[20px]">view_kanban</span>
+                        <span>Kanban</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Produksi & Kualitas</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="products.html">
+                        <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                        <span>Produk</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="qc.html">
+                        <span class="material-symbols-outlined text-[20px]">fact_check</span>
+                        <span>Quality Control</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 transition-all font-medium" href="phase.html">
+                        <span class="material-symbols-outlined text-[20px]">schema</span>
+                        <span>Fase</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="reviews.html">
+                        <span class="material-symbols-outlined text-[20px]">reviews</span>
+                        <span>Review</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Analitik & Laporan</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="productivity.html">
+                        <span class="material-symbols-outlined text-[20px]">engineering</span>
+                        <span>User Productivity</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="history.html">
+                        <span class="material-symbols-outlined text-[20px]">history</span>
+                        <span>Histori</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="laporan-produksi.html">
+                        <span class="material-symbols-outlined text-[20px]">summarize</span>
+                        <span>Laporan Produksi</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administrasi</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="sistem.html">
+                        <span class="material-symbols-outlined text-[20px]">settings_applications</span>
+                        <span>Sistem</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="manual.html">
+                        <span class="material-symbols-outlined text-[20px]">help_outline</span>
+                        <span>Panduan</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
+                <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors">
+                    <div class="size-10 rounded-full bg-cover relative" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7zCsRdVomcJzyX3rrrkP5f6UCo2OIq46qeFslE1JbYyB71cl5AMQBnfcZOxS0QKblQV0CHatRb3Dl77iV-jjPaen2uy6U8HeF480lJTcTLVBjWCUkkAGPnmTzo0ChJ1h7gugVoH5dqVlD1qm3zG1r7jnwadfuCHBMsYtvP_aTI0ly4vCvkDRq6SfZc3t7d98wmI-Wn9KApvCTepYQilaH7fMwnTBA47J019bafuZSuMKFKTQ1UcA3kAOhbKFxcuD1MJiVY2x2vcY')">
+                        <span class="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-background-dark"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">Andi Supervisor</p>
+                        <p class="text-xs text-slate-400 truncate">Kepala Produksi</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col overflow-y-auto w-full">
+            <!-- TOP HEADER -->
+            <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-1">
+                    <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">account_tree</span> 
+                        Manajemen Fase
+                    </h1>
+                    <div class="relative w-full max-w-md hidden md:block ml-8">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                        <input class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Cari Fase..." type="text" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                    </button>
+                    <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">mail</span>
+                    </button>
+                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                    <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">contrast</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- PAGE CONTENT: PHASE MANAGEMENT -->
+            <div class="p-8 max-w-6xl mx-auto w-full space-y-8 pb-16">
+                <!-- Hero/Header Section -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+                    <div class="space-y-2">
+                        <h2 class="text-slate-900 dark:text-white text-3xl md:text-4xl font-bold tracking-tight">Fase Produksi <span class="text-sm font-normal text-slate-500 uppercase tracking-widest ml-2">(DRAG UNTUK MENGUBAH URUTAN)</span></h2>
+                        <p class="text-slate-500 dark:text-slate-400 max-w-lg">Kelola dan pantau tahapan alur kerja produksi Anda. Pelacakan efisiensi secara real-time.</p>
+                    </div>
+                    <button onclick="openAddModal()" class="inline-flex items-center justify-center gap-2 bg-primary hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg font-semibold shadow-lg shadow-primary/20 transition-all transform active:scale-95">
+                        <span class="material-symbols-outlined text-xl">add</span>
+                        Tambah Fase Baru
+                    </button>
+                </div>
+                <!-- Phase Cards Container -->
+                <div class="flex flex-col gap-4 w-full max-w-5xl mx-auto" id="phase-list">
+                    <!-- Phase list rendered by JS -->
+                </div>
+                <!-- Summary/Stats (Glassmorphism card) -->
+                <div class="mt-12 glass-panel bg-primary/5 rounded-2xl p-8 border-primary/10">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Total Fase</p>
+                            <p id="totalPhases" class="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">00</p>
+                        </div>
+                        <div class="border-y md:border-y-0 md:border-x border-slate-200 dark:border-slate-800 py-6 md:py-0 md:px-8">
+                            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Fase Aktif Saat Ini</p>
+                            <p id="activePhases" class="text-3xl font-bold text-primary tracking-tight">00</p>
+                        </div>
+                        <div>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Tingkat Efisiensi Produksi</p>
+                            <p class="text-3xl font-bold text-emerald-500 tracking-tight">94.2%</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="w-full text-center py-6 text-slate-500 text-sm mt-8 border-t border-slate-200 dark:border-slate-800/50">
+                    Sistem Flowta di oleh Budi Ariadi Tata kelola 0811 767 4848 - Hak Cipta dilindungi Undang Undang
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ADD PHASE MODAL -->
+    <div id="addPhaseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative w-full max-w-lg bg-slate-800 border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-slate-700/50 flex items-center justify-between bg-slate-800/80">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2" id="modalTitle">
+                    <span class="material-symbols-outlined text-primary">add_circle</span>
+                    Tambah Fase Produksi Baru
+                </h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-white transition-colors">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <!-- Body/Form -->
+            <form onsubmit="handleFormSubmit(event)" class="p-6 space-y-6">
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" for="phaseName">Nama Fase <span class="text-secondary">*</span></label>
+                    <input type="text" id="phaseName" required placeholder="Misal: Pemasangan / Instalasi" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" for="phaseDesc">Deskripsi <span class="text-xs text-slate-500 font-normal ml-1">(Opsional)</span></label>
+                    <textarea id="phaseDesc" rows="2" placeholder="Jelaskan secara singkat apa yang dilakukan pada fase ini..." class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all placeholder:text-slate-500 resize-none"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" for="phaseIcon">Pilih Ikon</label>
+                    <select id="phaseIcon" class="w-full bg-slate-900/50 border border-slate-600 rounded-lg px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all appearance-none cursor-pointer">
+                        <option value="build">Build (Palu)</option>
+                        <option value="print">Print (Cetak)</option>
+                        <option value="precision_manufacturing">Manufacturing (Las)</option>
+                        <option value="brush">Brush (Desain)</option>
+                        <option value="verified">Verified (QC)</option>
+                        <option value="local_shipping">Shipping (Kirim)</option>
+                    </select>
+                </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Warna Identitas</label>
+                        <div class="flex items-center gap-3 pt-1">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="color" value="primary" class="peer sr-only" checked>
+                                <span class="block size-8 rounded-full bg-indigo-500 ring-2 ring-transparent peer-checked:ring-white peer-checked:ring-offset-2 peer-checked:ring-offset-slate-800 transition-all"></span>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="color" value="emerald" class="peer sr-only">
+                                <span class="block size-8 rounded-full bg-emerald-500 ring-2 ring-transparent peer-checked:ring-white peer-checked:ring-offset-2 peer-checked:ring-offset-slate-800 transition-all"></span>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="color" value="amber" class="peer sr-only">
+                                <span class="block size-8 rounded-full bg-amber-500 ring-2 ring-transparent peer-checked:ring-white peer-checked:ring-offset-2 peer-checked:ring-offset-slate-800 transition-all"></span>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="color" value="secondary" class="peer sr-only">
+                                <span class="block size-8 rounded-full bg-rose-500 ring-2 ring-transparent peer-checked:ring-white peer-checked:ring-offset-2 peer-checked:ring-offset-slate-800 transition-all"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="pt-6 border-t border-slate-700/50 flex items-center justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2.5 text-sm font-semibold text-slate-300 hover:text-white hover:bg-slate-700 rounded-lg transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-indigo-500 rounded-lg shadow-lg shadow-primary/20 transition-all">
+                        Simpan Fase
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Data Structure Layer
+        let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [
+            { id: 1, title: 'Desain & Pra-Cetak', desc: 'Pembuatan konsep desain dan persiapan file cetak', icon: 'brush', colorClass: 'indigo', status: 'AKTIF', statusColor: 'emerald' },
+            { id: 2, title: 'Cetak Produksi', desc: 'Proses mesin cetak large format (MMT, Stiker, Indoor)', icon: 'print', colorClass: 'amber', status: 'TERTUNDA', statusColor: 'amber' },
+            { id: 3, title: 'Las & Rangka', desc: 'Pembuatan struktur billboard dan neon box', icon: 'precision_manufacturing', colorClass: 'indigo', status: 'BELUM MULAI', statusColor: 'slate' },
+            { id: 4, title: 'Quality Control & Finishing', desc: 'Pengecekan kualitas akhir dan penempelan', icon: 'verified', colorClass: 'purple', status: 'BELUM MULAI', statusColor: 'slate' },
+        ];
+        
+        // State
+        let isEditing = false;
+        let editingId = null;
+
+        // UI Layer
+        const phaseListContainer = document.getElementById('phase-list');
+
+        function renderPhases() {
+            phaseListContainer.innerHTML = '';
+            phasesData.forEach(phase => {
+                const colorMap = {
+                    'primary': 'indigo',
+                    'emerald': 'emerald',
+                    'amber': 'amber',
+                    'secondary': 'rose'
+                };
+                
+                // fallback for default data
+                let themeColor = colorMap[phase.colorClass] || phase.colorClass;
+
+                const template = `
+                    <div class="glass-panel flex items-center justify-between p-4 rounded-xl border border-slate-700/50 bg-slate-800/40 hover:bg-slate-800/60 transition-colors group" data-id="${phase.id}">
+                        <div class="flex items-center gap-6 flex-1 cursor-grab active:cursor-grabbing handle">
+                            <span class="material-symbols-outlined text-slate-500 hover:text-slate-300 transition-colors">drag_indicator</span>
+                            <div class="flex items-center justify-center size-12 rounded-xl bg-${themeColor}-500/10 text-${themeColor}-400 border border-${themeColor}-500/20">
+                                <span class="material-symbols-outlined">${phase.icon}</span>
+                            </div>
+                            <div class="flex flex-col">
+                                <h3 class="text-white text-base font-bold">${phase.title}</h3>
+                                <p class="text-slate-400 text-sm">${phase.desc}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="inline-block size-1.5 rounded-full bg-${phase.statusColor}-500"></span>
+                                    <span class="text-[10px] uppercase tracking-wider font-bold text-slate-400">${phase.status}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-sm font-bold text-slate-300 hover:text-white transition-colors" onclick="editPhase(${phase.id})">Edit</button>
+                            <button class="text-sm font-bold text-secondary hover:text-red-400 transition-colors" onclick="deletePhase(${phase.id})">Hapus</button>
+                        </div>
+                    </div>
+                `;
+                phaseListContainer.insertAdjacentHTML('beforeend', template);
+            });
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('totalPhases').innerText = String(phasesData.length).padStart(2, '0');
+            const activeCount = phasesData.filter(p => p.status === 'AKTIF').length;
+            document.getElementById('activePhases').innerText = String(activeCount).padStart(2, '0');
+        }
+
+        // Modal functions
+        function openAddModal() {
+            isEditing = false;
+            editingId = null;
+            document.getElementById('modalTitle').innerHTML = '<span class="material-symbols-outlined text-primary">add_circle</span> Tambah Fase Produksi Baru';
+            document.querySelector('button[type="submit"]').innerText = 'Simpan Fase';
+            document.querySelector('form').reset();
+            document.getElementById('addPhaseModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('addPhaseModal').classList.add('hidden');
+            document.querySelector('form').reset();
+            isEditing = false;
+            editingId = null;
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            // Capture Values
+            const name = document.getElementById('phaseName').value;
+            const desc = document.getElementById('phaseDesc').value;
+            const icon = document.getElementById('phaseIcon').value;
+            const checkedColorRadio = document.querySelector('input[name="color"]:checked');
+            const colorClass = checkedColorRadio ? checkedColorRadio.value : 'primary';
+
+            if (isEditing && editingId) {
+                // Update existing
+                const index = phasesData.findIndex(p => p.id === editingId);
+                if (index !== -1) {
+                    phasesData[index].title = name;
+                    phasesData[index].desc = desc || 'Tidak ada deskripsi';
+                    phasesData[index].icon = icon;
+                    phasesData[index].colorClass = colorClass;
+                }
+                alert(`Fase berhasil diperbarui.`);
+            } else {
+                // Create new object
+                const newPhase = {
+                    id: Date.now(),
+                    title: name,
+                    desc: desc || 'Tidak ada deskripsi',
+                    icon: icon,
+                    colorClass: colorClass,
+                    status: 'BELUM MULAI',
+                    statusColor: 'slate'
+                };
+                phasesData.push(newPhase);
+                alert(`Fase '${name}' berhasil ditambahkan ke dashboard.`);
+            }
+
+            // Save and Render
+            saveData();
+            renderPhases();
+            closeModal();
+        }
+
+        function deletePhase(id) {
+            if(confirm('Apakah Anda yakin ingin menghapus fase ini?')) {
+                phasesData = phasesData.filter(p => p.id !== id);
+                saveData();
+                renderPhases();
+            }
+        }
+        
+        function editPhase(id) {
+            const phase = phasesData.find(p => p.id === id);
+            if (!phase) return;
+
+            isEditing = true;
+            editingId = id;
+
+            // Populate Form
+            document.getElementById('phaseName').value = phase.title;
+            document.getElementById('phaseDesc').value = phase.desc !== 'Tidak ada deskripsi' ? phase.desc : '';
+            document.getElementById('phaseIcon').value = phase.icon;
+            
+            // Set Color Radio
+            const radio = document.querySelector(`input[name="color"][value="${phase.colorClass}"]`);
+            if (radio) {
+                radio.checked = true;
+            } else {
+                document.querySelector('input[name="color"][value="primary"]').checked = true; // fallback
+            }
+
+            // Update UI
+            document.getElementById('modalTitle').innerHTML = '<span class="material-symbols-outlined text-slate-300">edit_note</span> Edit Fase Produksi';
+            document.querySelector('button[type="submit"]').innerText = 'Simpan Perubahan';
+            document.getElementById('addPhaseModal').classList.remove('hidden');
+        }
+
+        function saveData() {
+            localStorage.setItem('flowta_phases', JSON.stringify(phasesData));
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // Initial render
+            renderPhases();
+
+            // Drag and Drop integration
+            var flexList = document.getElementById('phase-list');
+            var sortable = Sortable.create(flexList, {
+                animation: 150,
+                ghostClass: 'opacity-50', // Class name for the drop placeholder
+                handle: '.handle', // Drag handle selector within list items
+                onEnd: function (evt) {
+                    console.log('Item dragged from ' + evt.oldIndex + ' to ' + evt.newIndex);
+                    
+                    // Rearrange data array
+                    const itemMoving = phasesData.splice(evt.oldIndex, 1)[0];
+                    phasesData.splice(evt.newIndex, 0, itemMoving);
+                    saveData();
+                },
+            });
+        });
+    </script>
+</body>
+</html>

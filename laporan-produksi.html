@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Laporan Produksi - Flowta</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                        "heatmap-bg": "#111827",
+                        "heatmap-empty": "#1f2937",
+                        "heatmap-low": "#3730a3",
+                        "heatmap-med": "#4f46e5",
+                        "heatmap-high": "#6366f1",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .glass-nav {
+            background: rgba(15,23,42,0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
+
+        /* Period tabs */
+        .period-tab { cursor:pointer; transition:all .2s; border-radius:0.65rem; padding:0.35rem 1rem; font-size:0.8rem; font-weight:600; }
+        .period-tab-active { background:#6366f1; color:#fff; box-shadow:0 0 16px rgba(99,102,241,0.35); }
+        .period-tab-inactive { color:#94a3b8; }
+        .period-tab-inactive:hover { background:rgba(255,255,255,0.06); color:#cbd5e1; }
+
+        /* Table */
+        .table-row:hover { background:rgba(255,255,255,0.03); }
+        .status-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:9999px; font-size:11px; font-weight:700; letter-spacing:.02em; }
+        .qc-dot { width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0; }
+        .section-divider { border-top: 1px solid rgba(255,255,255,0.05); margin: 0; }
+        .phase-header { border-left: 3px solid; }
+
+        /* accent borders per category */
+        .accent-admin    { border-color:#6366f1; }
+        .accent-produksi { border-color:#f59e0b; }
+        .accent-qc       { border-color:#22d3ee; }
+        .accent-customer { border-color:#10b981; }
+        .dot-admin    { background:#6366f1; }
+        .dot-produksi { background:#f59e0b; }
+        .dot-qc       { background:#22d3ee; }
+        .dot-customer { background:#10b981; }
+
+        /* Calendar Heatmap */
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+        }
+        .cal-cell {
+            min-height: 52px;
+            padding: 8px 0;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid rgba(255,255,255,0.03);
+            position: relative;
+        }
+        .cal-cell:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .cal-cell.active-filter {
+            border: 2px solid #a5b4fc;
+            box-shadow: 0 0 15px rgba(99,102,241,0.5);
+        }
+        .cal-empty { background-color: #1f2937; color: #4b5563; }
+        .cal-low   { background-color: #3730a3; color: #c7d2fe; border-color: rgba(99,102,241,0.2); }
+        .cal-med   { background-color: #4f46e5; color: #e0e7ff; border-color: rgba(99,102,241,0.3); }
+        .cal-high  { background-color: #6366f1; color: #ffffff; border-color: rgba(99,102,241,0.5); box-shadow: 0 2px 10px rgba(99,102,241,0.2); }
+        
+        .cal-date { font-size: 11px; font-weight: 700; margin-bottom: 2px; }
+        .cal-count { font-size: 14px; font-weight: 800; }
+        
+        .cal-header { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; text-align: center; padding-bottom: 8px; }
+
+        .legend-box { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+        .export-btn { transition:all .2s; }
+        .export-btn:hover { transform:translateY(-1px); }
+
+        :target { scroll-margin-top: 80px; }
+    </style>
+    <script src="auth.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="w-72 glass-nav hidden lg:flex flex-col h-full border-r border-slate-200 dark:border-slate-800">
+        <div class="p-6 flex items-center gap-3">
+            <div class="size-10 bg-gradient-to-br from-primary to-indigo-800 rounded-lg flex items-center justify-center shadow-lg shadow-primary/30">
+                <span class="material-symbols-outlined text-white font-light">campaign</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-bold text-xl tracking-tight leading-tight">Flowta</span>
+                <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tata Kelola Management</span>
+            </div>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-2 mt-2">
+            <div class="space-y-1 mb-6">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Workspace</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="index.html">
+                    <span class="material-symbols-outlined text-[20px]">grid_view</span><span>Dasbor</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="kanban.html">
+                    <span class="material-symbols-outlined text-[20px]">view_kanban</span><span>Kanban</span>
+                </a>
+            </div>
+            <div class="space-y-1 mb-6">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Produksi & Kualitas</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="products.html">
+                    <span class="material-symbols-outlined text-[20px]">inventory_2</span><span>Produk</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="qc.html">
+                    <span class="material-symbols-outlined text-[20px]">fact_check</span><span>Quality Control</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="phase.html">
+                    <span class="material-symbols-outlined text-[20px]">schema</span><span>Fase</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="reviews.html">
+                    <span class="material-symbols-outlined text-[20px]">reviews</span><span>Review</span>
+                </a>
+            </div>
+            <div class="space-y-1 mb-6">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Analitik & Laporan</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="productivity.html">
+                    <span class="material-symbols-outlined text-[20px]">engineering</span><span>User Productivity</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="history.html">
+                    <span class="material-symbols-outlined text-[20px]">history</span><span>Histori</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 shadow-sm transition-all text-sm font-medium" href="laporan-produksi.html">
+                    <span class="material-symbols-outlined text-[20px]">summarize</span><span>Laporan Produksi</span>
+                </a>
+            </div>
+            <div class="space-y-1">
+                <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administrasi</p>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="sistem.html">
+                    <span class="material-symbols-outlined text-[20px]">settings_applications</span><span>Sistem</span>
+                </a>
+                <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="manual.html">
+                    <span class="material-symbols-outlined text-[20px]">help_outline</span><span>Panduan</span>
+                </a>
+            </div>
+        </div>
+        <div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
+            <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors" id="user-profile-btn">
+                <div class="size-10 rounded-full bg-gradient-to-br from-primary to-indigo-800 flex items-center justify-center text-white font-bold text-sm" id="sidebar-avatar">A</div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold truncate" id="sidebar-username">Admin</p>
+                    <p class="text-xs text-slate-400 truncate" id="sidebar-role">Administrator</p>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 text-[20px]">settings</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- TOPBAR -->
+        <header class="glass-nav h-16 px-6 flex items-center gap-4 border-b border-slate-200 dark:border-slate-700/50 flex-shrink-0">
+            <div class="flex-1 flex items-center gap-3">
+                <span class="material-symbols-outlined text-cyan-400 text-[22px]">summarize</span>
+                <div>
+                    <h1 class="font-bold text-base leading-tight">Laporan Produksi</h1>
+                    <p class="text-[11px] text-slate-400">Heatmap kepadatan + rekap SPK per fase produksi</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="export-btn flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl" onclick="exportExcel()">
+                    <span class="material-symbols-outlined text-[16px]">table_view</span>Excel
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-5">
+
+            <!-- ══ CALENDAR HEATMAP ══ -->
+            <div class="bg-heatmap-bg border border-slate-800 rounded-2xl overflow-hidden shadow-xl" style="background-color: #111827;">
+                <div class="px-6 py-5 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <h2 class="font-bold text-lg text-white">Activity Heatmap</h2>
+                        <div class="flex items-center gap-2 ml-4">
+                            <button onclick="changeMonth(-1)" class="p-1 rounded-full hover:bg-slate-800 text-slate-400 transition-colors hidden" id="btn-prev-month">
+                                <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+                            </button>
+                            <span id="calendar-month-label" class="text-sm font-semibold text-slate-300 min-w-[120px] text-center">Bulan</span>
+                            <button onclick="changeMonth(1)" class="p-1 rounded-full hover:bg-slate-800 text-slate-400 transition-colors hidden" id="btn-next-month">
+                                <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-medium text-slate-400">
+                        <span class="flex items-center gap-1.5"><span class="legend-box cal-empty border border-slate-700"></span> 0</span>
+                        <span class="flex items-center gap-1.5"><span class="legend-box cal-low"></span> Rendah</span>
+                        <span class="flex items-center gap-1.5"><span class="legend-box cal-med"></span> Sedang</span>
+                        <span class="flex items-center gap-1.5"><span class="legend-box cal-high"></span> Tinggi</span>
+                    </div>
+                </div>
+                <div class="px-6 pb-6">
+                    <div class="cal-grid" id="calendar-heatmap-grid">
+                        <!-- headers will be injected -->
+                        <!-- cells will be injected -->
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t border-slate-800 bg-slate-900/50">
+                    <p class="text-[13px] text-slate-400" id="calendar-footer-text">Memuat performa puncak...</p>
+                </div>
+            </div>
+
+            <!-- FILTER BAR (For Table specific override) -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-wrap items-center gap-4">
+                <div class="text-sm font-bold text-slate-300">Filter Data:</div>
+                <div class="flex items-center gap-1 bg-slate-800/60 rounded-xl p-1" id="period-tabs">
+                    <button class="period-tab period-tab-active"   data-period="week"   onclick="setPeriod('week')">Minggu ini</button>
+                    <button class="period-tab period-tab-inactive" data-period="today"  onclick="setPeriod('today')">Hari ini</button>
+                    <button class="period-tab period-tab-inactive" data-period="month"  onclick="setPeriod('month')">Bulan ini</button>
+                    <button class="period-tab period-tab-inactive" data-period="all"    onclick="setPeriod('all')">Semua</button>
+                    <button class="period-tab period-tab-inactive" data-period="custom" onclick="setPeriod('custom')">Custom / Pilihan</button>
+                </div>
+                <div class="flex items-center gap-2" id="custom-range" style="display:none!important">
+                    <input type="date" id="date-from" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-primary" onchange="renderTablesOnly()">
+                    <span class="text-slate-500 text-sm">–</span>
+                    <input type="date" id="date-to"   class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-primary" onchange="renderTablesOnly()">
+                </div>
+                <div class="ml-auto text-xs text-slate-400" id="report-period-label">Menampilkan data minggu ini</div>
+                
+                <button onclick="clearDayFilter()" id="btn-clear-filter" class="hidden ml-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors">
+                    Hapus Filter Tanggal
+                </button>
+            </div>
+
+            <!-- ══ TABEL SPK PER FASE ══ -->
+            <div id="report-container" class="space-y-5"></div>
+
+            <!-- EMPTY STATE -->
+            <div id="empty-state" class="hidden text-center py-20 bg-slate-800/30 rounded-2xl border border-slate-700/50">
+                <span class="material-symbols-outlined text-[52px] text-slate-600 mb-3 block">inbox</span>
+                <p class="text-slate-300 font-semibold" id="empty-state-title">Tidak ada data SPK pada periode ini</p>
+                <p class="text-slate-500 text-sm mt-1">Coba ubah filter di kalender atau filter periode</p>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script>
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
+const CATEGORY_ORDER = ['ADMINISTRASI','PRODUKSI','QC','CUSTOMER'];
+const CATEGORY_CONFIG = {
+    'ADMINISTRASI': { accent:'accent-admin',    dot:'dot-admin',    color:'text-indigo-400',  icon:'admin_panel_settings',     bar:'#6366f1' },
+    'PRODUKSI':     { accent:'accent-produksi', dot:'dot-produksi', color:'text-amber-400',   icon:'precision_manufacturing',  bar:'#f59e0b' },
+    'QC':           { accent:'accent-qc',       dot:'dot-qc',       color:'text-cyan-400',    icon:'fact_check',               bar:'#22d3ee' },
+    'CUSTOMER':     { accent:'accent-customer', dot:'dot-customer', color:'text-emerald-400', icon:'person_check',             bar:'#10b981' },
+};
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentPeriod = 'all';
+let calendarViewDate = new Date(); // Stores the current month being viewed in heat calendar
+let activeDateFilter = null; // YYYY-MM-DD
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function getData(key) { return JSON.parse(localStorage.getItem(key) || '[]'); }
+
+function fmt(dtStr) {
+    if (!dtStr) return '—';
+    const d = new Date(dtStr);
+    if (isNaN(d)) return dtStr;
+    return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'})
+         + ' · ' + d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+}
+function fmtDate(dtStr) {
+    if (!dtStr) return '—';
+    const d = new Date(dtStr); if (isNaN(d)) return dtStr;
+    return d.toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'});
+}
+function durasi(s, t) {
+    if (!s || !t) return '—';
+    const ds = new Date(s), dt = new Date(t);
+    if (isNaN(ds)||isNaN(dt)) return '—';
+    const diff = Math.round((dt-ds)/(86400000));
+    return diff + ' hari';
+}
+function statusBadge(status) {
+    const map = {
+        'SELESAI':['bg-emerald-500/20 text-emerald-400','task_alt'],
+        'BATAL':  ['bg-red-500/20 text-red-400','cancel'],
+        'PENDING':['bg-slate-500/20 text-slate-400','pending'],
+        'PROSES': ['bg-amber-500/20 text-amber-400','autorenew'],
+        'REVISI': ['bg-orange-500/20 text-orange-400','edit_note'],
+        'HOLD':   ['bg-purple-500/20 text-purple-400','pause_circle'],
+    };
+    const [cls,icon] = map[status] || ['bg-slate-500/20 text-slate-400','remove'];
+    return `<span class="status-badge ${cls}"><span class="material-symbols-outlined text-[13px]">${icon}</span>${status||'—'}</span>`;
+}
+function qcHistoryHtml(card) {
+    const qc = card.qcHistory || [];
+    if (!qc.length) return '<span class="text-slate-600 text-xs">—</span>';
+    return qc.slice(-3).map(q => {
+        const cls = q.result==='LULUS' ? 'bg-emerald-500' : 'bg-red-500';
+        return `<span class="flex items-center gap-1 text-[11px] text-slate-400"><span class="qc-dot ${cls}"></span>${q.result||'?'}</span>`;
+    }).join('');
+}
+
+function categorizePhase(name) {
+    const n = (name||'').toUpperCase();
+    if (n.includes('ADMIN')||n.includes('ORDER')||n.includes('INPUT')) return 'ADMINISTRASI';
+    if (n.includes('QC')||n.includes('QUALITY')||n.includes('KONTROL')) return 'QC';
+    if (n.includes('CUSTOMER')||n.includes('SELESAI')||n.includes('KIRIM')||n.includes('AMBIL')||n.includes('DELIVERED')) return 'CUSTOMER';
+    return 'PRODUKSI';
+}
+
+function getLocalYMD(date) {
+    const d = new Date(date);
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().split('T')[0];
+}
+
+// ─── CALENDAR LOGIC ───────────────────────────────────────────────────────────
+function getCalendarData() {
+    const cards = getData('flowta_kanban_cards');
+    const y = calendarViewDate.getFullYear();
+    const m = calendarViewDate.getMonth();
+    
+    // First day of month
+    const firstDay = new Date(y, m, 1);
+    // Last day of month
+    const lastDay = new Date(y, m + 1, 0);
+    
+    // Which day of week does month start? (0 = Sun, 1 = Mon ... 6 = Sat)
+    // We want Monday=0... Sunday=6
+    let startingDayOfWeek = firstDay.getDay() - 1;
+    if (startingDayOfWeek === -1) startingDayOfWeek = 6; 
+    
+    const daysInMonth = lastDay.getDate();
+    
+    // Map of Date String (YYYY-MM-DD) -> count
+    const activityMap = {};
+    for (let i = 1; i <= daysInMonth; i++) {
+        const d = new Date(y, m, i);
+        activityMap[getLocalYMD(d)] = 0;
+    }
+    
+    // Count activities (SPKs created in this month)
+    cards.forEach(c => {
+        if (!c.createdAt) return;
+        const cDate = new Date(c.createdAt);
+        if (cDate.getFullYear() === y && cDate.getMonth() === m) {
+            const dateStr = getLocalYMD(cDate);
+            if (activityMap[dateStr] !== undefined) {
+                activityMap[dateStr]++;
+            }
+        }
+    });
+    
+    return { startingDayOfWeek, daysInMonth, activityMap, year: y, month: m };
+}
+
+function changeMonth(delta) {
+    calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+    renderCalendar();
+}
+
+function onDayClick(dateStr) {
+    activeDateFilter = dateStr;
+    setPeriod('custom', true); // Switch to custom filter secretly
+    document.getElementById('date-from').value = dateStr;
+    document.getElementById('date-to').value = dateStr;
+    
+    // Update UI
+    document.getElementById('btn-clear-filter').classList.remove('hidden');
+    
+    // Re-render everything to highlight selected day and show table
+    renderCalendar();
+    renderTablesOnly();
+}
+
+function clearDayFilter() {
+    activeDateFilter = null;
+    document.getElementById('btn-clear-filter').classList.add('hidden');
+    setPeriod('week'); // Reset to default week
+}
+
+function renderCalendar() {
+    const calData = getCalendarData();
+    const grid = document.getElementById('calendar-heatmap-grid');
+    
+    // Update month label
+    const moName = calendarViewDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+    document.getElementById('calendar-month-label').textContent = moName;
+    document.getElementById('btn-prev-month').classList.remove('hidden');
+    document.getElementById('btn-next-month').classList.remove('hidden');
+    
+    let html = '';
+    const hari = ['SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB', 'MIN'];
+    hari.forEach(h => {
+        html += `<div class="cal-header">${h}</div>`;
+    });
+    
+    // Empty cells before start of month
+    for (let i = 0; i < calData.startingDayOfWeek; i++) {
+        html += `<div class="opacity-0 min-h-[52px]"></div>`;
+    }
+    
+    let peakCount = -1;
+    let peakDateStr = '';
+    let peakDateObj = null;
+    let totalCount = 0;
+    
+    for (let i = 1; i <= calData.daysInMonth; i++) {
+        const targetD = new Date(calData.year, calData.month, i);
+        const dateStr = getLocalYMD(targetD);
+        const count = calData.activityMap[dateStr];
+        
+        totalCount += count;
+        if (count > peakCount) {
+            peakCount = count;
+            peakDateStr = dateStr;
+            peakDateObj = targetD;
+        }
+        
+        let densityCls = 'cal-empty';
+        if (count > 0 && count <= 2) densityCls = 'cal-low';
+        else if (count > 2 && count <= 5) densityCls = 'cal-med';
+        else if (count > 5) densityCls = 'cal-high';
+        
+        const isActive = (dateStr === activeDateFilter) ? 'active-filter' : '';
+        const countDisplay = count > 0 ? count : '-';
+        
+        html += `
+        <div class="cal-cell ${densityCls} ${isActive}" onclick="onDayClick('${dateStr}')" title="${count} aktivitas tanggal ${i} ${moName}">
+            <div class="cal-date mt-1 opacity-70">${i}</div>
+            <div class="cal-count mt-0.5">${countDisplay}</div>
+        </div>`;
+    }
+    
+    grid.innerHTML = html;
+    
+    // Update footer
+    const footer = document.getElementById('calendar-footer-text');
+    if (totalCount === 0) {
+        footer.innerHTML = `Belum ada aktivitas tercatat pada bulan <b>${moName}</b>.`;
+    } else if (peakDateObj) {
+        const pDay = peakDateObj.toLocaleDateString('id-ID', { weekday: 'long' });
+        const pDate = peakDateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        footer.innerHTML = `Performa puncak pada <span class="text-white font-bold">${pDay}, ${pDate}</span> dengan <span class="text-white font-bold">${peakCount}</span> aktivitas.`;
+    }
+}
+
+
+// ─── REPORT/TABLE LOGIC ───────────────────────────────────────────────────────
+function setPeriod(p, isFromCalendar = false) {
+    currentPeriod = p;
+    document.querySelectorAll('.period-tab').forEach(t => {
+        t.classList.toggle('period-tab-active', t.dataset.period === p);
+        t.classList.toggle('period-tab-inactive', t.dataset.period !== p);
+    });
+    const cr = document.getElementById('custom-range');
+    cr.style.setProperty('display', p==='custom' ? 'flex' : 'none', 'important');
+    
+    if (!isFromCalendar && activeDateFilter) {
+        // If user manually switched tabs, clear active calendar filter visually
+        activeDateFilter = null;
+        document.getElementById('btn-clear-filter').classList.add('hidden');
+        // Do not switch calendar month here, let it stay where it is.
+        renderCalendar();
+    }
+    
+    renderTablesOnly();
+}
+
+function getPeriodRange() {
+    const now = new Date();
+    let from, to;
+    if (currentPeriod === 'today') {
+        from = new Date(now); from.setHours(0,0,0,0);
+        to   = new Date(now); to.setHours(23,59,59,999);
+    } else if (currentPeriod === 'week') {
+        from = new Date(now); from.setDate(now.getDate()-((now.getDay()+6)%7)); from.setHours(0,0,0,0);
+        to   = new Date(from); to.setDate(from.getDate()+6); to.setHours(23,59,59,999);
+    } else if (currentPeriod === 'month') {
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        to   = new Date(now.getFullYear(), now.getMonth()+1, 0, 23, 59, 59, 999);
+    } else if (currentPeriod === 'all') {
+        from = new Date(0); to = new Date(8640000000000000);
+    } else {
+        const fv = document.getElementById('date-from').value;
+        const tv = document.getElementById('date-to').value;
+        from = fv ? new Date(fv+'T00:00:00') : new Date(0);
+        to   = tv ? new Date(tv+'T23:59:59') : new Date(8640000000000000);
+    }
+    return { from, to };
+}
+
+function periodLabel() {
+    if (activeDateFilter && currentPeriod === 'custom') {
+        const d = new Date(activeDateFilter);
+        return 'Pencarian Hari: ' + d.toLocaleDateString('id-ID', { dateStyle: 'full' });
+    }
+    const lbl = {today:'Hari ini',week:'Minggu ini',month:'Bulan ini',all:'Semua data',custom:'Rentang custom'};
+    return 'Menampilkan data ' + (lbl[currentPeriod]||'');
+}
+
+function inRange(dtStr, from, to) {
+    if (!dtStr) return false;
+    const d = new Date(dtStr);
+    return d >= from && d <= to;
+}
+
+function buildTableData() {
+    const cards  = getData('flowta_kanban_cards');
+    const phases = getData('flowta_phases');
+    const { from, to } = getPeriodRange();
+
+    const phaseMap = {};
+    phases.forEach(p => { phaseMap[p.id] = p.name; });
+
+    const filtered = cards.filter(c => inRange(c.createdAt, from, to));
+
+    const tableByPhase = {}; // phaseName → [cards]
+    filtered.forEach(c => {
+        const n = phaseMap[c.phaseId] || c.phaseId || 'Tidak Diketahui';
+        if (!tableByPhase[n]) tableByPhase[n] = [];
+        tableByPhase[n].push(c);
+    });
+
+    return { tableByPhase, filteredTotal: filtered.length };
+}
+
+function renderTablesOnly() {
+    document.getElementById('report-period-label').textContent = periodLabel();
+    const { tableByPhase, filteredTotal } = buildTableData();
+    
+    const container  = document.getElementById('report-container');
+    const emptyState = document.getElementById('empty-state');
+    
+    if (filteredTotal === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        if (activeDateFilter) {
+            document.getElementById('empty-state-title').textContent = "Tidak ada SPK pada tanggal ini";
+        } else {
+            document.getElementById('empty-state-title').textContent = "Tidak ada data SPK pada periode ini";
+        }
+        return;
+    }
+    emptyState.classList.add('hidden');
+
+    const allPhaseNames = Object.keys(tableByPhase);
+    const byCategory = {};
+    CATEGORY_ORDER.forEach(cat => { byCategory[cat] = []; });
+    allPhaseNames.forEach(pn => {
+        const cat = categorizePhase(pn);
+        byCategory[cat].push(pn);
+    });
+
+    let html = '';
+    CATEGORY_ORDER.forEach(cat => {
+        const phaseNames = byCategory[cat];
+        if (!phaseNames.length) return;
+        const cfg = CATEGORY_CONFIG[cat];
+        const catTotal = phaseNames.reduce((s, p) => s + tableByPhase[p].length, 0);
+
+        html += `
+        <div class="glass-panel rounded-2xl overflow-hidden shadow-lg border-t border-t-white/10">
+          <!-- Category header -->
+          <div class="px-5 py-4 flex items-center gap-3 border-b border-white/5 phase-header ${cfg.accent} bg-gradient-to-r from-slate-800/80 to-transparent">
+            <span class="material-symbols-outlined ${cfg.color} text-[22px]">${cfg.icon}</span>
+            <div class="flex-1">
+              <h2 class="font-bold text-sm ${cfg.color} tracking-wider">${cat}</h2>
+              <p class="text-[11px] text-slate-400 font-medium mt-0.5">${catTotal} SPK · ${phaseNames.length} fase berjalan</p>
+            </div>
+          </div>`;
+
+        phaseNames.forEach((phaseName, idx) => {
+            const phaseCards = tableByPhase[phaseName];
+            if (idx > 0) html += `<div class="section-divider"></div>`;
+
+            html += `
+          <!-- Phase sub-header -->
+          <div class="px-5 py-3.5 flex items-center gap-2 bg-white/[0.015]">
+            <span class="qc-dot ${cfg.dot}"></span>
+            <span class="text-[13px] font-bold text-slate-300 uppercase tracking-widest">${phaseName}</span>
+            <span class="ml-auto text-xs font-semibold px-2.5 py-1 rounded bg-slate-800 text-slate-300 shadow-inner">${phaseCards.length} SPK</span>
+          </div>
+          <!-- Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-white/5 bg-slate-800/40">
+                  <th class="px-5 py-3 text-left whitespace-nowrap">No SPK / Dibuat Pada</th>
+                  <th class="px-3 py-3 text-left whitespace-nowrap">Klien</th>
+                  <th class="px-3 py-3 text-left whitespace-nowrap">Item</th>
+                  <th class="px-3 py-3 text-left whitespace-nowrap">Lama Prod / Target</th>
+                  <th class="px-3 py-3 text-left whitespace-nowrap">Status</th>
+                  <th class="px-3 py-3 text-left whitespace-nowrap">QC History</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+            phaseCards.forEach(card => {
+                const qcAll  = (card.qcHistory||[]).length;
+                const qcPass = (card.qcHistory||[]).filter(q=>q.result==='LULUS').length;
+                html += `
+                <tr class="table-row border-b border-slate-800/50 cursor-pointer" onclick="window.location='product-detail.html?id=${card.id}'">
+                  <td class="px-5 py-3.5 min-w-[170px]">
+                    <div class="font-bold text-slate-100 text-[13px]">${card.spkNumber||'—'}</div>
+                    <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">schedule</span>${fmt(card.createdAt)}</div>
+                  </td>
+                  <td class="px-3 py-3.5 min-w-[130px]">
+                    <div class="font-semibold text-slate-300 text-[13px] flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-slate-600"></div>${card.client||'—'}</div>
+                  </td>
+                  <td class="px-3 py-3.5 min-w-[150px]">
+                    <div class="text-slate-200 text-[13px] font-medium">${card.title||'—'}</div>
+                    <div class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-800 text-slate-400">${card.projectType||'—'}</div>
+                  </td>
+                  <td class="px-3 py-3.5 min-w-[150px]">
+                    <div class="text-slate-200 text-[13px] font-semibold">${durasi(card.createdAt, card.targetDate)}</div>
+                    <div class="text-[11px] text-amber-500 mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">event</span>${fmtDate(card.targetDate)}</div>
+                  </td>
+                  <td class="px-3 py-3.5">${statusBadge(card.status||'PROSES')}</td>
+                  <td class="px-3 py-3.5 min-w-[120px]">
+                    <div class="flex flex-wrap gap-1">${qcHistoryHtml(card)}</div>
+                    ${qcAll ? `<div class="text-[10px] text-slate-500 mt-1.5 font-medium">${qcPass}/${qcAll} tahapan lulus</div>` : '<div class="text-[10px] text-slate-600 mt-1">Belum ada QC</div>'}
+                  </td>
+                </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+        });
+        html += `</div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportExcel() {
+    const { tableByPhase } = buildTableData();
+    const rows = [['No SPK','Dibuat Pada','Klien','Item','Jenis Project','Fase','Kategori','Lama Produksi','Target Selesai','Status','QC Total','QC Lulus']];
+    Object.entries(tableByPhase).forEach(([phaseName, cards]) => {
+        cards.forEach(c => {
+            const cat = categorizePhase(phaseName);
+            const qcAll  = (c.qcHistory||[]).length;
+            const qcPass = (c.qcHistory||[]).filter(q=>q.result==='LULUS').length;
+            rows.push([
+                c.spkNumber||'', c.createdAt ? new Date(c.createdAt).toLocaleString('id-ID') : '',
+                c.client||'', c.title||'', c.projectType||'', phaseName, cat,
+                durasi(c.createdAt, c.targetDate),
+                c.targetDate ? new Date(c.targetDate).toLocaleString('id-ID') : '',
+                c.status||'', qcAll, qcPass,
+            ]);
+        });
+    });
+    if (rows.length === 1) { alert('Tidak ada data untuk diekspor pada periode ini.'); return; }
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, ws, 'Laporan Produksi');
+    XLSX.writeFile(wb, `Laporan_Produksi_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(function init() {
+    const now = new Date();
+    
+    const cards = getData('flowta_kanban_cards');
+    let latestTime = 0;
+    cards.forEach(c => {
+        if(c.createdAt) {
+           const t = new Date(c.createdAt).getTime();
+           if(t && t > latestTime) latestTime = t;
+        }
+    });
+    if (latestTime > 0) {
+        calendarViewDate = new Date(latestTime);
+    }
+
+    const d = new Date(calendarViewDate);
+    const mon = new Date(d); mon.setDate(d.getDate()-((d.getDay()+6)%7)); mon.setHours(0,0,0,0);
+    const sun = new Date(mon); sun.setDate(mon.getDate()+6);
+    document.getElementById('date-from').value = mon.toISOString().slice(0,10);
+    document.getElementById('date-to').value   = sun.toISOString().slice(0,10);
+
+    try {
+        const u = JSON.parse(localStorage.getItem('flowta_current_user')||'{}');
+        const el = document.getElementById('sidebar-username');
+        const rl = document.getElementById('sidebar-role');
+        const av = document.getElementById('sidebar-avatar');
+        if(el) el.textContent = u.name||'Admin';
+        if(rl) rl.textContent = u.role||'Administrator';
+        if(av) av.textContent = (u.name||'A').charAt(0).toUpperCase();
+    } catch(e){}
+
+    renderCalendar();
+    setPeriod('all'); // Set filter default ke 'Semua' and renders everything
+})();
+</script>
+</body>
+</html>

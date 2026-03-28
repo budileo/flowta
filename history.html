@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Histori</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.5); }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: rgba(99, 102, 241, 0.15);
+            color: #818cf8;
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+        .filter-btn:not(.active) {
+            background: rgba(30, 41, 59, 0.5);
+            color: #94a3b8;
+            border-color: rgba(255, 255, 255, 0.05);
+        }
+        .filter-btn:not(.active):hover {
+            background: rgba(99, 102, 241, 0.08);
+            color: #a5b4fc;
+            border-color: rgba(99, 102, 241, 0.15);
+        }
+        .hist-item {
+            animation: fadeSlideIn 0.25s ease forwards;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.6);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- SIDEBAR -->
+        <aside class="w-72 glass-nav hidden lg:flex flex-col h-full border-r border-slate-200 dark:border-slate-800">
+            <div class="p-6 flex items-center gap-3">
+                <img src="logo.png" alt="FLOWTA Logo" class="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
+                <div class="flex flex-col">
+                    <span class="font-bold text-xl tracking-tight leading-tight">FLOWTA</span>
+                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tata Kelola Manajemen</span>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto px-4 py-2 mt-2">
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Workspace</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="index.html">
+                        <span class="material-symbols-outlined text-[20px]">grid_view</span>
+                        <span>Dasbor</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="kanban.html">
+                        <span class="material-symbols-outlined text-[20px]">view_kanban</span>
+                        <span>Kanban</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Produksi & Kualitas</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="products.html">
+                        <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+                        <span>Produk</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="qc.html">
+                        <span class="material-symbols-outlined text-[20px]">fact_check</span>
+                        <span>Quality Control</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="phase.html">
+                        <span class="material-symbols-outlined text-[20px]">schema</span>
+                        <span>Fase</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="reviews.html">
+                        <span class="material-symbols-outlined text-[20px]">reviews</span>
+                        <span>Review</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mb-6">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Analitik & Laporan</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="productivity.html">
+                        <span class="material-symbols-outlined text-[20px]">engineering</span>
+                        <span>User Productivity</span>
+                    </a>
+                    <!-- ACTIVE: Histori -->
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 transition-all font-medium" href="history.html">
+                        <span class="material-symbols-outlined text-[20px]">history</span>
+                        <span>Histori</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="laporan-produksi.html">
+                        <span class="material-symbols-outlined text-[20px]">summarize</span>
+                        <span>Laporan Produksi</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administrasi</p>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="sistem.html">
+                        <span class="material-symbols-outlined text-[20px]">settings_applications</span>
+                        <span>Sistem</span>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="manual.html">
+                        <span class="material-symbols-outlined text-[20px]">help_outline</span>
+                        <span>Panduan</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
+                <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors">
+                    <div class="size-10 rounded-full bg-cover relative" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7zCsRdVomcJzyX3rrrkP5f6UCo2OIq46qeFslE1JbYyB71cl5AMQBnfcZOxS0QKblQV0CHatRb3Dl77iV-jjPaen2uy6U8HeF480lJTcTLVBjWCUkkAGPnmTzo0ChJ1h7gugVoH5dqVlD1qm3zG1r7jnwadfuCHBMsYtvP_aTI0ly4vCvkDRq6SfZc3t7d98wmI-Wn9KApvCTepYQilaH7fMwnTBA47J019bafuZSuMKFKTQ1UcA3kAOhbKFxcuD1MJiVY2x2vcY')">
+                        <span class="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-background-dark"></span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold truncate">Andi Supervisor</p>
+                        <p class="text-xs text-slate-400 truncate">Kepala Produksi</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- TOP HEADER -->
+            <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-1">
+                    <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">history</span>
+                        Laporan Histori
+                    </h1>
+                    <div class="relative w-full max-w-md hidden md:block ml-8">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                        <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Cari SPK, Klien, atau Nama Produk... [Enter]" type="text" />
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                    </button>
+                    <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">mail</span>
+                    </button>
+                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                    <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">contrast</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- PAGE CONTENT -->
+            <div class="p-8 max-w-6xl mx-auto w-full space-y-6 pb-16">
+
+                <!-- PAGE HEADING -->
+                <div class="flex flex-col gap-1">
+                    <h2 class="text-3xl font-black tracking-tight">Histori Aktivitas Produksi</h2>
+                    <p class="text-slate-500 dark:text-slate-400">Rekam jejak seluruh aktivitas produksi berdasarkan periode waktu</p>
+                </div>
+
+                <!-- FILTER BAR -->
+                <div class="glass-panel p-4 rounded-2xl space-y-4">
+                    <!-- Period Quick Filters -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Periode:</span>
+                        <button class="filter-btn active" id="filter-btn-minggu" onclick="setQuickFilter('minggu')">
+                            <span class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[15px]">date_range</span>
+                                Minggu Ini
+                            </span>
+                        </button>
+                        <button class="filter-btn" id="filter-btn-hari" onclick="setQuickFilter('hari')">
+                            <span class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[15px]">today</span>
+                                Hari Ini
+                            </span>
+                        </button>
+                        <button class="filter-btn" id="filter-btn-bulan" onclick="setQuickFilter('bulan')">
+                            <span class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[15px]">calendar_month</span>
+                                Bulan Ini
+                            </span>
+                        </button>
+                        <button class="filter-btn" id="filter-btn-range" onclick="setQuickFilter('range')">
+                            <span class="flex items-center gap-1.5">
+                                <span class="material-symbols-outlined text-[15px]">tune</span>
+                                Range Kustom
+                            </span>
+                        </button>
+                    </div>
+
+                    <!-- Range Date Picker (hidden by default) -->
+                    <div id="range-picker" class="hidden flex-wrap items-center gap-3 pt-2 border-t border-slate-700/50">
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-400">Dari</label>
+                            <input type="date" id="range-start" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition" />
+                        </div>
+                        <span class="text-slate-500">—</span>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-semibold text-slate-400">Sampai</label>
+                            <input type="date" id="range-end" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition" />
+                        </div>
+                        <button onclick="applyRangeFilter()" class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-indigo-500 transition">
+                            <span class="material-symbols-outlined text-[16px]">filter_alt</span>
+                            Terapkan
+                        </button>
+                    </div>
+
+                    <!-- Activity Type Filter -->
+                    <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-700/50">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Tipe:</span>
+                        <button class="filter-btn active" id="type-all" onclick="setTypeFilter('all')">Semua</button>
+                        <button class="filter-btn" id="type-create" onclick="setTypeFilter('create')">
+                            <span class="flex items-center gap-1"><span class="size-1.5 rounded-full bg-indigo-400 inline-block"></span> Dibuat</span>
+                        </button>
+                        <button class="filter-btn" id="type-move" onclick="setTypeFilter('move')">
+                            <span class="flex items-center gap-1"><span class="size-1.5 rounded-full bg-amber-400 inline-block"></span> Pindah Fase</span>
+                        </button>
+                        <button class="filter-btn" id="type-complete" onclick="setTypeFilter('complete')">
+                            <span class="flex items-center gap-1"><span class="size-1.5 rounded-full bg-emerald-400 inline-block"></span> Selesai</span>
+                        </button>
+                        <button class="filter-btn" id="type-cancel" onclick="setTypeFilter('cancel')">
+                            <span class="flex items-center gap-1"><span class="size-1.5 rounded-full bg-rose-400 inline-block"></span> Dibatalkan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RESULT SUMMARY -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span id="result-count-label" class="text-sm text-slate-400">Memuat data...</span>
+                        <span id="period-label" class="text-xs font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md border border-primary/20">Minggu Ini</span>
+                    </div>
+                    <button onclick="exportCSV()" class="flex items-center gap-1.5 text-sm text-slate-400 hover:text-emerald-400 font-medium transition-colors group">
+                        <span class="material-symbols-outlined text-[18px] group-hover:text-emerald-400 transition-colors">download</span>
+                        Export CSV
+                    </button>
+                </div>
+
+                <!-- HISTORY FEED -->
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                    <div id="history-feed" class="divide-y divide-slate-800/60 p-2">
+                        <!-- Dynamic items injected here -->
+                        <div class="py-12 text-center text-slate-500">
+                            <span class="material-symbols-outlined text-4xl mb-2 block opacity-30">history</span>
+                            <p class="text-sm">Memuat histori...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty state (hidden by default) -->
+                <div id="empty-state" class="hidden glass-panel rounded-2xl py-20 flex flex-col items-center justify-center text-center">
+                    <span class="material-symbols-outlined text-6xl text-slate-700 mb-4">manage_search</span>
+                    <p class="text-xl font-bold text-slate-400">Tidak ada aktivitas ditemukan</p>
+                    <p class="text-sm text-slate-500 mt-2">Coba ubah filter periode atau tipe aktivitas</p>
+                </div>
+
+            </div>
+
+            <!-- FOOTER -->
+            <div class="w-full text-center py-6 text-slate-500 text-sm mt-auto border-t border-slate-200 dark:border-slate-800/50">
+                Sistem Flowta di oleh Budi Ariadi Tata kelola 0811 767 4848 - Hak Cipta dilindungi Undang Undang
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ====== STATE ======
+        let currentPeriod = 'minggu';
+        let currentType = 'all';
+        let rangeStart = null;
+        let rangeEnd = null;
+
+        // ====== DATA ======
+        let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+        let allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+
+        // ====== TIME AGO UTILITY ======
+        function timeAgo(dateStr) {
+            const now = new Date();
+            const past = new Date(dateStr);
+            const diffMs = now - past;
+            if (diffMs < 0) return 'baru saja';
+
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHr = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHr / 24);
+            const diffWk = Math.floor(diffDay / 7);
+            const diffMo = Math.floor(diffDay / 30);
+
+            if (diffSec < 60) return `${diffSec} detik yang lalu`;
+            if (diffMin < 60) return `${diffMin} menit yang lalu`;
+            if (diffHr < 24) return diffHr === 1 ? '1 jam yang lalu' : `${diffHr} jam yang lalu`;
+            if (diffDay < 7) return diffDay === 1 ? 'kemarin' : `${diffDay} hari yang lalu`;
+            if (diffWk < 5) return diffWk === 1 ? '1 minggu yang lalu' : `${diffWk} minggu yang lalu`;
+            return diffMo === 1 ? '1 bulan yang lalu' : `${diffMo} bulan yang lalu`;
+        }
+
+        function formatDateFull(dateStr) {
+            const d = new Date(dateStr);
+            const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} • ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+        }
+
+        // ====== DATE RANGE HELPERS ======
+        function getDateRange(period) {
+            const now = new Date();
+            let start, end;
+
+            if (period === 'hari') {
+                start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            } else if (period === 'minggu') {
+                const dayOfWeek = now.getDay(); // 0 = Sunday
+                const monday = new Date(now);
+                monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+                monday.setHours(0, 0, 0, 0);
+                start = monday;
+                end = new Date(monday);
+                end.setDate(monday.getDate() + 6);
+                end.setHours(23, 59, 59, 999);
+            } else if (period === 'bulan') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+                end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            } else if (period === 'range' && rangeStart && rangeEnd) {
+                start = new Date(rangeStart + 'T00:00:00');
+                end = new Date(rangeEnd + 'T23:59:59');
+            } else {
+                return null; // no filter
+            }
+            return { start, end };
+        }
+
+        // ====== FILTER FUNCTIONS ======
+        function setQuickFilter(period) {
+            currentPeriod = period;
+
+            // Update button styles
+            ['hari','minggu','bulan','range'].forEach(p => {
+                const btn = document.getElementById('filter-btn-' + p);
+                if (btn) {
+                    btn.classList.toggle('active', p === period);
+                }
+            });
+
+            // Show/hide range picker
+            const rangePicker = document.getElementById('range-picker');
+            if (period === 'range') {
+                rangePicker.classList.remove('hidden');
+                rangePicker.classList.add('flex');
+                // Set defaults for range if empty
+                if (!document.getElementById('range-start').value) {
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('range-start').value = today;
+                    document.getElementById('range-end').value = today;
+                }
+            } else {
+                rangePicker.classList.add('hidden');
+                rangePicker.classList.remove('flex');
+                renderHistory();
+            }
+
+            updatePeriodLabel();
+        }
+
+        function applyRangeFilter() {
+            rangeStart = document.getElementById('range-start').value;
+            rangeEnd = document.getElementById('range-end').value;
+            if (!rangeStart || !rangeEnd) {
+                alert('Pilih tanggal mulai dan tanggal akhir terlebih dahulu.');
+                return;
+            }
+            renderHistory();
+        }
+
+        function setTypeFilter(type) {
+            currentType = type;
+            ['all','create','move','complete','cancel'].forEach(t => {
+                const btn = document.getElementById('type-' + t);
+                if (btn) btn.classList.toggle('active', t === type);
+            });
+            renderHistory();
+        }
+
+        function updatePeriodLabel() {
+            const labelEl = document.getElementById('period-label');
+            const labels = { hari: 'Hari Ini', minggu: 'Minggu Ini', bulan: 'Bulan Ini', range: 'Range Kustom' };
+            labelEl.textContent = labels[currentPeriod] || 'Semua';
+        }
+
+        // ====== RENDER ======
+        function renderHistory() {
+            const range = getDateRange(currentPeriod);
+
+            // Filter by period
+            let filtered = allHistories.filter(h => {
+                if (!range) return true;
+                const t = new Date(h.timestamp);
+                return t >= range.start && t <= range.end;
+            });
+
+            // Filter by type
+            if (currentType !== 'all') {
+                filtered = filtered.filter(h => h.type === currentType);
+            }
+
+            // Sort: newest first
+            filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const feed = document.getElementById('history-feed');
+            const emptyState = document.getElementById('empty-state');
+            const countLabel = document.getElementById('result-count-label');
+
+            countLabel.textContent = `${filtered.length} aktivitas ditemukan`;
+
+            if (filtered.length === 0) {
+                feed.innerHTML = '';
+                feed.closest('.glass-panel').classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            feed.closest('.glass-panel').classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            let feedHtml = '';
+
+            filtered.forEach((hist, index) => {
+                let icon = 'history';
+                let bgClass = 'bg-slate-500/20 text-slate-400 border border-slate-500/30';
+                let typeLabel = 'Aktivitas';
+                let typeBadgeClass = 'bg-slate-700 text-slate-400';
+
+                if (hist.type === 'create') {
+                    icon = 'add_task';
+                    bgClass = 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
+                    typeLabel = 'Dibuat';
+                    typeBadgeClass = 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20';
+                } else if (hist.type === 'move') {
+                    icon = 'sync_alt';
+                    bgClass = 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+                    typeLabel = 'Pindah Fase';
+                    typeBadgeClass = 'bg-amber-500/15 text-amber-400 border border-amber-500/20';
+                } else if (hist.type === 'cancel') {
+                    icon = 'cancel';
+                    bgClass = 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                    typeLabel = 'Dibatalkan';
+                    typeBadgeClass = 'bg-rose-500/15 text-rose-400 border border-rose-500/20';
+                } else if (hist.type === 'complete') {
+                    icon = 'task_alt';
+                    bgClass = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                    typeLabel = 'Selesai';
+                    typeBadgeClass = 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20';
+                } else if (hist.type === 'qc') {
+                    icon = 'fact_check';
+                    bgClass = 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30';
+                    typeLabel = 'QC';
+                    typeBadgeClass = 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/20';
+                } else if (hist.type === 'comment') {
+                    icon = 'chat';
+                    bgClass = 'bg-violet-500/20 text-violet-400 border border-violet-500/30';
+                    typeLabel = 'Komentar';
+                    typeBadgeClass = 'bg-violet-500/15 text-violet-400 border border-violet-500/20';
+                }
+
+                const cardRelated = kanbanCards.find(c => c.id === hist.cardId);
+                const cardName = cardRelated ? cardRelated.title : (hist.cardId || '-');
+                const cardLink = cardRelated ? `product-detail.html?id=${cardRelated.id}` : '#';
+
+                const timeAgoStr = timeAgo(hist.timestamp);
+                const fullDateStr = formatDateFull(hist.timestamp);
+                const cleanDesc = (hist.desc || '').replace(/<[^>]*>?/gm, '');
+                const userName = hist.user || 'Sistem';
+
+                const isLast = index === filtered.length - 1;
+
+                feedHtml += `
+                <div class="hist-item relative flex gap-4 p-4 hover:bg-white/[0.02] transition-colors" style="animation-delay: ${Math.min(index * 30, 300)}ms">
+                    <!-- Timeline line -->
+                    ${!isLast ? `<div class="absolute left-[31px] top-14 bottom-0 w-[1px] bg-slate-800"></div>` : ''}
+
+                    <!-- Icon -->
+                    <div class="shrink-0 size-10 rounded-full ${bgClass} flex items-center justify-center z-10 mt-1">
+                        <span class="material-symbols-outlined text-[18px]">${icon}</span>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-1 min-w-0 pb-4">
+                        <div class="flex flex-wrap items-start justify-between gap-2 mb-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <a href="${cardLink}" class="font-semibold text-slate-100 hover:text-primary transition-colors text-sm leading-tight">
+                                    ${cardName}
+                                </a>
+                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${typeBadgeClass}">
+                                    ${typeLabel}
+                                </span>
+                            </div>
+                            <div class="flex flex-col items-end gap-0.5 shrink-0">
+                                <span class="text-xs font-bold text-primary" title="${fullDateStr}">
+                                    ${timeAgoStr}
+                                </span>
+                                <span class="text-[10px] text-slate-500">${fullDateStr}</span>
+                            </div>
+                        </div>
+
+                        <p class="text-[13px] text-slate-400 mt-1 leading-relaxed">${cleanDesc || '—'}</p>
+
+                        <div class="flex items-center gap-3 mt-2">
+                            <span class="flex items-center gap-1 text-[11px] text-slate-500">
+                                <span class="material-symbols-outlined text-[13px]">person</span>
+                                ${userName}
+                            </span>
+                            ${hist.cardId ? `
+                            <span class="text-slate-700">•</span>
+                            <a href="${cardLink}" class="flex items-center gap-1 text-[11px] text-slate-500 hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+                                Lihat Detail
+                            </a>` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            feed.innerHTML = feedHtml;
+        }
+
+        // ====== EXPORT CSV ======
+        function exportCSV() {
+            const range = getDateRange(currentPeriod);
+            let filtered = allHistories.filter(h => {
+                if (!range) return true;
+                const t = new Date(h.timestamp);
+                return t >= range.start && t <= range.end;
+            });
+            if (currentType !== 'all') {
+                filtered = filtered.filter(h => h.type === currentType);
+            }
+            filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+            const rows = [['Waktu', 'Tipe', 'SPK/Produk', 'Deskripsi', 'User', 'Waktu Lalu']];
+            filtered.forEach(h => {
+                const card = kanbanCards.find(c => c.id === h.cardId);
+                rows.push([
+                    formatDateFull(h.timestamp),
+                    h.type,
+                    card ? card.title : (h.cardId || '-'),
+                    (h.desc || '').replace(/<[^>]*>?/gm, '').replace(/,/g, ';'),
+                    h.user || 'Sistem',
+                    timeAgo(h.timestamp)
+                ]);
+            });
+
+            const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `histori_flowta_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ====== INIT ======
+        document.addEventListener('DOMContentLoaded', () => {
+            updatePeriodLabel();
+            renderHistory();
+        });
+    </script>
+</body>
+</html>
