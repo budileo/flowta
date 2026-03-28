@@ -219,8 +219,18 @@
         const isStaf = currentUser.role === 'Staf';
 
         if (!isPemilik) {
-            const phaseLink = Array.from(document.querySelectorAll('a')).find(el => el.href.includes('phase.html'));
-            if (phaseLink) phaseLink.style.display = 'none';
+            // Hide any phase links
+            const phaseLinks = document.querySelectorAll('a[href*="phase.html"]');
+            phaseLinks.forEach(link => {
+                link.style.display = 'none';
+                link.classList.add('hidden');
+            });
+            // Hard block direct access to phase.html
+            if (window.location.pathname.includes('phase.html')) {
+                alert('Akses Ditolak: Hanya Pemilik Sistem yang dapat mengelola fase.');
+                window.location.href = 'index.html';
+                return;
+            }
         }
 
         if (!isPemilik && currentUser.deptId) {
