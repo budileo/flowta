@@ -1026,18 +1026,35 @@ function closeConfirm() {
     document.getElementById('confirm-overlay').classList.add('hidden');
 }
 
-document.getElementById('confirm-ok').addEventListener('click', () => {
+document.getElementById('confirm-ok').addEventListener('click', async () => {
     if (!pendingDelete) return;
     const { type, id } = pendingDelete;
-    if (type === 'dept') {
-        departments = departments.filter(d => d.id !== id);
-        saveDepts(); closeConfirm(); renderDept();
-    } else if (type === 'user') {
-        users = users.filter(u => u.id !== id);
-        saveUsers(); closeConfirm(); renderUsers();
-    } else if (type === 'spk') {
-        cards = cards.filter(c => c.id !== id);
-        saveCards(); closeConfirm(); renderSpk();
+    
+    const btn = document.getElementById('confirm-ok');
+    const oriText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin align-middle mr-1">progress_activity</span> Memproses...';
+    btn.disabled = true;
+
+    try {
+        if (type === 'dept') {
+            await window.db.deleteDepartment(id);
+            departments = departments.filter(d => d.id !== id);
+            saveDepts(); closeConfirm(); renderDept();
+        } else if (type === 'user') {
+            await window.db.deleteUser(id);
+            users = users.filter(u => u.id !== id);
+            saveUsers(); closeConfirm(); renderUsers();
+        } else if (type === 'spk') {
+            await window.db.deleteCard(id);
+            cards = cards.filter(c => c.id !== id);
+            saveCards(); closeConfirm(); renderSpk();
+        }
+    } catch(err) {
+        console.error('Delete error:', err);
+        alert('Gagal menghapus data dari server. Periksa koneksi Anda.');
+    } finally {
+        btn.innerHTML = oriText;
+        btn.disabled = false;
     }
 });
 

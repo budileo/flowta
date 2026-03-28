@@ -23,11 +23,24 @@
     const activeUserId = localStorage.getItem(CURRENT_USER_KEY);
     let currentUser = null;
 
+    // Fast synchronous fail if no token
+    if (!activeUserId && !isLoginPath) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Hide page content while verifying existing token to prevent flashes/interactions
+    if (!isLoginPath) {
+        document.documentElement.style.display = 'none';
+    }
+
     if (activeUserId) {
         currentUser = await window.db.getUserById(activeUserId);
     }
 
     if (!currentUser && !isLoginPath) {
+        // Token is invalid or user was deleted
+        localStorage.removeItem(CURRENT_USER_KEY);
         window.location.href = 'login.html';
         return;
     }
@@ -35,6 +48,11 @@
     if (currentUser && isLoginPath) {
         window.location.href = 'index.html';
         return;
+    }
+
+    // Reveal page once verified
+    if (!isLoginPath) {
+        document.documentElement.style.display = '';
     }
 
     // ACTIVE DEPARTMENT CONTEXT
