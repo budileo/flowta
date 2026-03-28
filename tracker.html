@@ -566,7 +566,8 @@
                         rating: Math.round((review.ratings.produk + review.ratings.layanan + review.ratings.pengiriman + review.ratings.waktu) / 4),
                         comment: review.comment,
                         reviewerName: review.name,
-                        deptId: card.deptId
+                        deptId: card.deptId,
+                        ratings: review.ratings
                     });
 
                     // Animate submit

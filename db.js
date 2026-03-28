@@ -299,26 +299,57 @@ const db = {
         if (deptId) q = q.eq('dept_id', deptId);
         const { data, error } = await q;
         if (error) { console.error('getReviews:', error); return []; }
-        return data.map(r => ({
-            id: r.id, cardId: r.card_id, rating: r.rating, comment: r.comment,
-            reviewerName: r.reviewer_name, timestamp: r.timestamp, deptId: r.dept_id
-        }));
+        return data.map(r => {
+            let parsedComment = r.comment || '';
+            let ratingsObj = { produk: r.rating || 5, layanan: r.rating || 5, pengiriman: r.rating || 5, waktu: r.rating || 5 };
+            if (parsedComment.startsWith('JSON:')) {
+                try {
+                    const parsed = JSON.parse(parsedComment.slice(5));
+                    if (parsed.ratings) ratingsObj = parsed.ratings;
+                    parsedComment = parsed.text || '';
+                } catch(e) {}
+            }
+            return {
+                id: r.id, cardId: r.card_id, rating: r.rating, comment: parsedComment,
+                reviewerName: r.reviewer_name, timestamp: r.timestamp, deptId: r.dept_id,
+                ratings: ratingsObj
+            };
+        });
     },
 
     async getReviewsByCard(cardId) {
         const { data, error } = await getSupabase().from('reviews').select('*')
             .eq('card_id', cardId).order('timestamp', { ascending: false });
         if (error) { console.error('getReviewsByCard:', error); return []; }
-        return data.map(r => ({
-            id: r.id, cardId: r.card_id, rating: r.rating, comment: r.comment,
-            reviewerName: r.reviewer_name, timestamp: r.timestamp, deptId: r.dept_id
-        }));
+        return data.map(r => {
+            let parsedComment = r.comment || '';
+            let ratingsObj = { produk: r.rating || 5, layanan: r.rating || 5, pengiriman: r.rating || 5, waktu: r.rating || 5 };
+            if (parsedComment.startsWith('JSON:')) {
+                try {
+                    const parsed = JSON.parse(parsedComment.slice(5));
+                    if (parsed.ratings) ratingsObj = parsed.ratings;
+                    parsedComment = parsed.text || '';
+                } catch(e) {}
+            }
+            return {
+                id: r.id, cardId: r.card_id, rating: r.rating, comment: parsedComment,
+                reviewerName: r.reviewer_name, timestamp: r.timestamp, deptId: r.dept_id,
+                ratings: ratingsObj
+            };
+        });
     },
 
     async addReview(review) {
+        let finalComment = review.comment || '';
+        if (review.ratings) {
+            finalComment = 'JSON:' + JSON.stringify({
+                ratings: review.ratings,
+                text: review.comment || ''
+            });
+        }
         const row = {
             id: review.id || genId('REV'), card_id: review.cardId, rating: review.rating || 5,
-            comment: review.comment || '', reviewer_name: review.reviewerName || 'Anonim',
+            comment: finalComment, reviewer_name: review.reviewerName || 'Anonim',
             timestamp: review.timestamp || new Date().toISOString(), dept_id: review.deptId || null
         };
         const { error } = await getSupabase().from('reviews').insert(row);
