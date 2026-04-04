@@ -42,68 +42,68 @@ window.calcDeadline = function(createdAt, dueDate) {
     // Progress percentage (0-100)
     const persenWaktu = totalJam > 0 ? Math.min(100, Math.max(0, (terpakaiMs / (totalJam * 3600000)) * 100)) : 100;
 
-    // Human-readable time remaining/overdue
     let timeText = '';
     const absSisaJam = Math.abs(sisaJam);
     const hari = Math.floor(absSisaJam / 24);
     const jam = Math.floor(absSisaJam % 24);
 
     if (hari > 0 && jam > 0) {
-        timeText = `${hari} Hari, ${jam} Jam`;
+        timeText = `${hari}H ${jam}J`;
     } else if (hari > 0) {
-        timeText = `${hari} Hari`;
+        timeText = `${hari}H`;
     } else if (jam > 0) {
-        timeText = `${jam} Jam`;
+        timeText = `${jam}J`;
     } else {
-        // Less than 1 hour
         const menit = Math.floor(Math.abs(sisaMs) / 60000);
-        timeText = menit > 0 ? `${menit} Menit` : 'Sekarang';
+        timeText = menit > 0 ? `${menit}M` : '0M';
     }
 
-    // 3. STATUS TENGGAT
-    let status, label, color, level;
+    let status, color, level, bg, kanbanText, pulse = false;
 
     if (sisaJam > 12) {
         status = 'SANGAT AMAN';
-        label = `${timeText} Tersisa`;
         color = 'emerald';
         level = 1;
+        bg = 'linear-gradient(135deg, #d4f8e8, #b7efd5)';
+        kanbanText = '#065f46';
     } else if (sisaJam > 6) {
         status = 'AMAN';
-        label = `${timeText} Tersisa`;
         color = 'sky';
         level = 2;
+        bg = 'linear-gradient(135deg, #bbf7d0, #86efac)';
+        kanbanText = '#064e3b';
     } else if (sisaJam > 2) {
         status = 'WARNING';
-        label = `${timeText} Tersisa`;
         color = 'amber';
         level = 3;
+        bg = 'linear-gradient(135deg, #fef9c3, #fde68a)';
+        kanbanText = '#78350f';
     } else if (sisaJam >= -4) {
-        if (sisaJam >= 0) {
-            status = 'TERLAMBAT';
-            label = `${timeText} Tersisa`;
-        } else {
-            status = 'TERLAMBAT';
-            label = `Lebih ${timeText}`;
-        }
+        status = 'TERLAMBAT';
         color = 'orange';
         level = 4;
+        bg = 'linear-gradient(135deg, #fecaca, #fca5a5)';
+        kanbanText = '#7f1d1d';
     } else {
         status = 'SANGAT TERLAMBAT';
-        label = `Lebih ${timeText}`;
         color = 'rose';
         level = 5;
+        bg = 'linear-gradient(135deg, #ef4444, #b91c1c)';
+        kanbanText = '#ffffff';
+        pulse = true;
     }
 
-    // Compose final text: "STATUS, detail"
-    const text = `${status}, ${label}`;
+    const text = `${status}, ${timeText}`;
 
     return {
-        status,       // e.g. "SANGAT AMAN", "WARNING", "TERLAMBAT"
-        label,        // e.g. "6 Hari, 3 Jam Tersisa" or "Lebih 1 Hari, 8 Jam"
-        text,         // Combined: "SANGAT AMAN, 6 Hari, 3 Jam Tersisa"
-        color,        // Tailwind color key: emerald, sky, amber, orange, rose
-        level,        // 1-5 severity
+        status,
+        label: timeText,
+        text,
+        color,
+        level,
+        kanbanBg: bg,
+        kanbanText,
+        pulse,
         persenWaktu:  Math.round(persenWaktu),
         sisaJam:      Math.round(sisaJam * 10) / 10
     };
