@@ -147,9 +147,13 @@
                                         <div class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold" id="info-type-badge">
                                             NORMAL
                                         </div>
-                                        <button id="btn-copy-tracker" type="button" class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-primary hover:border-primary dark:hover:border-primary transition-colors shadow-sm" title="Salin Link Tracker Publik">
+                                        <button id="btn-copy-tracker" type="button" class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-primary hover:border-primary dark:hover:border-primary transition-colors shadow-sm" title="Salin Link Publik">
                                             <span class="material-symbols-outlined text-[14px] pointer-events-none">link</span>
                                             <span>Link Publik</span>
+                                        </button>
+                                        <button id="btn-copy-wa" type="button" class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-500 hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors shadow-sm" title="Salin Draft WA Publik">
+                                            <span class="material-symbols-outlined text-[14px] pointer-events-none">chat</span>
+                                            <span>Link WA</span>
                                         </button>
                                     </div>
                                 </div>
@@ -867,7 +871,7 @@
                     qcHtmlRows += `</tr>`;
                 });
                 
-                qcTableBody.innerHTML = qcHtmlRows;
+                if(qcTableBody) qcTableBody.innerHTML = qcHtmlRows;
 
                 if (cardHistories.length === 0) {
                     // Fallback to minimal created state if it's an old placeholder card
@@ -986,6 +990,34 @@
                         }).catch(err => {
                             console.error('Gagal menyalin:', err);
                             alert('Gagal menyalin link. Silakan coba lagi.');
+                        });
+                    });
+                }
+                
+                // LINK WA Logic
+                const btnWa = document.getElementById('btn-copy-wa');
+                if (btnWa) {
+                    btnWa.addEventListener('click', () => {
+                        const currentUrl = window.location.href;
+                        const trackerUrl = currentUrl.replace('product-detail.html', 'tracker.html');
+                        
+                        const titleParts2 = card.title.split(' ');
+                        const klienName = titleParts2.length > 1 ? titleParts2.slice(1).join(' ') : 'Klien';
+                        const adminNameStr = window.flowtaUser ? window.flowtaUser.name : 'Admin';
+                        
+                        const waText = `Terimakasih ${klienName}\nsudah mempercayakan pada TATA KELOLA,\nSaat ini (SPK ${window.currentSpkInfo.spkNo}, ${window.currentSpkInfo.title}),\nbisa Anda lihat progres nya : ${trackerUrl}\nTerimakasih - ${adminNameStr}`;
+                        
+                        navigator.clipboard.writeText(waText).then(() => {
+                            const originalHtml = btnWa.innerHTML;
+                            btnWa.innerHTML = `<span class="material-symbols-outlined text-[14px] text-emerald-500">check</span><span class="text-emerald-500">Tersalin!</span>`;
+                            btnWa.classList.add('border-emerald-500');
+                            setTimeout(() => {
+                                btnWa.innerHTML = originalHtml;
+                                btnWa.classList.remove('border-emerald-500');
+                            }, 2000);
+                        }).catch(err => {
+                            console.error('Gagal menyalin:', err);
+                            alert('Gagal menyalin draft WA. Silakan coba lagi.');
                         });
                     });
                 }
