@@ -225,24 +225,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-span-1 md:col-span-2 lg:col-span-3 mt-4">
-                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Rekapitulasi Quality Control</p>
-                                    <div class="overflow-hidden border border-slate-200 dark:border-slate-700/50 rounded-xl bg-white dark:bg-slate-800/50">
-                                        <table class="w-full text-left text-sm whitespace-nowrap">
-                                            <thead class="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs uppercase font-semibold">
-                                                <tr>
-                                                    <th class="px-6 py-4">Fase Produksi</th>
-                                                    <th class="px-6 py-4">Waktu Masuk & Durasi</th>
-                                                    <th class="px-6 py-4 text-center">Status QC</th>
-                                                    <th class="px-6 py-4">Diperiksa Oleh</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50" id="qc-table-body">
-                                                <!-- Injected by JS -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
                                 <div class="col-span-1 md:col-span-2 lg:col-span-3">
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
                                         <div>
@@ -1110,8 +1092,13 @@
                             });
                             localStorage.setItem('flowta_qc', JSON.stringify(qcRecords));
                             
-                            alert('Aktivitas berhasil disimpan! Hubungkan ke Dashboard/Kanban untuk melihat efeknya.');
-                            window.location.reload();
+                            btnFinish.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Menyinkronkan...`;
+                            btnFinish.disabled = true;
+                            
+                            setTimeout(() => {
+                                alert('Aktivitas berhasil disimpan! Data telah disinkronkan ke Database.');
+                                window.location.reload();
+                            }, 1500);
                         } else {
                             alert('Galat: SPK tidak ditemukan di database.');
                         }
