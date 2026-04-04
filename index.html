@@ -85,10 +85,9 @@
                         <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Cari SPK, Klien, atau Nama Produk... [Enter]" type="text" />
                     </div>
                 </div>
-                <div id="greeting-box" class="hidden text-right mr-6">
-                    <p class="text-sm font-bold text-slate-800 dark:text-white">Halo <span id="greeting-name"></span>, selamat datang di Flowta.</p>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Semoga bisnis <span id="greeting-dept" class="font-bold text-primary">Flowta</span> semakin sukses.</p>
-                    <p class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold mt-1 bg-emerald-500/10 inline-block px-2 py-0.5 rounded-full border border-emerald-500/20">Sistem ini masih berfungsi dengan baik sampai dengan sisa token = <span id="greeting-token"></span></p>
+                <div id="greeting-box" class="hidden text-right mr-4">
+                    <p class="text-sm font-bold text-slate-800 dark:text-white leading-tight"><span id="greeting-dept" class="text-primary">—</span></p>
+                    <p class="text-xs text-slate-400 mt-0.5">User : <span id="greeting-name" class="font-semibold text-slate-300">—</span>, Sisa Token : <span id="greeting-token" class="font-bold text-emerald-400">—</span></p>
                 </div>
                 <div class="flex items-center gap-3">
                     <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
@@ -614,14 +613,15 @@
                 document.getElementById('greeting-name').textContent = window.flowtaUser.name;
                 
                 const depts = JSON.parse(localStorage.getItem('flowta_departments')) || [];
-                const myDept = depts.find(d => d.id === window.flowtaUser.deptId);
+                const activeDeptId = localStorage.getItem('flowta_active_dept');
+                const myDept = depts.find(d => d.id === (activeDeptId || window.flowtaUser.deptId));
                 
                 if (myDept) {
                     document.getElementById('greeting-dept').textContent = myDept.name;
                     document.getElementById('greeting-token').textContent = myDept.token || '0';
                 } else {
-                    document.getElementById('greeting-dept').textContent = 'Anda';
-                    document.getElementById('greeting-token').textContent = 'Unlimited';
+                    document.getElementById('greeting-dept').textContent = 'Flowta';
+                    document.getElementById('greeting-token').textContent = '∞';
                 }
             }
         });

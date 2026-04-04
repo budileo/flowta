@@ -102,7 +102,31 @@
 
             <!-- Tracker Info -->
             <div id="tracker-data" class="hidden space-y-8">
-                
+
+                <!-- Departemen Info -->
+                <div id="dept-info" class="hidden glass-panel rounded-2xl border border-blue-400/20 dark:border-blue-500/15 p-5 shadow-lg">
+                    <div class="flex items-start gap-4">
+                        <img id="dept-logo" src="logo.png" alt="Dept Logo" class="h-14 w-14 object-contain rounded-xl bg-white dark:bg-slate-800 p-1.5 border border-slate-200 dark:border-slate-700 shrink-0 shadow-sm" />
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-lg font-bold text-slate-800 dark:text-white leading-tight" id="dept-name">—</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-start gap-1" id="dept-address-wrap">
+                                <span class="material-symbols-outlined text-[13px] mt-0.5 shrink-0 text-slate-400">location_on</span>
+                                <span id="dept-address">—</span>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-4">
+                        <a id="dept-phone-btn" href="#" class="hidden flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary dark:text-blue-400 text-sm font-bold transition-all border border-primary/20 shadow-sm">
+                            <span class="material-symbols-outlined text-[18px]">call</span>
+                            <span id="dept-phone-label">Telepon</span>
+                        </a>
+                        <a id="dept-wa-btn" href="#" target="_blank" class="hidden flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-sm font-bold transition-all border border-emerald-500/20 shadow-sm">
+                            <span class="material-symbols-outlined text-[18px]">forum</span>
+                            <span id="dept-wa-label">WhatsApp</span>
+                        </a>
+                    </div>
+                </div>
+
                 <!-- SPK Heading -->
                 <div class="glass-panel rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-lg">
                     <div class="flex flex-col gap-4 mb-5">
@@ -338,6 +362,47 @@
                 document.getElementById('tr-title').textContent = titleParts.slice(1).join(' ');
                 document.getElementById('tr-due').textContent = card.dueDateDesc || '-';
                 document.getElementById('tr-item').textContent = card.type || '-';
+
+                // ── Department Info ──
+                if (card.deptId) {
+                    try {
+                        const depts = await window.db.getDepartments();
+                        const dept = depts.find(d => d.id === card.deptId);
+                        if (dept) {
+                            const deptInfoEl = document.getElementById('dept-info');
+                            deptInfoEl.classList.remove('hidden');
+
+                            document.getElementById('dept-name').textContent = dept.name || '—';
+                            document.getElementById('dept-address').textContent = dept.address || 'Alamat belum diisi';
+
+                            if (dept.logo) {
+                                document.getElementById('dept-logo').src = dept.logo;
+                            }
+
+                            // Phone button
+                            if (dept.phone) {
+                                const phoneBtn = document.getElementById('dept-phone-btn');
+                                const cleanPhone = dept.phone.replace(/[^0-9+]/g, '');
+                                phoneBtn.href = 'tel:' + cleanPhone;
+                                document.getElementById('dept-phone-label').textContent = dept.phone;
+                                phoneBtn.classList.remove('hidden');
+                            }
+
+                            // WhatsApp button
+                            if (dept.wa) {
+                                const waBtn = document.getElementById('dept-wa-btn');
+                                let waNum = dept.wa.replace(/[^0-9]/g, '');
+                                if (waNum.startsWith('0')) waNum = '62' + waNum.substring(1);
+                                waBtn.href = 'https://wa.me/' + waNum;
+                                document.getElementById('dept-wa-label').textContent = dept.wa;
+                                waBtn.classList.remove('hidden');
+                            }
+                        }
+                    } catch (err) {
+                        console.error('[Tracker] Dept info load failed:', err);
+                    }
+                }
+
                 
                 // Tanggal+jam aktual Target Selesai
                 const dueDatetimeValEl = document.getElementById('tr-due-datetime-val');
