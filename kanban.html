@@ -118,6 +118,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
     <div class="flex h-screen overflow-hidden">
@@ -674,10 +675,16 @@
                                         <div class="${sz.footerMt} border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
                                             ${qcIndicatorHtml}
                                             <div class="flex items-center ${sz.gapMeta}">
-                                                <div class="flex items-center ${sz.innerGap} ${sz.dueBadge} rounded bg-${card.dueColor}-500/10 text-${card.dueColor}-600 dark:text-${card.dueColor}-400 ring-1 ring-${card.dueColor}-500/20 pointer-events-none font-semibold whitespace-nowrap">
-                                                    <span class="material-symbols-outlined ${sz.dueIcon}">event</span>
-                                                    <span class="uppercase tracking-wide leading-none">${card.dueDateDesc || 'No Due'}</span>
-                                                </div>
+                                                ${(() => {
+                                                    const dl = window.calcDeadline(card.createdAt, card.dueDate);
+                                                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                                                    const dlColor = isFinished ? 'slate' : dl.color;
+                                                    const dlText = isFinished ? (card.status === 'SELESAI' ? 'SELESAI' : 'BATAL') : dl.text;
+                                                    return `<div class="flex items-center ${sz.innerGap} ${sz.dueBadge} rounded bg-${dlColor}-500/10 text-${dlColor}-600 dark:text-${dlColor}-400 ring-1 ring-${dlColor}-500/20 pointer-events-none font-semibold whitespace-nowrap">
+                                                        <span class="material-symbols-outlined ${sz.dueIcon}">event</span>
+                                                        <span class="uppercase tracking-wide leading-none">${dlText}</span>
+                                                    </div>`;
+                                                })()}
                                                 <div class="h-3 w-[1px] bg-slate-200 dark:bg-slate-700 mx-0.5"></div>
                                                 <div class="flex items-center gap-0.5 shrink-0">
                                                     <!-- Buttons are now isolated from the dblclick wrapper -->
@@ -830,23 +837,11 @@
                     priorityIcon = 'priority_high';
                 }
                 
-                // Calculate rough due date distance logic (simplified)
-                const dueDate = document.getElementById('spkDueDate').value;
-                let dueDesc = "Tidak Ditentukan";
-                let dueColor = "slate";
-                
-                if (dueDate) {
-                    const diffDays = Math.ceil((new Date(dueDate) - new Date()) / (1000 * 60 * 60 * 24));
-                    if (diffDays < 0) {
-                        dueDesc = `${Math.abs(diffDays)} Hari Terlambat`;
-                        dueColor = "rose";
-                    } else if (diffDays === 0) {
-                        dueDesc = "Hari Ini";
-                        dueColor = "orange";
-                    } else {
-                        dueDesc = `${diffDays} Hari Tersisa`;
-                        dueColor = "emerald";
-                    }
+                // Store due date as ISO string for dynamic calculation
+                const dueDateInput = document.getElementById('spkDueDate').value;
+                let dueDateIso = '';
+                if (dueDateInput) {
+                    dueDateIso = new Date(dueDateInput + 'T17:00:00').toISOString();
                 }
                 
                 let targetPhase = document.getElementById('spkTargetPhaseId').value;
@@ -859,8 +854,7 @@
                     type: item,
                     tagDesc: tagDesc,
                     tagColor: tagColor,
-                    dueDateDesc: dueDesc,
-                    dueColor: dueColor,
+                    dueDate: dueDateIso,
                     priority: priorityDesc,
                     priorityIcon: priorityIcon
                 };

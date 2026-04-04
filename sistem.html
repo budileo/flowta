@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="id">
 <head>
     <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
@@ -109,6 +109,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
 <div class="flex h-screen overflow-hidden">
@@ -655,6 +656,12 @@ function renderSpk() {
         else if (c.status === 'BATAL') statusBadge = `<span class="badge-batal px-2.5 py-1 rounded-md text-xs font-bold">Batal</span>`;
         else statusBadge = `<span class="badge-aktif px-2.5 py-1 rounded-md text-xs font-bold">Aktif</span>`;
 
+        const createEv = histories.find(h => h.cardId === c.id && h.type === 'create');
+        const createdAt = createEv ? createEv.timestamp : (c.createdAt || null);
+        const dl = window.calcDeadline(createdAt, c.dueDate);
+        const isFinished = c.status === 'SELESAI' || c.status === 'BATAL';
+        const targetStr = isFinished ? (c.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+
         html += `<tr class="trow text-sm transition-colors cursor-pointer" onclick="window.location.href='product-detail.html?id=${c.id}'">
             <td class="px-6 py-4">
                 <div class="font-mono font-bold text-slate-300">${esc(spkNo)}</div>
@@ -662,7 +669,7 @@ function renderSpk() {
             </td>
             <td class="px-6 py-4 text-slate-400 text-sm">${esc(c.type || '—')}</td>
             <td class="px-6 py-4 text-center">${statusBadge}</td>
-            <td class="px-6 py-4 text-slate-400 text-sm">${esc(c.dueDateDesc || '—')}</td>
+            <td class="px-6 py-4 text-slate-400 text-sm">${esc(targetStr)}</td>
             <td class="px-6 py-4 text-center" onclick="event.stopPropagation()">
                 <div class="flex items-center justify-center gap-2">
                     <a href="product-detail.html?id=${c.id}" class="p-1.5 rounded-lg text-slate-400 hover:bg-primary/10 hover:text-primary transition" title="Lihat Detail">
@@ -695,9 +702,16 @@ function filterSpk(status) {
 function exportSpkCSV() {
     cards = JSON.parse(localStorage.getItem(CARD_KEY)) || [];
     const rows = [['No. SPK','Judul','Tipe','Status','Tenggat']];
+    const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
     cards.forEach(c => {
+        const createEv = histories.find(h => h.cardId === c.id && h.type === 'create');
+        const createdAt = createEv ? createEv.timestamp : (c.createdAt || null);
+        const dl = window.calcDeadline(createdAt, c.dueDate);
+        const isFinished = c.status === 'SELESAI' || c.status === 'BATAL';
+        const targetStr = isFinished ? (c.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+
         const parts = (c.title || '').split(' ');
-        rows.push([parts[0], parts.slice(1).join(' '), c.type || '', c.status || 'AKTIF', c.dueDateDesc || '']);
+        rows.push([parts[0], parts.slice(1).join(' '), c.type || '', c.status || 'AKTIF', targetStr]);
     });
     const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });

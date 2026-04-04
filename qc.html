@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="id">
 <head>
     <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
@@ -38,6 +38,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
 </head>
 <body class="bg-background-dark font-display text-slate-100 min-h-screen selection:bg-primary/30">
 <div class="flex h-screen overflow-hidden">
@@ -405,11 +406,13 @@ function renderTable() {
         const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
         const createdStr = createdAt ? fmtDate(createdAt) : '—';
 
-        // Target Selesai: label relatif + tanggal+jam aktual
-        const targetStr = card.dueDateDesc || '—';
-        let targetTdClass = 'text-slate-400';
-        if (targetStr.includes('Terlambat')) targetTdClass = 'text-rose-400 font-bold';
-        else if (targetStr.includes('Hari Ini')) targetTdClass = 'text-orange-400 font-bold';
+        // Target Selesai: dynamic
+        const dl = window.calcDeadline(createdAt, card.dueDate);
+        const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+        const targetStr = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+        const dlColor = isFinished ? 'slate' : dl.color;
+        let targetTdClass = `text-${dlColor}-400`;
+        if (!isFinished && dl.level >= 4) targetTdClass = `text-${dlColor}-400 font-bold`;
         const targetDatetimeStr = card.dueDate ? fmtDate(card.dueDate) : '—';
 
         html += `<tr class="table-row-hover text-sm transition-colors ${rowOp}" onclick="window.location.href='product-detail.html?id=${esc(card.id)}'">

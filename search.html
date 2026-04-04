@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="id">
 <head>
     <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
@@ -36,6 +36,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
 </head>
 <body class="bg-background-dark font-display text-slate-100 min-h-screen selection:bg-primary/30">
 <div class="flex h-screen overflow-hidden">
@@ -214,7 +215,9 @@ function doSearch(query) {
     const matchedSpk = kanbanCards.filter(c => {
         const title  = (c.title || '').toLowerCase();
         const type   = (c.type  || '').toLowerCase();
-        const due    = (c.dueDateDesc || '').toLowerCase();
+        const createEv = histories.find(h => h.cardId === c.id && h.type === 'create');
+        const dl = window.calcDeadline(createEv ? createEv.timestamp : null, c.dueDate);
+        const due    = dl.text.toLowerCase();
         const spkNo  = (c.spkNumber || '').toLowerCase();
         const client = (c.client || '').toLowerCase();
         return title.includes(ql) || type.includes(ql) || due.includes(ql) || spkNo.includes(ql) || client.includes(ql);
@@ -303,7 +306,9 @@ function buildSpkUI(cards, q, histories, phases, allQcRecs) {
                     const createEv = histories.find(h => h.cardId === card.id && h.type === 'create');
                     const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
                     const createdStr = createdAt ? fmtDate(createdAt) : '—';
-                    const targetStr = card.dueDateDesc || '—';
+                    const dl = window.calcDeadline(createdAt, card.dueDate);
+                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                    const targetStr = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
                     const targetDatetimeStr = card.dueDate ? fmtDate(card.dueDate) : '—';
 
                     let targetTdClass = 'text-slate-400';

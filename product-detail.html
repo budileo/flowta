@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="en">
 <head>
     <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
@@ -70,6 +70,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
     <div class="flex h-screen overflow-hidden">
@@ -607,26 +608,11 @@
             // Build new title
             const newTitle = `${spkNo} ${spkTitle}`;
 
-            // Calculate dueDate ISO & label
+            // Calculate dueDate ISO
             let dueDateIso = '';
-            let dueDateDesc = 'Tidak ada tenggat';
-            let dueColor = 'slate';
             if (dueDateVal) {
                 const dueObj  = new Date(`${dueDateVal}T${dueTimeVal}:00`);
                 dueDateIso    = dueObj.toISOString();
-                const now     = new Date();
-                const diffMs  = dueObj - now;
-                const diffDays = Math.ceil(diffMs / (1000*60*60*24));
-                if (diffDays < 0) {
-                    dueDateDesc = `${Math.abs(diffDays)} Hari Terlambat`;
-                    dueColor = 'rose';
-                } else if (diffDays === 0) {
-                    dueDateDesc = 'Hari Ini';
-                    dueColor = 'orange';
-                } else {
-                    dueDateDesc = `${diffDays} Hari Tersisa`;
-                    dueColor = 'emerald';
-                }
             }
 
             // Tag color
@@ -644,8 +630,6 @@
             kanbanCards[idx].tagDesc     = tagDesc;
             kanbanCards[idx].tagColor    = tagColor;
             kanbanCards[idx].dueDate     = dueDateIso;
-            kanbanCards[idx].dueDateDesc = dueDateDesc;
-            kanbanCards[idx].dueColor    = dueColor;
 
             localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
 
@@ -702,7 +686,11 @@
                     
                     document.getElementById('info-id').textContent = titleParts[0];
                     document.getElementById('info-title').textContent = card.title;
-                    document.getElementById('info-due').textContent = `${card.dueDateDesc}`;
+                    // Dynamic deadline calculation
+                    const dl = window.calcDeadline(card.createdAt, card.dueDate);
+                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                    const dueText = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+                    document.getElementById('info-due').textContent = dueText;
                     
                     // Tanggal+jam aktual Target Selesai
                     const dueDatetimeEl = document.getElementById('info-due-datetime-val');
@@ -710,12 +698,14 @@
                         dueDatetimeEl.textContent = card.dueDate ? formatDateTime(card.dueDate) : '—';
                     }
                     
-                    if(card.dueDateDesc.includes('Terlambat')) {
-                         document.getElementById('info-due').className = "text-rose-500 font-bold";
-                    } else if(card.dueDateDesc.includes('Hari Ini')) {
-                         document.getElementById('info-due').className = "text-orange-500 font-bold";
+                    if (isFinished) {
+                        document.getElementById('info-due').className = 'text-slate-400 font-semibold';
+                    } else if (dl.level >= 4) {
+                        document.getElementById('info-due').className = `text-${dl.color}-500 font-bold`;
+                    } else if (dl.level === 3) {
+                        document.getElementById('info-due').className = 'text-amber-500 font-bold';
                     } else {
-                         document.getElementById('info-due').className = "text-emerald-500 font-bold";
+                        document.getElementById('info-due').className = `text-${dl.color}-500 font-bold`;
                     }
                     
                     if(card.type) {

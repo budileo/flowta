@@ -62,6 +62,7 @@
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
     <div class="flex h-screen overflow-hidden">
@@ -355,6 +356,12 @@
 
                     const createEv = cardHistories.find(h => h.type === 'create');
                     const creatorName = createEv && createEv.user ? createEv.user : 'Sistem';
+                    const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
+
+                    const dl = window.calcDeadline(createdAt, card.dueDate);
+                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                    const dlText = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+                    const targetClass = isFinished ? 'text-slate-400 font-medium' : (dl.level >= 4 ? `text-${dl.color}-400 font-bold` : `text-${dl.color}-400 font-medium`);
 
                     tbHtml += `
                     <tr class="text-sm hover:bg-white/5 transition-colors cursor-pointer" onclick="window.location.href='product-detail.html?id=${card.id}'">
@@ -365,7 +372,7 @@
                         </td>
                         <td class="py-4 text-slate-400"><div class="flex items-center gap-1 text-[11px]"><span class="material-symbols-outlined text-[13px]">person</span> ${creatorName}</div></td>
                         <td class="py-4 text-slate-300"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">architecture</span> ${phaseName}</span></td>
-                        <td class="py-4 text-slate-400 font-medium">${card.dueDateDesc || 'No Due'}</td>
+                        <td class="py-4 ${targetClass}">${dlText}</td>
                         <td class="py-4">${durationBadge}</td>
                         <td class="py-4">${statusBadge}</td>
                     </tr>
