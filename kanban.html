@@ -546,7 +546,9 @@
             localStorage.setItem('flowta_history', JSON.stringify(histories));
             
             closeQcModal();
-            // Show toast or alert ideally, but we'll just reload or silently close for now
+            // Re-render board after QC data changed
+            if (window.renderKanban) window.renderKanban();
+            if (window.renderHeatmap) window.renderHeatmap();
         };
 
          document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
@@ -793,6 +795,7 @@
                             // Small delay to allow Sortable to finish its DOM manipulation safely
                             setTimeout(() => {
                                 renderKanban();
+                                renderHeatmap();
                             }, 50);
                         },
                     });
@@ -879,6 +882,7 @@
                 
                 closeSpkModal();
                 renderKanban();
+                renderHeatmap();
             };
 
             // ── Activity Heatmap ──────────────────────────────────────────
@@ -941,6 +945,10 @@
 
             renderKanban();
             renderHeatmap();
+
+            // Expose globally so handleQcSubmit (outside this closure) can call them
+            window.renderKanban = renderKanban;
+            window.renderHeatmap = renderHeatmap;
 
             // View Toggle Logic
             const btnBoard = document.getElementById('btn-board-view');
