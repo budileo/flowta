@@ -556,12 +556,28 @@ function renderLaporanAll() {
         if (isSelesai) {
             const completeLog = history.find(h => h.cardId === c.id && h.type === 'complete');
             if (completeLog && (c.targetDate || c.dueDate)) {
-                // target in hours
-                const targetJam = (new Date(c.targetDate || c.dueDate) - new Date(c.createdAt)) / 3600000;
-                const realisasiJam = (new Date(completeLog.timestamp) - new Date(c.createdAt)) / 3600000;
+                const tMs = new Date(c.targetDate || c.dueDate).getTime();
+                const cMs = new Date(c.createdAt).getTime();
+                const sMs = new Date(completeLog.timestamp).getTime();
+                
+                const targetJam = (tMs - cMs) / 3600000;
+                const realisasiJam = (sMs - cMs) / 3600000;
 
-                if (targetJam > 0 && realisasiJam >= 0) {
-                    const persen = (realisasiJam / targetJam) * 100;
+                let persen = 0;
+                let valid = false;
+
+                if (targetJam > 0) {
+                    if (realisasiJam >= 0) {
+                        persen = (realisasiJam / targetJam) * 100;
+                        valid = true;
+                    }
+                } else {
+                    // Target kadaluarsa pada saat dibuat
+                    persen = (sMs <= tMs) ? 100 : 999;
+                    valid = true;
+                }
+
+                if (valid) {
                     c._realisasiPersen = Math.round(persen);
 
                     if (persen < 70) { kSangatCepat++; realisasiLabel = 'Sangat Cepat'; }
@@ -572,6 +588,9 @@ function renderLaporanAll() {
                     else { kSangatTerlambat++; realisasiLabel = 'Sgt Terlambat'; }
 
                     addHeatData(completeLog.timestamp, `Selesai: ${realisasiLabel}`);
+                } else {
+                    realisasiLabel = 'Tidak Dihitung';
+                    c._realisasiPersen = null;
                 }
             } else {
                 realisasiLabel = 'Tidak Dihitung'; // Kosong bila SPK langsung diselesaikan tanpa deadline
