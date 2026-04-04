@@ -757,7 +757,7 @@ function renderLaporanAll() {
             phaseCards.forEach(card => {
                 const priorityBdg = (card.priority||'Normal').toUpperCase();
                 const perfBdg = card._performa;
-                const realisasiBdg = card._realisasiPersen !== null ? `${card._realisasiPersen}% (${card._realisasi})` : `<span class="text-slate-600">N/A</span>`;
+                const realisasiBdg = card._realisasiPersen != null ? `${card._realisasiPersen}% (${card._realisasi})` : `<span class="text-slate-600">N/A</span>`;
 
                 html += `
                 <tr class="table-row border-b border-slate-800/50 cursor-pointer" onclick="window.location='product-detail.html?id=${card.id}'">
