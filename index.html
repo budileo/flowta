@@ -61,99 +61,21 @@
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
 </head>
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
     <div class="flex h-screen overflow-hidden">
-        <!-- SIDEBAR -->
-        <aside class="w-72 glass-nav hidden lg:flex flex-col h-full border-r border-slate-200 dark:border-slate-800">
-            <div class="p-6 flex items-center gap-3">
-                <img src="logo.png" alt="FLOWTA Logo" class="h-10 w-auto object-contain drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
-            <div class="flex flex-col">
-                <span class="font-bold text-xl tracking-tight leading-tight">FLOWTA</span>
-                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tata Kelola Manajemen</span>
-            </div>
-            </div>
-            
-            <div class="flex-1 overflow-y-auto px-4 py-2 mt-2">
-                <div class="space-y-1 mb-6">
-                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Workspace</p>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 transition-all font-medium" href="index.html">
-                        <span class="material-symbols-outlined text-[20px]">grid_view</span>
-                        <span>Dasbor</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-amber-400 transition-all text-sm font-medium" href="kanban.html">
-                        <span class="material-symbols-outlined text-[20px]">view_kanban</span>
-                        <span>Kanban</span>
-                    </a>
-                </div>
-
-                <div class="space-y-1 mb-6">
-                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Produksi & Kualitas</p>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="products.html">
-                        <span class="material-symbols-outlined text-[20px]">inventory_2</span>
-                        <span>Produk</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="qc.html">
-                        <span class="material-symbols-outlined text-[20px]">fact_check</span>
-                        <span>Quality Control</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="phase.html">
-                        <span class="material-symbols-outlined text-[20px]">schema</span>
-                        <span>Fase</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-emerald-400 transition-all text-sm font-medium" href="reviews.html">
-                        <span class="material-symbols-outlined text-[20px]">reviews</span>
-                        <span>Review</span>
-                    </a>
-                </div>
-
-                <div class="space-y-1 mb-6">
-                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Analitik & Laporan</p>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="productivity.html">
-                        <span class="material-symbols-outlined text-[20px]">engineering</span>
-                        <span>User Productivity</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="history.html">
-                        <span class="material-symbols-outlined text-[20px]">history</span>
-                        <span>Histori</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-cyan-400 transition-all text-sm font-medium" href="laporan-produksi.html">
-                        <span class="material-symbols-outlined text-[20px]">summarize</span>
-                        <span>Laporan Produksi</span>
-                    </a>
-                </div>
-
-                <div class="space-y-1">
-                    <p class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">Administrasi</p>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="sistem.html">
-                        <span class="material-symbols-outlined text-[20px]">settings_applications</span>
-                        <span>Sistem</span>
-                    </a>
-                    <a class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-primary transition-all text-sm font-medium" href="manual.html">
-                        <span class="material-symbols-outlined text-[20px]">help_outline</span>
-                        <span>Panduan</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
-                <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors">
-                    <div class="size-10 rounded-full bg-cover relative" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7zCsRdVomcJzyX3rrrkP5f6UCo2OIq46qeFslE1JbYyB71cl5AMQBnfcZOxS0QKblQV0CHatRb3Dl77iV-jjPaen2uy6U8HeF480lJTcTLVBjWCUkkAGPnmTzo0ChJ1h7gugVoH5dqVlD1qm3zG1r7jnwadfuCHBMsYtvP_aTI0ly4vCvkDRq6SfZc3t7d98wmI-Wn9KApvCTepYQilaH7fMwnTBA47J019bafuZSuMKFKTQ1UcA3kAOhbKFxcuD1MJiVY2x2vcY')">
-                        <span class="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-background-dark"></span>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold truncate">Andi Supervisor</p>
-                        <p class="text-xs text-slate-400 truncate">Kepala Produksi</p>
-                    </div>
-                </div>
-            </div>
-        </aside>
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col overflow-y-auto">
             <!-- TOP HEADER -->
             <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
                 <div class="flex items-center gap-4 flex-1">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
                     <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <span class="material-symbols-outlined text-primary">data_usage</span> 
                         Monitoring Produksi

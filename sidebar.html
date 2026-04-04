@@ -1,0 +1,110 @@
+<!-- FLOWTA Sidebar Component - loaded via sidebar.js -->
+<!-- Mobile Overlay -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 lg:hidden" onclick="window.FlowtaSidebar.close()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar-aside"
+    class="sidebar-component glass-nav flex flex-col h-full border-r border-slate-200 dark:border-slate-800 z-50
+           fixed top-0 left-0 -translate-x-full lg:translate-x-0 lg:relative lg:shrink-0
+           transition-all duration-300 ease-in-out w-72"
+    data-collapsed="false">
+    
+    <!-- HEADER with Toggle -->
+    <div class="sidebar-header p-4 flex items-center gap-3 relative">
+        <a href="index.html" class="flex items-center gap-3 flex-1 min-w-0">
+            <img src="logo.png" alt="FLOWTA Logo" class="h-10 w-10 object-contain drop-shadow-[0_0_8px_rgba(99,102,241,0.5)] shrink-0" />
+            <div class="flex flex-col sidebar-label overflow-hidden transition-all duration-300">
+                <span class="font-bold text-xl tracking-tight leading-tight whitespace-nowrap">FLOWTA</span>
+                <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider whitespace-nowrap">Tata Kelola Manajemen</span>
+            </div>
+        </a>
+        <!-- Toggle Button (Desktop only) -->
+        <button id="sidebar-toggle-btn"
+            onclick="window.FlowtaSidebar.toggle()"
+            class="hidden lg:flex items-center justify-center size-8 rounded-lg bg-slate-800/60 hover:bg-primary/20 text-slate-400 hover:text-primary transition-all duration-200 shrink-0 border border-slate-700/50"
+            title="Toggle Sidebar">
+            <span class="material-symbols-outlined text-[18px] transition-transform duration-300" id="sidebar-toggle-icon">chevron_left</span>
+        </button>
+        <!-- Close Button (Mobile only) -->
+        <button onclick="window.FlowtaSidebar.close()"
+            class="lg:hidden flex items-center justify-center size-8 rounded-lg bg-slate-800/60 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 transition-all shrink-0">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+    </div>
+
+    <!-- NAV LINKS -->
+    <div class="flex-1 overflow-y-auto px-3 py-2 mt-1 sidebar-nav">
+        <div class="space-y-1 mb-5">
+            <p class="sidebar-section-label px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 transition-all duration-300 whitespace-nowrap overflow-hidden">Workspace</p>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="index.html" data-page="index.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">grid_view</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Dasbor</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="kanban.html" data-page="kanban.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">view_kanban</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Kanban</span>
+            </a>
+        </div>
+
+        <div class="space-y-1 mb-5">
+            <p class="sidebar-section-label px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 transition-all duration-300 whitespace-nowrap overflow-hidden">Produksi &amp; Kualitas</p>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="products.html" data-page="products.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">inventory_2</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Produk</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="qc.html" data-page="qc.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">fact_check</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Quality Control</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="phase.html" data-page="phase.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">schema</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Fase</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="reviews.html" data-page="reviews.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">reviews</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Review</span>
+            </a>
+        </div>
+
+        <div class="space-y-1 mb-5">
+            <p class="sidebar-section-label px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 transition-all duration-300 whitespace-nowrap overflow-hidden">Analitik &amp; Laporan</p>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="productivity.html" data-page="productivity.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">engineering</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">User Productivity</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="history.html" data-page="history.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">history</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Histori</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="laporan-produksi.html" data-page="laporan-produksi.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">summarize</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Laporan Produksi</span>
+            </a>
+        </div>
+
+        <div class="space-y-1">
+            <p class="sidebar-section-label px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 transition-all duration-300 whitespace-nowrap overflow-hidden">Administrasi</p>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="sistem.html" data-page="sistem.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">settings_applications</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Sistem</span>
+            </a>
+            <a class="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-sm font-medium" href="manual.html" data-page="manual.html">
+                <span class="material-symbols-outlined text-[20px] shrink-0">help_outline</span>
+                <span class="sidebar-label transition-all duration-300 whitespace-nowrap overflow-hidden">Panduan</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- USER CARD -->
+    <div class="sidebar-user-card p-4 mt-auto border-t border-slate-200 dark:border-slate-800">
+        <div class="glass-panel p-3 rounded-2xl flex items-center gap-3 hover:bg-white/5 cursor-pointer transition-colors overflow-hidden">
+            <div class="size-10 rounded-full bg-cover relative shrink-0" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7zCsRdVomcJzyX3rrrkP5f6UCo2OIq46qeFslE1JbYyB71cl5AMQBnfcZOxS0QKblQV0CHatRb3Dl77iV-jjPaen2uy6U8HeF480lJTcTLVBjWCUkkAGPnmTzo0ChJ1h7gugVoH5dqVlD1qm3zG1r7jnwadfuCHBMsYtvP_aTI0ly4vCvkDRq6SfZc3t7d98wmI-Wn9KApvCTepYQilaH7fMwnTBA47J019bafuZSuMKFKTQ1UcA3kAOhbKFxcuD1MJiVY2x2vcY')">
+                <span class="absolute bottom-0 right-0 size-2.5 bg-emerald-500 rounded-full border-2 border-background-dark"></span>
+            </div>
+            <div class="flex-1 min-w-0 sidebar-label transition-all duration-300 overflow-hidden">
+                <p class="text-sm font-semibold truncate">Andi Supervisor</p>
+                <p class="text-xs text-slate-400 truncate">Kepala Produksi</p>
+            </div>
+        </div>
+    </div>
+</aside>
