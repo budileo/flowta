@@ -179,6 +179,29 @@
                     </div>
                 </section>
 
+                <!-- DETAILED METRICS GRID (Same as Laporan Produksi) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- TENGGAT WAKTU (AKTIF) -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-amber-400 text-[18px]">timer</span> Tenggat Waktu SPK Berjalan</h3>
+                        <div id="index-stat-tenggat" class="flex-1 space-y-2 mt-2"></div>
+                    </div>
+
+                    <!-- PRIORITAS (AKTIF) & PERFORMA (AKTIF) -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-rose-400 text-[18px]">priority_high</span> Prioritas & Performa Aktif</h3>
+                        <div id="index-stat-prioritas" class="space-y-2 mt-2"></div>
+                        <div class="h-px w-full bg-white/10 my-2"></div>
+                        <div id="index-stat-performa" class="space-y-2"></div>
+                    </div>
+
+                    <!-- REALISASI KINERJA (SELESAI) -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-emerald-400 text-[18px]">verified</span> Kinerja SPK Selesai (Realisasi)</h3>
+                        <div id="index-stat-kinerja" class="flex-1 mt-2 space-y-2"></div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- CHARTS & TABLES -->
                     <div class="lg:col-span-2 space-y-6">
@@ -313,6 +336,78 @@
             document.getElementById('stat-progress').textContent = inProgressCards.length;
             document.getElementById('stat-batal').textContent = batalCards.length;
             document.getElementById('stat-selesai').textContent = selesaiCards.length;
+
+            // 1.5. COMPUTE DETAILED METRICS
+            let twSangatAman = 0, twAman = 0, twWarning = 0, twTerlambat = 0, twSangatTerlambat = 0;
+            let pCritical = 0, pHigh = 0, pMedium = 0, pLow = 0;
+            let pfOnTrack = 0, pfTertinggal = 0;
+            let kSangatCepat = 0, kLebihCepat = 0, kTepatWaktu = 0, kSedikitTerlambat = 0, kTerlambat = 0, kSangatTerlambat = 0;
+
+            activeCards.forEach(c => {
+                const dueDate = c.targetDate || c.dueDate;
+                if (dueDate) {
+                    const dl = window.calcDeadline(c.createdAt, dueDate);
+                    if(dl.level === 1) twSangatAman++;
+                    else if(dl.level === 2) twAman++;
+                    else if(dl.level === 3) twWarning++;
+                    else if(dl.level === 4) twTerlambat++;
+                    else if(dl.level === 5) twSangatTerlambat++;
+
+                    if (dl.level <= 3) pfOnTrack++;
+                    else pfTertinggal++;
+                }
+
+                const prio = (c.priority || 'NORMAL').toUpperCase();
+                if(prio === 'CRITICAL') pCritical++;
+                else if(prio === 'HIGH') pHigh++;
+                else if(prio === 'MEDIUM') pMedium++;
+                else pLow++;
+            });
+
+            selesaiCards.forEach(c => {
+                const completeLog = histories.find(h => h.cardId === c.id && h.type === 'complete');
+                if (completeLog && (c.targetDate || c.dueDate)) {
+                    const targetJam = (new Date(c.targetDate || c.dueDate) - new Date(c.createdAt)) / 3600000;
+                    const realisasiJam = (new Date(completeLog.timestamp) - new Date(c.createdAt)) / 3600000;
+
+                    if (targetJam > 0 && realisasiJam >= 0) {
+                        const persen = (realisasiJam / targetJam) * 100;
+                        if (persen < 70) kSangatCepat++;
+                        else if (persen < 100) kLebihCepat++;
+                        else if (persen === 100) kTepatWaktu++;
+                        else if (persen <= 130) kSedikitTerlambat++;
+                        else if (persen <= 180) kTerlambat++;
+                        else kSangatTerlambat++;
+                    }
+                }
+            });
+
+            // UPDATE DOM PANELS
+            document.getElementById('index-stat-tenggat').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold">1. Sangat Aman</span><span class="font-bold border border-emerald-500/30 rounded px-2 bg-emerald-500/10 text-emerald-400">${twSangatAman} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-sky-400 font-semibold">2. Aman</span><span class="font-bold border border-sky-500/30 rounded px-2 bg-sky-500/10 text-sky-400">${twAman} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">3. Warning</span><span class="font-bold border border-amber-500/30 rounded px-2 bg-amber-500/10 text-amber-400">${twWarning} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">4. Terlambat</span><span class="font-bold border border-orange-500/30 rounded px-2 bg-orange-500/10 text-orange-400">${twTerlambat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-rose-500 font-semibold">5. Sangat Terlambat</span><span class="font-bold border border-rose-500/30 rounded px-2 bg-rose-500/10 text-rose-500">${twSangatTerlambat} SPK</span></div>
+            `;
+            document.getElementById('index-stat-prioritas').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-rose-400 font-semibold">• Critical</span><span class="font-bold text-slate-300">${pCritical} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">• High</span><span class="font-bold text-slate-300">${pHigh} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">• Medium</span><span class="font-bold text-slate-300">${pMedium} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-slate-400 font-semibold">• Low / Normal</span><span class="font-bold text-slate-300">${pLow} SPK</span></div>
+            `;
+            document.getElementById('index-stat-performa').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold"><span class="material-symbols-outlined text-[14px] align-middle mr-1">trending_up</span>ON TRACK</span><span class="font-bold border border-emerald-500/30 rounded px-2 bg-emerald-500/10 text-emerald-400">${pfOnTrack} SPK</span></div>
+                <div class="flex justify-between items-center text-sm mt-1"><span class="text-rose-400 font-semibold"><span class="material-symbols-outlined text-[14px] align-middle mr-1">trending_down</span>TERTINGGAL</span><span class="font-bold border border-rose-500/30 rounded px-2 bg-rose-500/10 text-rose-400">${pfTertinggal} SPK</span></div>
+            `;
+            document.getElementById('index-stat-kinerja').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold">1. Sangat Cepat</span><span class="font-bold text-emerald-400">${kSangatCepat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-500 font-semibold">2. Lebih Cepat</span><span class="font-bold text-emerald-500">${kLebihCepat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-sky-400 font-semibold">3. Tepat Waktu</span><span class="font-bold text-sky-400">${kTepatWaktu} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">4. Sedikit Terlambat</span><span class="font-bold text-amber-400">${kSedikitTerlambat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">5. Terlambat</span><span class="font-bold text-orange-400">${kTerlambat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-rose-500 font-semibold">6. Sangat Terlambat</span><span class="font-bold text-rose-500">${kSangatTerlambat} SPK</span></div>
+            `;
 
             // 2. UPDATE TABLE
             const tbBody = document.getElementById('dashboard-table-body');
