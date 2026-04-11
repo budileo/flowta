@@ -96,59 +96,16 @@
             padding-bottom: 0;
         }
 
-        /* Heatmap Compact Collapsible */
-        #heatmap-section {
-            transition: opacity 0.35s ease, transform 0.35s ease;
-        }
-        #heatmap-section.heatmap-hidden {
-            opacity: 0;
-            transform: translateY(-6px);
-            pointer-events: none;
-            position: absolute;
-            visibility: hidden;
-        }
-        .heatmap-wrapper {
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                        opacity 0.3s ease,
-                        margin 0.3s ease,
-                        padding 0.3s ease;
-            margin-top: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-        }
-        .heatmap-wrapper.is-open {
-            max-height: 60px; /* 30% of original ~200px */
-            opacity: 1;
-            margin-top: 0.375rem;
-            padding-top: 0.5rem;
-            padding-bottom: 0.125rem;
-        }
-        .heatmap-toggle-btn {
-            transition: background 0.2s ease, box-shadow 0.2s ease;
-        }
-        .heatmap-toggle-btn.is-open {
-            background: rgba(99, 102, 241, 0.15);
-            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
-        }
-        .heatmap-badge {
+        /* Heatmap */
+        .heatmap-card {
             transition: transform 0.15s ease, box-shadow 0.15s ease;
         }
-        .heatmap-badge:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        .heatmap-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
         }
-        .heatmap-mini-bar {
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .heatmap-alert-enter {
-            animation: heatmapAlertIn 0.4s ease forwards;
-        }
-        @keyframes heatmapAlertIn {
-            from { opacity: 0; transform: translateX(-8px); }
-            to   { opacity: 1; transform: translateX(0); }
+        .heatmap-bar {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .sortable-fallback {
@@ -237,26 +194,18 @@
                 </div>
             </div>
 
-            <!-- Activity Heatmap (Compact Collapsible) -->
-            <div id="heatmap-section" class="px-8 pt-1 pb-0 relative z-10 shrink-0 heatmap-hidden">
-                <div class="glass-panel rounded-xl px-3 py-2">
-                    <!-- Header Row -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2 min-w-0">
-                            <span class="text-amber-400 text-[13px] leading-none">🔥</span>
-                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">Kepadatan Fase</span>
-                            <!-- Inline overload alerts -->
-                            <div id="heatmap-alerts" class="flex items-center gap-1.5 ml-1 overflow-x-auto no-scrollbar"></div>
+            <!-- Activity Heatmap -->
+            <div class="px-8 py-4 relative z-10 shrink-0">
+                <div class="glass-panel rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-amber-400 text-[18px]">local_fire_department</span>
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Activity Heatmap — Kepadatan Pekerjaan Per Fase</span>
                         </div>
-                        <button id="heatmap-toggle" onclick="toggleHeatmap()" class="heatmap-toggle-btn flex items-center justify-center size-6 rounded-md bg-slate-700/60 hover:bg-slate-600 text-slate-300 hover:text-white cursor-pointer" title="Toggle Heatmap Detail">
-                            <span class="text-[13px] leading-none select-none">📊</span>
-                        </button>
+                        <span class="text-[10px] text-slate-600 font-medium">SPK Aktif (tidak termasuk Selesai &amp; Batal)</span>
                     </div>
-                    <!-- Collapsible Body -->
-                    <div id="heatmap-body" class="heatmap-wrapper">
-                        <div id="phase-heatmap" class="flex items-center gap-1.5 flex-wrap">
-                            <!-- Injected by renderHeatmap() -->
-                        </div>
+                    <div id="phase-heatmap" class="grid gap-2" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr))">
+                        <!-- Injected by renderHeatmap() -->
                     </div>
                 </div>
             </div>
@@ -935,51 +884,14 @@
                 renderHeatmap();
             };
 
-            // ── Activity Heatmap (Compact Collapsible) ─────────────────────
-            let heatmapOpen = false;
-
-            window.toggleHeatmap = function() {
-                const body = document.getElementById('heatmap-body');
-                const btn = document.getElementById('heatmap-toggle');
-                heatmapOpen = !heatmapOpen;
-                body.classList.toggle('is-open', heatmapOpen);
-                btn.classList.toggle('is-open', heatmapOpen);
-            };
-
-            // Phase short names for compact badges
-            const phaseShortNames = {
-                'administrasi': 'ADM', 'admin': 'ADM', 'adm': 'ADM',
-                'desain': 'DES', 'design': 'DES', 'des': 'DES',
-                'laser': 'LASER', 'cutting': 'CUT', 'cut': 'CUT',
-                'cnc': 'CNC', 'produksi': 'PROD', 'prod': 'PROD',
-                'finishing': 'FIN', 'fin': 'FIN',
-                'qc': 'QC', 'quality': 'QC', 'quality control': 'QC',
-                'packing': 'PACK', 'pack': 'PACK',
-                'pengiriman': 'KIRIM', 'kirim': 'KIRIM', 'delivery': 'KIRIM',
-                'instalasi': 'INST', 'install': 'INST',
-            };
-
-            function getShortName(title) {
-                const lower = title.toLowerCase().trim();
-                if (phaseShortNames[lower]) return phaseShortNames[lower];
-                // fallback: take first 4 chars uppercase
-                return title.substring(0, 4).toUpperCase();
-            }
-
+            // ── Activity Heatmap ──────────────────────────────────────────
             function renderHeatmap() {
                 const heatmapEl = document.getElementById('phase-heatmap');
-                const alertsEl = document.getElementById('heatmap-alerts');
-                const sectionEl = document.getElementById('heatmap-section');
-                if (!heatmapEl || !alertsEl || !sectionEl) return;
+                if (!heatmapEl) return;
 
-                const maxLoad = 8;
-                const OVERLOAD_THRESHOLD = 3; // show alert if >= this
+                const maxLoad = 8; // SPK dianggap sangat padat jika ≥ 8
 
-                let badgesHtml = '';
-                let alertsHtml = '';
-                let hasOverload = false;
-                let hasAnyActive = false;
-
+                let html = '';
                 phasesData.forEach(phase => {
                     const count = kanbanCards.filter(c =>
                         c.phaseId === phase.id &&
@@ -987,74 +899,47 @@
                         c.status !== 'SELESAI'
                     ).length;
 
-                    if (count > 0) hasAnyActive = true;
-
                     const pct = Math.min(100, Math.round((count / maxLoad) * 100));
-                    const shortName = getShortName(phase.title);
 
                     // Color tier
-                    let dotColor, textColor, bgColor, borderColor, barColor;
+                    let colorBar, colorText, colorBg, colorBorder, intensityLabel;
                     if (count === 0) {
-                        dotColor = 'bg-slate-600'; textColor = 'text-slate-500';
-                        bgColor = 'bg-slate-800/30'; borderColor = 'border-slate-700/40';
-                        barColor = 'bg-slate-600';
+                        colorBar = 'bg-slate-700'; colorText = 'text-slate-500';
+                        colorBg = 'bg-slate-800/40'; colorBorder = 'border-slate-700/50';
+                        intensityLabel = 'Kosong';
                     } else if (count <= 2) {
-                        dotColor = 'bg-emerald-500'; textColor = 'text-emerald-400';
-                        bgColor = 'bg-emerald-500/10'; borderColor = 'border-emerald-500/20';
-                        barColor = 'bg-emerald-500';
+                        colorBar = 'bg-emerald-500'; colorText = 'text-emerald-400';
+                        colorBg = 'bg-emerald-500/5'; colorBorder = 'border-emerald-500/20';
+                        intensityLabel = 'Rendah';
                     } else if (count <= 4) {
-                        dotColor = 'bg-amber-400'; textColor = 'text-amber-400';
-                        bgColor = 'bg-amber-500/10'; borderColor = 'border-amber-500/20';
-                        barColor = 'bg-amber-400';
+                        colorBar = 'bg-amber-400'; colorText = 'text-amber-400';
+                        colorBg = 'bg-amber-500/5'; colorBorder = 'border-amber-500/20';
+                        intensityLabel = 'Sedang';
                     } else if (count <= 7) {
-                        dotColor = 'bg-orange-500'; textColor = 'text-orange-400';
-                        bgColor = 'bg-orange-500/10'; borderColor = 'border-orange-500/20';
-                        barColor = 'bg-orange-500';
+                        colorBar = 'bg-orange-500'; colorText = 'text-orange-400';
+                        colorBg = 'bg-orange-500/5'; colorBorder = 'border-orange-500/20';
+                        intensityLabel = 'Tinggi';
                     } else {
-                        dotColor = 'bg-rose-500'; textColor = 'text-rose-400';
-                        bgColor = 'bg-rose-500/15'; borderColor = 'border-rose-500/30';
-                        barColor = 'bg-rose-500';
+                        colorBar = 'bg-rose-500'; colorText = 'text-rose-400';
+                        colorBg = 'bg-rose-500/10'; colorBorder = 'border-rose-500/30';
+                        intensityLabel = 'Kritis';
                     }
 
-                    // Overload alert
-                    if (count >= OVERLOAD_THRESHOLD) {
-                        hasOverload = true;
-                        const alertColor = count >= maxLoad ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' 
-                                         : count >= 5 ? 'text-orange-400 bg-orange-500/10 border-orange-500/30'
-                                         : 'text-amber-400 bg-amber-500/10 border-amber-500/30';
-                        alertsHtml += `<span class="heatmap-alert-enter inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[8px] font-bold whitespace-nowrap ${alertColor}">⚠ ${shortName} Overload (${count} job)</span>`;
-                    }
-
-                    // Compact badge with mini horizontal bar (only show overloaded or active phases)
-                    badgesHtml += `
-                        <div class="heatmap-badge ${bgColor} border ${borderColor} rounded px-2 py-1 flex items-center gap-1.5 min-w-[90px]" title="${phase.title}: ${count} SPK aktif">
-                            <div class="flex items-center gap-1 shrink-0">
-                                <span class="w-1.5 h-1.5 rounded-full ${dotColor} shrink-0"></span>
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">${shortName}</span>
+                    html += `
+                        <div class="heatmap-card ${colorBg} border ${colorBorder} rounded-lg p-3">
+                            <div class="flex items-start justify-between mb-2">
+                                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider leading-tight max-w-[90px]">${phase.title}</span>
+                                <span class="${colorText} text-xl font-black leading-none">${count}</span>
                             </div>
-                            <div class="flex-1 flex items-center gap-1 min-w-[30px]">
-                                <div class="flex-1 bg-slate-700/50 rounded-full h-[3px]">
-                                    <div class="heatmap-mini-bar ${barColor} h-[3px] rounded-full" style="width:${pct}%"></div>
-                                </div>
-                                <span class="${textColor} text-[9px] font-black leading-none tabular-nums">${count}</span>
+                            <div class="w-full bg-slate-700/60 rounded-full h-1.5 mb-1.5">
+                                <div class="heatmap-bar ${colorBar} h-1.5 rounded-full" style="width:${pct}%"></div>
                             </div>
+                            <span class="text-[9px] font-semibold ${colorText} uppercase tracking-wider">${intensityLabel}</span>
                         </div>
                     `;
                 });
 
-                heatmapEl.innerHTML = badgesHtml;
-                alertsEl.innerHTML = alertsHtml;
-
-                // Auto-hide logic:
-                // 1) No active cards at all → hide
-                // 2) All phases normal (below overload threshold) → hide
-                // Only show when there IS an overload to not distract from Kanban focus
-                if (!hasAnyActive || !hasOverload) {
-                    sectionEl.classList.add('heatmap-hidden');
-                    return;
-                }
-
-                sectionEl.classList.remove('heatmap-hidden');
+                heatmapEl.innerHTML = html;
             }
 
             renderKanban();
