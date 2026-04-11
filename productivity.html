@@ -1,0 +1,622 @@
+﻿<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Produktivitas User</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
+
+        .heatmap-cell {
+            transition: transform 0.15s, box-shadow 0.15s;
+            cursor: pointer;
+        }
+        .heatmap-cell:hover {
+            transform: scale(1.08);
+            box-shadow: 0 0 14px rgba(99,102,241,0.4);
+        }
+        .score-bar {
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .metric-card { animation: slideUp 0.4s ease forwards; }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: rgba(99,102,241,0.15);
+            color: #818cf8;
+            border-color: rgba(99,102,241,0.3);
+        }
+        .filter-btn:not(.active) {
+            background: rgba(30,41,59,0.5);
+            color: #94a3b8;
+            border-color: rgba(255,255,255,0.05);
+        }
+        .filter-btn:not(.active):hover {
+            background: rgba(99,102,241,0.08);
+            color: #a5b4fc;
+        }
+        select option { background: #1e293b; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <!-- TOP HEADER -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4 flex-1">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">engineering</span>
+                    User Productivity
+                </h1>
+                <div class="relative w-full max-w-md hidden md:block ml-8">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                    <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Cari SPK, Klien, atau Nama Produk... [Enter]" type="text" />
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                </button>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">mail</span>
+                </button>
+                <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">contrast</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <div class="p-8 max-w-7xl mx-auto w-full space-y-8 pb-16">
+
+            <!-- PAGE HEADING + FILTERS -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight uppercase">Reports: User Productivity</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Analisis kinerja dan kontribusi tim produksi berdasarkan data aktivitas.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Period Filter -->
+                    <div class="flex items-center gap-1 glass-card p-1 rounded-xl">
+                        <button class="filter-btn active" id="pb-7" onclick="setPeriod(7)">7 Hari</button>
+                        <button class="filter-btn" id="pb-30" onclick="setPeriod(30)">30 Hari</button>
+                        <button class="filter-btn" id="pb-90" onclick="setPeriod(90)">3 Bulan</button>
+                    </div>
+                    <button onclick="exportCSV()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-all shadow-lg shadow-emerald-900/20">
+                        <span class="material-symbols-outlined text-[18px]">description</span>
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- METRIC CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:0ms">
+                    <div class="absolute -right-4 -top-4 text-primary/10 transition-transform group-hover:scale-110">
+                        <span class="material-symbols-outlined text-8xl">bolt</span>
+                    </div>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Aktivitas</p>
+                    <div class="flex items-baseline gap-3 mt-1">
+                        <span class="text-4xl font-bold text-white" id="stat-total">0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1" id="stat-period-label">dalam 30 hari terakhir</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:80ms">
+                    <div class="absolute -right-4 -top-4 text-amber-500/10 transition-transform group-hover:scale-110">
+                        <span class="material-symbols-outlined text-8xl">move_up</span>
+                    </div>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Perpindahan Fase</p>
+                    <div class="flex items-baseline gap-3 mt-1">
+                        <span class="text-4xl font-bold text-white" id="stat-moves">0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">pindah antar fase</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:160ms">
+                    <div class="absolute -right-4 -top-4 text-emerald-500/10 transition-transform group-hover:scale-110">
+                        <span class="material-symbols-outlined text-8xl">task_alt</span>
+                    </div>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">SPK Diselesaikan</p>
+                    <div class="flex items-baseline gap-3 mt-1">
+                        <span class="text-4xl font-bold text-white" id="stat-complete">0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">order tuntas</p>
+                </div>
+                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:240ms">
+                    <div class="absolute -right-4 -top-4 text-cyan-500/10 transition-transform group-hover:scale-110">
+                        <span class="material-symbols-outlined text-8xl">verified_user</span>
+                    </div>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Input QC</p>
+                    <div class="flex items-baseline gap-3 mt-1">
+                        <span class="text-4xl font-bold text-white" id="stat-qc">0</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-1">entri quality control</p>
+                </div>
+            </div>
+
+            <!-- HEATMAP + DISTRIBUTION -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Heatmap -->
+                <div class="lg:col-span-2 glass-panel rounded-2xl p-8">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-lg font-bold">Activity Heatmap</h3>
+                        <div class="flex items-center gap-4 text-xs font-medium text-slate-500">
+                            <div class="flex items-center gap-1.5"><div class="size-2.5 rounded-sm bg-slate-800"></div> Rendah</div>
+                            <div class="flex items-center gap-1.5"><div class="size-2.5 rounded-sm bg-primary/40"></div> Sedang</div>
+                            <div class="flex items-center gap-1.5"><div class="size-2.5 rounded-sm bg-primary"></div> Tinggi</div>
+                        </div>
+                    </div>
+
+                    <!-- Day Labels -->
+                    <div class="grid grid-cols-7 gap-2 mb-2">
+                        <div class="text-center text-[10px] font-semibold text-slate-500">SEN</div>
+                        <div class="text-center text-[10px] font-semibold text-slate-500">SEL</div>
+                        <div class="text-center text-[10px] font-semibold text-slate-500">RAB</div>
+                        <div class="text-center text-[10px] font-semibold text-slate-500">KAM</div>
+                        <div class="text-center text-[10px] font-semibold text-slate-500">JUM</div>
+                        <div class="text-center text-[10px] font-semibold text-slate-500">SAB</div>
+                        <div class="text-center text-[10px] font-semibold text-slate-500">MIN</div>
+                    </div>
+
+                    <div class="grid grid-cols-7 gap-2" id="heatmap-grid">
+                        <!-- Injected by JS -->
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-800 flex justify-between items-center">
+                        <p class="text-sm text-slate-400" id="heatmap-peak-label">Memuat data heatmap...</p>
+                    </div>
+                </div>
+
+                <!-- Distribution -->
+                <div class="glass-panel rounded-2xl p-8">
+                    <h3 class="text-lg font-bold mb-6">Distribusi Aktivitas</h3>
+                    <div class="space-y-6" id="distribution-panel">
+                        <!-- Injected by JS -->
+                    </div>
+                    <div class="mt-8 p-4 rounded-xl bg-primary/5 border border-primary/10">
+                        <p class="text-xs text-primary font-bold uppercase tracking-widest mb-1">Info</p>
+                        <p class="text-sm text-slate-300" id="dist-insight">Analisis distribusi aktivitas tim produksi.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USER PERFORMANCE TABLE -->
+            <div class="glass-panel rounded-2xl overflow-hidden">
+                <div class="px-8 py-6 border-b border-slate-800 flex items-center justify-between">
+                    <h3 class="text-lg font-bold">Performa Per User</h3>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-medium text-slate-500">Urutkan:</span>
+                        <select id="sort-select" onchange="renderTable()" class="bg-slate-800/60 border border-slate-700/50 rounded-lg text-xs font-bold text-primary focus:ring-2 focus:ring-primary/30 focus:border-primary/50 px-2 py-1 cursor-pointer transition">
+                            <option value="total">Total Aktivitas</option>
+                            <option value="moves">Perpindahan Fase</option>
+                            <option value="complete">SPK Selesai</option>
+                            <option value="qc">Input QC</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-slate-800/30 text-slate-400 text-xs uppercase tracking-wider">
+                                <th class="px-8 py-4 font-semibold">User</th>
+                                <th class="px-6 py-4 font-semibold text-center">Total</th>
+                                <th class="px-6 py-4 font-semibold text-center">Pindah Fase</th>
+                                <th class="px-6 py-4 font-semibold text-center">Selesai</th>
+                                <th class="px-6 py-4 font-semibold text-center">QC</th>
+                                <th class="px-8 py-4 font-semibold">Skor Produktivitas</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800" id="user-table-body">
+                            <tr>
+                                <td colspan="6" class="px-8 py-12 text-center text-slate-500">
+                                    <span class="material-symbols-outlined text-4xl block mb-2 opacity-30">person_search</span>
+                                    <p class="text-sm">Memuat data pengguna...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="px-8 py-4 bg-slate-800/10 flex items-center justify-between border-t border-slate-800">
+                    <p class="text-xs text-slate-500" id="table-footer-label">—</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="w-full text-center py-6 text-slate-500 text-sm mt-auto border-t border-slate-200 dark:border-slate-800/50">
+            Sistem Flowta di oleh Budi Ariadi Tata kelola 0811 767 4848 - Hak Cipta dilindungi Undang Undang
+        </div>
+    </main>
+</div>
+
+<script>
+    // ==================== DATA ====================
+    let allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+    let allQcRecs    = JSON.parse(localStorage.getItem('flowta_qc'))      || [];
+    let kanbanCards  = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+    let currentDays  = 30;
+    let filteredHistories = [];
+    let filteredQcRecs    = [];
+    let userStats = {};
+
+    // ==================== PERIOD FILTER ====================
+    function setPeriod(days) {
+        currentDays = days;
+        ['7','30','90'].forEach(d => {
+            const btn = document.getElementById('pb-' + d);
+            if (btn) btn.classList.toggle('active', parseInt(d) === days);
+        });
+        const lbl = { 7: 'dalam 7 hari terakhir', 30: 'dalam 30 hari terakhir', 90: 'dalam 3 bulan terakhir' };
+        document.getElementById('stat-period-label').textContent = lbl[days] || '';
+        compute();
+    }
+
+    // ==================== COMPUTE ALL STATS ====================
+    function compute() {
+        const now = new Date();
+        const cutoff = new Date(now);
+        cutoff.setDate(cutoff.getDate() - currentDays);
+
+        // Filter history (aktivitas umum: create, move, complete, cancel, dll)
+        filteredHistories = allHistories.filter(h => new Date(h.timestamp) >= cutoff);
+
+        // Filter QC records dari flowta_qc (sumber data yang sama dengan qc.html)
+        filteredQcRecs = allQcRecs.filter(q => new Date(q.timestamp) >= cutoff);
+
+        // Global stats
+        const moves    = filteredHistories.filter(h => h.type === 'move').length;
+        const complete = filteredHistories.filter(h => h.type === 'complete').length;
+        // QC count dari flowta_qc (bukan dari history) — sama persis dengan qc.html
+        const qcCount  = filteredQcRecs.length;
+        const total    = filteredHistories.length;
+
+        document.getElementById('stat-total').textContent    = total;
+        document.getElementById('stat-moves').textContent    = moves;
+        document.getElementById('stat-complete').textContent = complete;
+        document.getElementById('stat-qc').textContent       = qcCount;
+
+        // Per-user stats — gabungkan dari history + qc records
+        userStats = {};
+
+        filteredHistories.forEach(h => {
+            const u = h.user || 'Sistem';
+            if (!userStats[u]) userStats[u] = { moves: 0, complete: 0, qc: 0, create: 0, total: 0 };
+            userStats[u].total++;
+            if (h.type === 'move')     userStats[u].moves++;
+            if (h.type === 'complete') userStats[u].complete++;
+            if (h.type === 'create')   userStats[u].create++;
+        });
+
+        // Tambahkan QC dari flowta_qc ke per-user stats
+        filteredQcRecs.forEach(q => {
+            const u = q.user || 'Sistem';
+            if (!userStats[u]) userStats[u] = { moves: 0, complete: 0, qc: 0, create: 0, total: 0 };
+            userStats[u].qc++;
+            // Tambahkan ke total karena QC juga merupakan aktivitas
+            userStats[u].total++;
+        });
+
+        renderTable();
+        renderHeatmap();
+        renderDistribution(total + qcCount, moves, qcCount, complete);
+    }
+
+    // ==================== PRODUCTIVITY SCORE ====================
+    function calcScore(s) {
+        // Weighted: complete=40, move=30, qc=20, create=10 points
+        const raw = (s.complete * 40) + (s.moves * 30) + (s.qc * 20) + (s.create * 10);
+        return raw;
+    }
+
+    // ==================== USER TABLE ====================
+    function renderTable() {
+        const sortKey = document.getElementById('sort-select').value;
+        const tbody = document.getElementById('user-table-body');
+
+        const users = Object.keys(userStats);
+        if (users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-8 py-12 text-center text-slate-500">
+                <span class="material-symbols-outlined text-4xl block mb-2 opacity-30">person_search</span>
+                <p class="text-sm">Belum ada data aktivitas pengguna pada periode ini.</p>
+            </td></tr>`;
+            document.getElementById('table-footer-label').textContent = '0 pengguna ditemukan';
+            return;
+        }
+
+        // Sort
+        const sortedUsers = [...users].sort((a, b) => {
+            if (sortKey === 'moves')    return userStats[b].moves - userStats[a].moves;
+            if (sortKey === 'complete') return userStats[b].complete - userStats[a].complete;
+            if (sortKey === 'qc')       return userStats[b].qc - userStats[a].qc;
+            return userStats[b].total - userStats[a].total;
+        });
+
+        // Max score for normalizing bar
+        const scores = sortedUsers.map(u => calcScore(userStats[u]));
+        const maxScore = Math.max(...scores, 1);
+
+        let html = '';
+        sortedUsers.forEach((user, idx) => {
+            const s = userStats[user];
+            const score = calcScore(s);
+            const scorePct = Math.round((score / maxScore) * 100);
+
+            let barColor, textColor;
+            if (scorePct >= 75) {
+                barColor = 'bg-primary shadow-[0_0_8px_rgba(99,102,241,0.4)]';
+                textColor = 'text-primary';
+            } else if (scorePct >= 40) {
+                barColor = 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]';
+                textColor = 'text-amber-500';
+            } else {
+                barColor = 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
+                textColor = 'text-rose-400';
+            }
+
+            // Initials avatar
+            const initials = user.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            const avatarColors = ['from-indigo-500 to-purple-600','from-emerald-500 to-cyan-600','from-amber-500 to-orange-600','from-rose-500 to-pink-600','from-cyan-500 to-blue-600'];
+            const colorClass = avatarColors[user.charCodeAt(0) % avatarColors.length];
+
+            html += `
+            <tr class="hover:bg-slate-800/20 transition-colors">
+                <td class="px-8 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="size-10 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white text-sm font-bold shrink-0">
+                            ${initials}
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold">${user}</p>
+                            <p class="text-[10px] text-slate-500 font-medium">${s.total} aktivitas total</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-center font-bold text-sm">${s.total}</td>
+                <td class="px-6 py-4 text-center font-semibold text-sm text-amber-400">${s.moves}</td>
+                <td class="px-6 py-4 text-center font-semibold text-sm text-emerald-400">${s.complete}</td>
+                <td class="px-6 py-4 text-center font-semibold text-sm text-cyan-400">${s.qc}</td>
+                <td class="px-8 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden min-w-[80px]">
+                            <div class="${barColor} h-full rounded-full score-bar" style="width: 0%" data-w="${scorePct}%"></div>
+                        </div>
+                        <span class="text-sm font-bold ${textColor} w-10 text-right">${scorePct}%</span>
+                    </div>
+                </td>
+            </tr>`;
+        });
+
+        tbody.innerHTML = html;
+        document.getElementById('table-footer-label').textContent = `${users.length} pengguna aktif dalam periode ini`;
+
+        // Animate score bars
+        requestAnimationFrame(() => {
+            document.querySelectorAll('.score-bar').forEach(bar => {
+                const w = bar.getAttribute('data-w');
+                setTimeout(() => { bar.style.width = w; }, 50);
+            });
+        });
+    }
+
+    // ==================== HEATMAP ====================
+    function renderHeatmap() {
+        const grid = document.getElementById('heatmap-grid');
+
+        // Build a 7-column (Mon–Sun) heatmap for the last N weeks (up to 4 rows)
+        const now = new Date();
+        const weeks = Math.min(4, Math.ceil(currentDays / 7));
+        const totalCells = weeks * 7;
+
+        // Count per date
+        const dateCounts = {};
+        filteredHistories.forEach(h => {
+            const d = new Date(h.timestamp).toISOString().split('T')[0];
+            dateCounts[d] = (dateCounts[d] || 0) + 1;
+        });
+
+        const maxCount = Math.max(...Object.values(dateCounts), 1);
+
+        // Build cells, starting from (weeks*7) days ago aligned to Monday
+        let cells = '';
+        // Find Monday of the week `weeks` weeks ago
+        const startDate = new Date(now);
+        // Go back to end of current week (Sunday)
+        const currentDayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+        // Offset to align to Mon=0 ... Sun=6
+        const offsetToMonday = (currentDayOfWeek + 6) % 7; // days from Monday
+        startDate.setDate(now.getDate() - offsetToMonday - (weeks - 1) * 7);
+        startDate.setHours(0,0,0,0);
+
+        let peakDate = null;
+        let peakCount = 0;
+
+        for (let i = 0; i < totalCells; i++) {
+            const cellDate = new Date(startDate);
+            cellDate.setDate(startDate.getDate() + i);
+            const dateStr = cellDate.toISOString().split('T')[0];
+            const count = dateCounts[dateStr] || 0;
+
+            if (count > peakCount) { peakCount = count; peakDate = cellDate; }
+
+            const isToday = dateStr === now.toISOString().split('T')[0];
+            const isFuture = cellDate > now;
+
+            let bgClass, labelColor;
+            if (isFuture) {
+                bgClass = 'bg-slate-800/30 border border-slate-700/20';
+                labelColor = 'text-slate-700';
+            } else if (count === 0) {
+                bgClass = 'bg-slate-800/60';
+                labelColor = 'text-slate-600';
+            } else {
+                const intensity = count / maxCount;
+                if (intensity > 0.8)      bgClass = 'bg-primary border border-white/20 shadow-lg shadow-primary/30';
+                else if (intensity > 0.5) bgClass = 'bg-primary/70';
+                else if (intensity > 0.25) bgClass = 'bg-primary/40';
+                else                       bgClass = 'bg-primary/20';
+                labelColor = intensity > 0.8 ? 'text-white font-bold' : 'text-slate-300';
+            }
+
+            const todayRing = isToday ? 'ring-2 ring-white/30' : '';
+            const dayNums = ['Sen','Sel','Rab','Kam','Jum','Sab','Min'];
+            const dayLabel = cellDate.getDate();
+            const tooltip = isFuture ? '' : `title="${dateStr}: ${count} aktivitas"`;
+
+            cells += `<div class="heatmap-cell h-16 rounded-lg ${bgClass} ${todayRing} flex flex-col items-center justify-center gap-0.5" ${tooltip}>
+                <span class="text-[10px] ${labelColor}">${dayLabel}</span>
+                ${count > 0 ? `<span class="text-[9px] ${labelColor} font-bold">${count}</span>` : ''}
+            </div>`;
+        }
+
+        grid.innerHTML = cells;
+
+        // Peak label
+        if (peakDate && peakCount > 0) {
+            const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+            const peakStr = `${days[peakDate.getDay()]}, ${peakDate.getDate()} ${months[peakDate.getMonth()]}`;
+            document.getElementById('heatmap-peak-label').innerHTML =
+                `Performa puncak pada <span class="text-white font-semibold">${peakStr}</span> dengan ${peakCount} aktivitas.`;
+        } else {
+            document.getElementById('heatmap-peak-label').textContent = 'Belum ada data aktivitas pada periode ini.';
+        }
+    }
+
+    // ==================== DISTRIBUTION ====================
+    function renderDistribution(total, moves, qc, complete, create) {
+        const panel = document.getElementById('distribution-panel');
+        create = filteredHistories.filter(h => h.type === 'create').length;
+        const other = total - moves - qc - complete - create;
+
+        const items = [
+            { label: 'Pindah Fase',  count: moves,    color: 'bg-primary',      glow: 'rgba(99,102,241,0.5)' },
+            { label: 'SPK Selesai',  count: complete,  color: 'bg-emerald-500',  glow: 'rgba(16,185,129,0.5)' },
+            { label: 'Input QC',     count: qc,        color: 'bg-cyan-500',     glow: 'rgba(6,182,212,0.5)' },
+            { label: 'Buat SPK',     count: create,    color: 'bg-violet-500',   glow: 'rgba(139,92,246,0.5)' },
+        ].filter(i => i.count > 0);
+
+        if (items.length === 0 || total === 0) {
+            panel.innerHTML = `<p class="text-sm text-slate-500 text-center py-4">Belum ada data distribusi.</p>`;
+            document.getElementById('dist-insight').textContent = 'Belum ada aktivitas pada periode ini.';
+            return;
+        }
+
+        let html = '';
+        items.forEach(item => {
+            const pct = Math.round((item.count / total) * 100);
+            html += `<div>
+                <div class="flex justify-between mb-2">
+                    <span class="text-sm font-medium">${item.label}</span>
+                    <span class="text-sm font-bold">${pct}%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2">
+                    <div class="${item.color} h-2 rounded-full" style="width:${pct}%;box-shadow:0 0 8px ${item.glow}"></div>
+                </div>
+            </div>`;
+        });
+
+        panel.innerHTML = html;
+
+        // Insight
+        const topItem = items.sort((a,b) => b.count - a.count)[0];
+        document.getElementById('dist-insight').textContent =
+            `Aktivitas terbanyak adalah "${topItem.label}" (${Math.round((topItem.count/total)*100)}%). ` +
+            `Total ${total} aktivitas tercatat pada periode ini.`;
+    }
+
+    // ==================== EXPORT CSV ====================
+    function exportCSV() {
+        const rows = [['User','Total','Pindah Fase','SPK Selesai','Input QC','Skor (%)']];
+        const sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].total - userStats[a].total);
+        const scores = sortedUsers.map(u => calcScore(userStats[u]));
+        const maxScore = Math.max(...scores, 1);
+
+        sortedUsers.forEach((user, i) => {
+            const s = userStats[user];
+            const pct = Math.round((scores[i] / maxScore) * 100);
+            rows.push([user, s.total, s.moves, s.complete, s.qc, pct + '%']);
+        });
+
+        const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+        const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `produktivitas_flowta_${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ==================== INIT ====================
+     document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+        setPeriod(30);
+    });
+</script>
+</body>
+</html>

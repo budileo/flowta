@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Detail SPK</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                        "local-dark": "#15191d", // to support the custom background in their snippet
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+        
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none; /* IE and Edge */
+            scrollbar-width: none; /* Firefox */
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
+
+        <!-- MAIN CONTENT (User snippet adjusted) -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-y-auto relative p-8">
+            
+            <!-- Dashboard Global Background Effect -->
+            <div class="absolute inset-0 z-0 overflow-hidden opacity-50 dark:opacity-30 pointer-events-none">
+                <div class="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-primary/20 blur-[120px]"></div>
+                <div class="absolute top-[60%] -left-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/10 blur-[100px]"></div>
+            </div>
+
+            <div class="relative z-10 max-w-7xl mx-auto w-full">
+                <!-- Header -->
+                <div class="flex flex-wrap justify-between items-end gap-4 mb-8">
+                    <div>
+                        <nav class="flex mb-2 text-xs font-medium text-slate-500 uppercase tracking-widest items-center">
+                            <a class="hover:text-primary transition-colors cursor-pointer flex items-center gap-1" href="kanban.html">
+                                <span class="material-symbols-outlined text-[14px]">arrow_back</span>
+                                Kanban Board
+                            </a>
+                            <span class="mx-2">/</span>
+                            <span class="text-slate-200 flex items-center gap-1">
+                                <span class="material-symbols-outlined text-[14px]">tag</span>
+                                <span id="breadcrumb-title">#A01 - Banner X</span>
+                            </span>
+                        </nav>
+                        <h2 class="text-3xl md:text-4xl tracking-tight text-slate-800 dark:text-white mt-4 font-normal flex items-center gap-3">
+                            <span class="font-bold text-primary dark:text-blue-400" id="header-id">#A01</span> 
+                            <span class="text-slate-600 dark:text-slate-300" id="header-title">Banner X</span>
+                        </h2>
+                    </div>
+                    <div class="relative w-full max-w-md hidden md:block ml-4 flex-1">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                        <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border border-slate-200 dark:border-transparent rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Pencarian Global... [Enter]" type="text" />
+                    </div>
+                    <div class="flex gap-3">
+                        <button onclick="handlePrintLabel()" class="flex items-center gap-2 px-5 py-2.5 border border-slate-300 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-white rounded-lg text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
+                            <span class="material-symbols-outlined text-[20px]">print</span>
+                            Print Label
+                        </button>
+                        <button id="btn-edit-spk" class="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-bold shadow-md shadow-blue-600/20 transition-all">
+                            <span class="material-symbols-outlined text-[20px]">edit</span>
+                            Edit Produk
+                        </button>
+                        <button id="btn-finish-production" class="flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-bold shadow-md shadow-emerald-600/20 transition-all">
+                            <span class="material-symbols-outlined text-[20px]">task_alt</span>
+                            Produksi Selesai
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-12 gap-8">
+                    <!-- Info Produk & History -->
+                    <div class="col-span-12 lg:col-span-8 space-y-8">
+                        
+                        <!-- Section: Info Produk -->
+                        <section class="glass-panel backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl">
+                            <div class="p-6 border-b border-slate-200 dark:border-white/10 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-900/40">
+                                <span class="material-symbols-outlined text-primary dark:text-blue-400">info</span>
+                                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Info Produk</h3>
+                            </div>
+                            <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8 bg-white/50 dark:bg-slate-900/40">
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">No. Produksi</p>
+                                    <p class="text-slate-800 dark:text-slate-200 font-semibold" id="info-id">PROD-123456</p>
+                                </div>
+                                <div class="col-span-1 md:col-span-2 lg:col-span-1">
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Jenis Project</p>
+                                    <div class="flex items-center gap-3">
+                                        <div class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold" id="info-type-badge">
+                                            NORMAL
+                                        </div>
+                                        <button id="btn-copy-tracker" type="button" class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-primary hover:border-primary dark:hover:border-primary transition-colors shadow-sm" title="Salin Link Publik">
+                                            <span class="material-symbols-outlined text-[14px] pointer-events-none">link</span>
+                                            <span>Link Publik</span>
+                                        </button>
+                                        <button id="btn-copy-wa" type="button" class="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/50 rounded text-[10px] font-bold text-slate-600 dark:text-slate-300 hover:text-emerald-500 hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors shadow-sm" title="Salin Draft WA Publik">
+                                            <span class="material-symbols-outlined text-[14px] pointer-events-none">chat</span>
+                                            <span>Link WA</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-span-1 md:col-span-2 lg:col-span-3 mt-2 border border-slate-200 dark:border-slate-800/50 rounded-xl p-5 bg-slate-50 dark:bg-slate-800/20 shadow-inner">
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4">Status Checklist Berjenjang</p>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-white/10">
+                                        <!-- QC 1 -->
+                                        <div class="flex flex-col gap-3 pt-4 md:pt-0 pr-4">
+                                            <div class="flex items-center gap-2.5">
+                                                <div id="qc1-check" class="w-5 h-5 rounded border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 text-transparent transition-colors shadow-sm" title="Centang QC 1">
+                                                    <span class="material-symbols-outlined text-[14px] font-bold">check</span>
+                                                </div>
+                                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">QC 1 / Pra Produksi</span>
+                                            </div>
+                                            <div id="qc1-details" class="hidden flex-col gap-1.5 pl-[30px]">
+                                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                                    <span class="material-symbols-outlined text-[14px]">schedule</span>
+                                                    <span id="qc1-time">-</span>
+                                                </div>
+                                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                                    <span class="material-symbols-outlined text-[14px]">person</span>
+                                                    <span id="qc1-user">-</span>
+                                                </div>
+                                                <div class="text-[10px] text-slate-600 dark:text-slate-400 italic mt-0.5 p-2 bg-white/60 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-white/5 leading-relaxed">
+                                                    "<span id="qc1-desc"></span>"
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- QC 2 -->
+                                        <div class="flex flex-col gap-3 pt-4 md:pt-0 pl-0 md:pl-6 pr-4">
+                                            <div class="flex items-center gap-2.5">
+                                                <div id="qc2-check" class="w-5 h-5 rounded border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 text-transparent transition-colors shadow-sm" title="Centang QC 2">
+                                                    <span class="material-symbols-outlined text-[14px] font-bold">check</span>
+                                                </div>
+                                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">QC 2 / Produksi</span>
+                                            </div>
+                                            <div id="qc2-details" class="hidden flex-col gap-1.5 pl-[30px]">
+                                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                                    <span class="material-symbols-outlined text-[14px]">schedule</span>
+                                                    <span id="qc2-time">-</span>
+                                                </div>
+                                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                                    <span class="material-symbols-outlined text-[14px]">person</span>
+                                                    <span id="qc2-user">-</span>
+                                                </div>
+                                                <div class="text-[10px] text-slate-600 dark:text-slate-400 italic mt-0.5 p-2 bg-white/60 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-white/5 leading-relaxed">
+                                                    "<span id="qc2-desc"></span>"
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- QC 3 -->
+                                        <div class="flex flex-col gap-3 pt-4 md:pt-0 pl-0 md:pl-6">
+                                            <div class="flex items-center gap-2.5">
+                                                <div id="qc3-check" class="w-5 h-5 rounded border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center bg-white dark:bg-slate-800 text-transparent transition-colors shadow-sm" title="Centang QC 3">
+                                                    <span class="material-symbols-outlined text-[14px] font-bold">check</span>
+                                                </div>
+                                                <span class="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">QC 3 / Final & Packing</span>
+                                            </div>
+                                            <div id="qc3-details" class="hidden flex-col gap-1.5 pl-[30px]">
+                                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                                    <span class="material-symbols-outlined text-[14px]">schedule</span>
+                                                    <span id="qc3-time">-</span>
+                                                </div>
+                                                <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                                                    <span class="material-symbols-outlined text-[14px]">person</span>
+                                                    <span id="qc3-user">-</span>
+                                                </div>
+                                                <div class="text-[10px] text-slate-600 dark:text-slate-400 italic mt-0.5 p-2 bg-white/60 dark:bg-slate-800/50 rounded border border-slate-200 dark:border-white/5 leading-relaxed">
+                                                    "<span id="qc3-desc"></span>"
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-span-1 md:col-span-2 lg:col-span-3">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                                        <div>
+                                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Nama Produk / Klien</p>
+                                            <p class="text-slate-800 dark:text-slate-200 font-semibold" id="info-title">Banner X - Luxury High Gloss</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Item Produksi</p>
+                                            <p class="text-slate-800 dark:text-slate-200 font-semibold" id="info-item">Banner Large Format</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-span-1 md:col-span-2 lg:col-span-3">
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">Deskripsi</p>
+                                    <p class="text-slate-700 dark:text-slate-300 text-sm" id="info-desc">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-indigo-400">event</span>Tgl. SPK Dibuat</p>
+                                    <p class="text-slate-800 dark:text-slate-200 font-semibold" id="info-created">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-teal-400">person</span>Dibuat Oleh</p>
+                                    <p class="text-slate-800 dark:text-slate-200 font-semibold" id="info-creator">-</p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px] text-amber-400">flag</span>Target Selesai</p>
+                                    <p class="font-semibold" id="info-due">20 Okt 2026</p>
+                                    <p class="flex items-center gap-1 mt-1 text-[11px] text-slate-500" id="info-due-datetime">
+                                        <span class="material-symbols-outlined text-[12px]">calendar_month</span>
+                                        <span id="info-due-datetime-val">—</span>
+                                    </p>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">timer</span> Lama Produktivitas</p>
+                                    <p class="text-slate-800 dark:text-slate-200 font-bold text-primary bg-primary/10 inline-block px-2 py-0.5 rounded" id="info-duration">-</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Section: Riwayat Proses -->
+                        <section class="glass-panel backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl">
+                            <div class="p-6 border-b border-slate-200 dark:border-white/10 flex items-center gap-2 bg-slate-50/50 dark:bg-slate-900/40">
+                                <span class="material-symbols-outlined text-primary dark:text-blue-400">history</span>
+                                <h3 class="font-bold text-lg text-slate-800 dark:text-white">Riwayat Proses</h3>
+                            </div>
+                            <div class="p-6 bg-white/50 dark:bg-slate-900/40">
+                                <div id="history-timeline" class="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:h-full before:w-0.5 before:-translate-x-px before:bg-slate-200 dark:before:bg-white/10">
+                                    <!-- Dynamic history items will be injected here -->
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- Review Section -->
+                    <div class="col-span-12 lg:col-span-4 space-y-8">
+                        
+                        <!-- Mini Actions -->
+                        <div class="glass-panel backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 p-4 flex items-center gap-4 bg-white/50 dark:bg-slate-900/40">
+                            <button onclick="handleCancelSpk()" class="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 border border-red-500/20">
+                                <span class="material-symbols-outlined text-[18px]">cancel</span>
+                                Batal SPK
+                            </button>
+                        </div>
+                        
+                        <section class="glass-panel backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl" id="review-section">
+                            <div class="p-6 border-b border-slate-200 dark:border-white/10 flex items-center justify-between bg-slate-50/50 dark:bg-slate-900/40">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-amber-500">reviews</span>
+                                    <h3 class="font-bold text-lg text-slate-800 dark:text-white">Review Konsumen</h3>
+                                </div>
+                                <span id="review-badge" class="hidden text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded ring-1 ring-emerald-500/30">Verified Purchase</span>
+                            </div>
+                            <!-- Dynamic review body injected here -->
+                            <div class="p-6 bg-white/50 dark:bg-slate-900/40" id="review-body">
+                                <!-- placeholder — replaced by JS -->
+                                <div class="flex flex-col items-center gap-3 py-8 text-center">
+                                    <span class="material-symbols-outlined text-slate-400 text-5xl">rate_review</span>
+                                    <p class="text-slate-500 font-semibold text-sm">Belum ada review dari konsumen.</p>
+                                    <p class="text-slate-600 text-xs">Review akan muncul setelah konsumen mengisi formulir di halaman Tracker.</p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ===== MODAL EDIT PRODUK ===== -->
+    <div id="editModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 hidden opacity-0 transition-opacity duration-300" style="background-color:rgba(15,23,42,0.75);backdrop-filter:blur(4px);">
+        <div class="glass-panel w-full max-w-4xl rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] transform scale-95 transition-transform duration-300" id="editModalContent">
+            <!-- Header -->
+            <header class="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-slate-800/40">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="bg-blue-500/20 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-blue-400 text-2xl">edit_note</span>
+                    </div>
+                    <div>
+                        <h2 class="text-slate-100 text-lg font-bold tracking-tight uppercase">FORM: EDIT PRODUK / SPK</h2>
+                        <p class="text-slate-400 text-xs">Ubah data produk — perubahan akan disimpan ke sistem</p>
+                    </div>
+                </div>
+                <button onclick="closeEditModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700/50 hover:bg-slate-700 text-slate-200 text-sm font-semibold transition-all">
+                    <span class="material-symbols-outlined text-sm">close</span>
+                    Batal
+                </button>
+            </header>
+
+            <!-- Form Content -->
+            <form id="editForm" onsubmit="handleSaveEdit(event)" class="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+                <input type="hidden" id="editCardId" value="">
+                <div class="p-6 space-y-8 flex-1">
+
+                    <!-- Section 1: Production Info -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">No. Produksi</span>
+                                <div class="relative group">
+                                    <input id="editSpkNo" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all placeholder:text-slate-500" placeholder="Contoh: PROD-2026-001" type="text" required/>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-slate-500">
+                                        <span class="material-symbols-outlined text-xl">info</span>
+                                    </div>
+                                </div>
+                                <p class="mt-1.5 text-slate-500 text-xs italic">ID akan diperbarui</p>
+                            </label>
+                            
+                            <div class="space-y-3">
+                                <span class="text-slate-300 text-sm font-semibold block uppercase tracking-wider">Jenis Project</span>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <label class="relative cursor-pointer group">
+                                        <input class="peer sr-only" name="edit_project_type" type="radio" value="NORMAL">
+                                        <div class="p-3 text-center rounded-lg border border-slate-700 bg-slate-800/40 peer-checked:border-primary peer-checked:bg-primary/10 transition-all">
+                                            <span class="text-sm font-medium text-slate-400 group-hover:text-slate-200 peer-checked:text-primary">NORMAL</span>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer group">
+                                        <input class="peer sr-only" name="edit_project_type" type="radio" value="VIP">
+                                        <div class="p-3 text-center rounded-lg border border-slate-700 bg-slate-800/40 peer-checked:border-yellow-500 peer-checked:bg-yellow-500/10 transition-all">
+                                            <span class="text-sm font-medium text-slate-400 group-hover:text-slate-200 peer-checked:text-yellow-500">VIP</span>
+                                            <div class="absolute -top-2 -right-1 bg-yellow-500 text-[10px] px-1.5 rounded-full text-slate-900 font-bold">GOLD</div>
+                                        </div>
+                                    </label>
+                                    <label class="relative cursor-pointer group">
+                                        <input class="peer sr-only" name="edit_project_type" type="radio" value="VVIP">
+                                        <div class="p-3 text-center rounded-lg border border-slate-700 bg-slate-800/40 peer-checked:border-purple-500 peer-checked:bg-purple-500/10 transition-all">
+                                            <span class="text-sm font-medium text-slate-400 group-hover:text-slate-200 peer-checked:text-purple-400">VVIP</span>
+                                            <div class="absolute -top-2 -right-1 bg-purple-500 text-[10px] px-1.5 rounded-full text-white font-bold">NEON</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Nama Produk / Klien</span>
+                                <input id="editSpkTitle" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="Masukkan nama klien atau proyek" type="text" required/>
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Item Produksi</span>
+                                <input id="editSpkItem" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="Misal: Banner Large Format" type="text"/>
+                            </label>
+                            
+                            <label class="block">
+                                <span class="text-slate-300 text-sm font-semibold mb-2 block uppercase tracking-wider">Deskripsi</span>
+                                <textarea id="editSpkDesc" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all resize-none" placeholder="Detail spesifikasi produk..." rows="2"></textarea>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Section 2: Penjadwalan Produksi -->
+                    <div class="bg-slate-800/30 p-5 rounded-xl border border-slate-700/50 space-y-6">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="material-symbols-outlined text-primary">schedule</span>
+                            <h3 class="text-slate-200 text-sm font-bold uppercase tracking-wider">Penjadwalan Produksi</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- SPK Dibuat (Read-only) -->
+                            <div class="space-y-4">
+                                <span class="text-slate-400 text-xs font-bold uppercase">Tanggal SPK Dibuat (Otomatis)</span>
+                                <div class="flex gap-3">
+                                    <div class="flex-1 relative">
+                                        <input class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed" disabled type="text" id="editCreatedDate" value="-" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Target Selesai -->
+                            <div class="space-y-4">
+                                <span class="text-slate-200 text-xs font-bold uppercase">Target Selesai (Manual)</span>
+                                <div class="flex gap-3">
+                                    <div class="flex-1 relative">
+                                        <input id="editDueDate" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" type="date" required/>
+                                    </div>
+                                    <div class="w-32 relative">
+                                        <input id="editDueTime" class="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-3 text-slate-100 focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" type="time" value="17:00" required/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <footer class="px-6 py-5 border-t border-slate-700/50 bg-slate-800/60 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-4 text-slate-400 text-xs">
+                        <div class="flex items-center gap-1">
+                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                            <span>Mode: Edit SPK</span>
+                        </div>
+                        <span>•</span>
+                        <span id="edit-user-label">User: —</span>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <button type="button" onclick="closeEditModal()" class="flex-1 md:flex-none px-6 py-3 rounded-lg border border-slate-600 text-slate-300 text-sm font-semibold hover:bg-slate-800 transition-all">Batal</button>
+                        <button type="submit" class="flex-1 md:flex-none px-8 py-3 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">save</span>
+                            SIMPAN PERUBAHAN
+                        </button>
+                    </div>
+                </footer>
+            </form>
+        </div>
+    </div>
+    <!-- ===== END MODAL EDIT PRODUK ===== -->
+
+    <!-- JS untuk Load Data dari URL parameter (Simulasi dinamis) -->
+    <script>
+        window.calculateDurationStr = function(startStr, endStr) {
+            let startD = new Date(startStr);
+            let endD = new Date(endStr);
+            let diffMs = endD - startD;
+            if(diffMs < 0) diffMs = 0;
+            
+            let diffMins = Math.floor(diffMs / 60000);
+            if (diffMins === 0) return 'kurang dari 1 menit';
+            if (diffMins < 60) return `${diffMins} menit`;
+            
+            let h = Math.floor(diffMins / 60);
+            let m = diffMins % 60;
+            if (h < 24) return m > 0 ? `${h} jam ${m} menit` : `${h} jam`;
+            
+            let d = Math.floor(h / 24);
+            h = h % 24;
+            return h > 0 ? `${d} hari ${h} jam` : `${d} hari`;
+        };
+
+        function formatDateTime(isoString) {
+            const d = new Date(isoString);
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+            const day = d.getDate().toString().padStart(2, '0');
+            const month = months[d.getMonth()];
+            const year = d.getFullYear();
+            const hours = d.getHours().toString().padStart(2, '0');
+            const minutes = d.getMinutes().toString().padStart(2, '0');
+            return `Tgl ${day} ${month} ${year} Jam ${hours}.${minutes}`;
+        }
+
+        // ===== FUNGSI MODAL EDIT PRODUK =====
+        window.handleEditSpk = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardId = urlParams.get('id');
+            if (!cardId) { alert('Tidak ada produk yang dimuat.'); return; }
+
+            const kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+            const card = kanbanCards.find(c => c.id === cardId);
+            if (!card) { alert('Data produk tidak ditemukan.'); return; }
+
+            // Pre-fill cardId
+            document.getElementById('editCardId').value = cardId;
+
+            // Pre-fill No. Produksi dan Nama Produk (pisahkan dari title)
+            const titleParts = (card.title || '').split(' ');
+            document.getElementById('editSpkNo').value   = titleParts[0] || '';
+            document.getElementById('editSpkTitle').value = titleParts.slice(1).join(' ') || card.title || '';
+            document.getElementById('editSpkItem').value  = card.type || '';
+            document.getElementById('editSpkDesc').value  = card.desc || '';
+
+            // Pre-fill Jenis Project (radio)
+            const tagVal = card.tagDesc || 'NORMAL';
+            const radios = document.querySelectorAll('input[name="edit_project_type"]');
+            radios.forEach(r => { r.checked = (r.value === tagVal); });
+
+            // Pre-fill Tanggal SPK Dibuat (readonly)
+            const allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+            const createEv = allHistories.find(h => h.cardId === cardId && h.type === 'create');
+            const createdDateEl = document.getElementById('editCreatedDate');
+            if (createdDateEl) {
+                if (createEv) {
+                    createdDateEl.value = formatDateTime(createEv.timestamp);
+                } else if (card.createdAt) {
+                    createdDateEl.value = formatDateTime(card.createdAt);
+                } else {
+                    createdDateEl.value = '-';
+                }
+            }
+
+            // Pre-fill Target Selesai
+            if (card.dueDate) {
+                try {
+                    const dObj = new Date(card.dueDate);
+                    const yyyy = dObj.getFullYear();
+                    const mm   = String(dObj.getMonth()+1).padStart(2,'0');
+                    const dd   = String(dObj.getDate()).padStart(2,'0');
+                    document.getElementById('editDueDate').value = `${yyyy}-${mm}-${dd}`;
+                    const hh   = String(dObj.getHours()).padStart(2,'0');
+                    const min  = String(dObj.getMinutes()).padStart(2,'0');
+                    document.getElementById('editDueTime').value = `${hh}:${min}`;
+                } catch(e) {}
+            }
+
+            // Label user di footer
+            const userName = window.flowtaUser ? window.flowtaUser.name : 'Tamu';
+            document.getElementById('edit-user-label').textContent = 'User: ' + userName;
+
+            // Tampilkan modal dengan animasi (sama seperti kanban.html)
+            const modal = document.getElementById('editModal');
+            const cont = document.getElementById('editModalContent');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                cont.classList.remove('scale-95');
+            }, 10);
+        };
+
+        window.closeEditModal = function() {
+            const modal = document.getElementById('editModal');
+            const cont = document.getElementById('editModalContent');
+            modal.classList.add('opacity-0');
+            cont.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        };
+
+        window.handleSaveEdit = function(e) {
+            e.preventDefault();
+
+            const cardId     = document.getElementById('editCardId').value;
+            const spkNo      = document.getElementById('editSpkNo').value.trim();
+            const spkTitle   = document.getElementById('editSpkTitle').value.trim();
+            const spkItem    = document.getElementById('editSpkItem').value.trim();
+            const spkDesc    = document.getElementById('editSpkDesc').value.trim();
+            const dueDateVal = document.getElementById('editDueDate').value;
+            const dueTimeVal = document.getElementById('editDueTime').value || '17:00';
+            const tagRadio   = document.querySelector('input[name="edit_project_type"]:checked');
+            const tagDesc    = tagRadio ? tagRadio.value : 'NORMAL';
+
+            if (!spkNo || !spkTitle) {
+                alert('No. Produksi dan Nama Produk / Klien wajib diisi.');
+                return;
+            }
+
+            // Token billing
+            if(!window.consumeToken('Edit Produk', { spkNo, title: spkTitle, item: spkItem })) return;
+
+            // Build new title
+            const newTitle = `${spkNo} ${spkTitle}`;
+
+            // Calculate dueDate ISO
+            let dueDateIso = '';
+            if (dueDateVal) {
+                const dueObj  = new Date(`${dueDateVal}T${dueTimeVal}:00`);
+                dueDateIso    = dueObj.toISOString();
+            }
+
+            // Tag color
+            const tagColorMap = { NORMAL: 'indigo', VIP: 'amber', VVIP: 'fuchsia' };
+            const tagColor = tagColorMap[tagDesc] || 'indigo';
+
+            // Update card in localStorage
+            let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+            const idx = kanbanCards.findIndex(c => c.id === cardId);
+            if (idx === -1) { alert('Produk tidak ditemukan, simpan gagal.'); return; }
+
+            kanbanCards[idx].title       = newTitle;
+            kanbanCards[idx].type        = spkItem;
+            kanbanCards[idx].desc        = spkDesc;
+            kanbanCards[idx].tagDesc     = tagDesc;
+            kanbanCards[idx].tagColor    = tagColor;
+            kanbanCards[idx].dueDate     = dueDateIso;
+
+            localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+
+            // Log History: edit
+            const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+            histories.unshift({
+                id: 'HIST-' + Date.now(),
+                cardId: cardId,
+                type: 'edit',
+                timestamp: new Date().toISOString(),
+                user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                desc: `Data produk diperbarui: <span class="font-bold text-slate-200">${newTitle}</span> oleh <span class="font-medium text-blue-400">${window.flowtaUser ? window.flowtaUser.name : 'Sistem'}</span>`
+            });
+            localStorage.setItem('flowta_history', JSON.stringify(histories));
+
+            // Tutup modal & reload halaman untuk refresh tampilan
+            closeEditModal();
+            window.location.reload();
+        };
+        // ===== END FUNGSI MODAL EDIT PRODUK =====
+
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+            // ── Pasang event listener tombol Edit dan Close modal ──
+            const btnEdit = document.getElementById('btn-edit-spk');
+            if (btnEdit) btnEdit.addEventListener('click', function() { window.handleEditSpk(); });
+
+            // Tutup modal edit jika klik overlay gelap
+            const editModal = document.getElementById('editModal');
+            if (editModal) {
+                editModal.addEventListener('click', function(e) {
+                    if (e.target === editModal) window.closeEditModal();
+                });
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const cardId = urlParams.get('id');
+            
+            if (cardId) {
+                const kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+                const card = kanbanCards.find(c => c.id === cardId);
+                
+                if (card) {
+                    const titleParts2 = card.title.split(' ');
+                    window.currentSpkInfo = { spkNo: titleParts2[0], title: titleParts2.slice(1).join(' '), item: card.type };
+
+                    // Injecting simple text replacements
+                    document.getElementById('breadcrumb-title').textContent = card.title;
+                    
+                    const titleParts = card.title.split(' ');
+                    document.getElementById('header-id').textContent = titleParts[0];
+                    if(titleParts.length > 1) {
+                        document.getElementById('header-title').textContent = '- ' + titleParts.slice(1).join(' ');
+                    }
+                    
+                    document.getElementById('info-id').textContent = titleParts[0];
+                    document.getElementById('info-title').textContent = card.title;
+                    // Dynamic deadline calculation
+                    const dl = window.calcDeadline(card.createdAt, card.dueDate);
+                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                    const dueText = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+                    document.getElementById('info-due').textContent = dueText;
+                    
+                    // Tanggal+jam aktual Target Selesai
+                    const dueDatetimeEl = document.getElementById('info-due-datetime-val');
+                    if (dueDatetimeEl) {
+                        dueDatetimeEl.textContent = card.dueDate ? formatDateTime(card.dueDate) : '—';
+                    }
+                    
+                    if (isFinished) {
+                        document.getElementById('info-due').className = 'text-slate-400 font-semibold';
+                    } else if (dl.level >= 4) {
+                        document.getElementById('info-due').className = `text-${dl.color}-500 font-bold`;
+                    } else if (dl.level === 3) {
+                        document.getElementById('info-due').className = 'text-amber-500 font-bold';
+                    } else {
+                        document.getElementById('info-due').className = `text-${dl.color}-500 font-bold`;
+                    }
+                    
+                    if(card.type) {
+                        document.getElementById('info-item').textContent = card.type;
+                    }
+                    if(card.tagDesc) {
+                        let cBadge = document.getElementById('info-type-badge');
+                        cBadge.textContent = card.tagDesc;
+                        if(card.tagDesc === 'VIP') {
+                            cBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/30';
+                        } else if(card.tagDesc === 'VVIP') {
+                            cBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-fuchsia-500/10 text-fuchsia-500 ring-1 ring-fuchsia-500/30';
+                        } else {
+                            cBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-indigo-500/10 text-indigo-500 ring-1 ring-indigo-500/30';
+                        }
+                    }
+                }
+                
+                // RENDER TIMELINE HISTORY
+                const allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+
+                // Populate Tgl. SPK Dibuat dan Pembuat
+                const createEv = allHistories.find(h => h.cardId === cardId && h.type === 'create');
+                const createdEl = document.getElementById('info-created');
+                const creatorEl = document.getElementById('info-creator');
+                if (createdEl) {
+                    if (createEv) {
+                        createdEl.textContent = formatDateTime(createEv.timestamp);
+                        if(creatorEl) creatorEl.textContent = createEv.user || 'Sistem';
+                    } else if (card.createdAt) {
+                        createdEl.textContent = formatDateTime(card.createdAt);
+                        if(creatorEl) creatorEl.textContent = 'Sistem';
+                    } else {
+                        createdEl.textContent = '-';
+                        if(creatorEl) creatorEl.textContent = '-';
+                    }
+                }
+                // Filter by cardId, sort by newest first (descending)
+                const cardHistories = allHistories.filter(h => h.cardId === cardId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const tlContainer = document.getElementById('history-timeline');
+                let html = '';
+                
+                // UPDATE QC TABLE UI dynamically based on phases
+                let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [
+                    { id: 1, title: 'Desain & Pra-Cetak' },
+                    { id: 2, title: 'Cetak Produksi' },
+                    { id: 3, title: 'Las & Rangka' },
+                    { id: 4, title: 'Quality Control & Finishing' }
+                ];
+                
+                const allQcRecords = JSON.parse(localStorage.getItem('flowta_qc')) || [];
+                const cardQcRecords = allQcRecords.filter(q => q.cardId === cardId);
+                const qcTableBody = document.getElementById('qc-table-body');
+                
+                // Initialize top Checklist UI based on history
+                const praRecord = cardQcRecords.find(q => q.type === 'Pra Produksi');
+                const prodRecord = cardQcRecords.find(q => q.type === 'Produksi');
+                const akhirRecord = cardQcRecords.find(q => q.type === 'Hasil Akhir');
+                
+                const activeCheckClass = "w-5 h-5 rounded border-2 border-emerald-500 bg-emerald-500 text-white flex items-center justify-center transition-colors shadow-sm shadow-emerald-500/30";
+                
+                if (praRecord) {
+                    document.getElementById('qc1-check').className = activeCheckClass;
+                    document.getElementById('qc1-details').classList.remove('hidden');
+                    document.getElementById('qc1-details').classList.add('flex');
+                    document.getElementById('qc1-time').textContent = formatDateTime(praRecord.timestamp);
+                    document.getElementById('qc1-user').textContent = praRecord.user || '-';
+                    document.getElementById('qc1-desc').textContent = praRecord.desc || 'Telah diperiksa.';
+                }
+                if (prodRecord) {
+                    document.getElementById('qc2-check').className = activeCheckClass;
+                    document.getElementById('qc2-details').classList.remove('hidden');
+                    document.getElementById('qc2-details').classList.add('flex');
+                    document.getElementById('qc2-time').textContent = formatDateTime(prodRecord.timestamp);
+                    document.getElementById('qc2-user').textContent = prodRecord.user || '-';
+                    document.getElementById('qc2-desc').textContent = prodRecord.desc || 'Telah diperiksa.';
+                }
+                if (akhirRecord) {
+                    document.getElementById('qc3-check').className = activeCheckClass;
+                    document.getElementById('qc3-details').classList.remove('hidden');
+                    document.getElementById('qc3-details').classList.add('flex');
+                    document.getElementById('qc3-time').textContent = formatDateTime(akhirRecord.timestamp);
+                    document.getElementById('qc3-user').textContent = akhirRecord.user || '-';
+                    document.getElementById('qc3-desc').textContent = akhirRecord.desc || 'Telah diperiksa.';
+                }
+                
+                // Sort absolute history chronologically to compute Phase entry and exit times
+                const ascHistories = [...cardHistories].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+                let qcHtmlRows = '';
+                
+                phasesData.forEach((phase, index) => {
+                    let phaseQc = null;
+                    if(phase.title.toLowerCase().includes('pra') || phase.title.toLowerCase().includes('desain')) {
+                        phaseQc = cardQcRecords.find(q => q.type === 'Pra Produksi');
+                    } else if(phase.title.toLowerCase().includes('cetak') || phase.title.toLowerCase().includes('produksi')) {
+                        phaseQc = cardQcRecords.find(q => q.type === 'Produksi');
+                    } else if(phase.title.toLowerCase().includes('finishing') || phase.title.toLowerCase().includes('akhir')) {
+                        phaseQc = cardQcRecords.find(q => q.type === 'Hasil Akhir');
+                    }
+                    
+                    // Logic to find entry event and exit event for this phase
+                    let entryEvent = null;
+                    let exitEvent = null;
+                    
+                    for (let i = 0; i < ascHistories.length; i++) {
+                        let h = ascHistories[i];
+                        if (h.type === 'create' && index === 0) {
+                            entryEvent = h;
+                            break;
+                        }
+                        if (h.type === 'move' && h.desc.includes(`>${phase.title}</span>`)) {
+                            entryEvent = h;
+                            break;
+                        }
+                    }
+                    
+                    if (entryEvent) {
+                        let entryIdx = ascHistories.indexOf(entryEvent);
+                        for (let i = entryIdx + 1; i < ascHistories.length; i++) {
+                            if (ascHistories[i].type === 'move') {
+                                exitEvent = ascHistories[i];
+                                break;
+                            }
+                        }
+                    }
+                    // Fallback safety if missing but it's phase 0
+                    if (!entryEvent && index === 0 && ascHistories.length > 0) {
+                        entryEvent = ascHistories[0];
+                    }
+                    
+                    let timeDisplayHtml = `<td class="px-6 py-4 text-xs text-slate-400 dark:text-slate-600 italic">-</td>`;
+                    
+                    if (entryEvent) {
+                        const entryDate = new Date(entryEvent.timestamp);
+                        const dateStr = `<span class="text-slate-800 dark:text-slate-200 font-medium">${entryDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span> <span class="text-slate-500 ml-2">${entryDate.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}</span>`;
+                        
+                        let endTime = exitEvent ? new Date(exitEvent.timestamp) : new Date(); // If not exited, count until now
+                        
+                        const msDiff = endTime - entryDate;
+                        const hrDiff = Math.floor(msDiff / (1000 * 60 * 60));
+                        const minDiff = Math.floor((msDiff % (1000 * 60 * 60)) / (1000 * 60));
+                        
+                        let durationStr = `<div class="mt-1 flex items-center gap-1 text-[10px] text-slate-500 bg-slate-100 dark:bg-slate-800/80 w-fit px-1.5 py-0.5 rounded font-bold border border-slate-200 dark:border-slate-700/50" title="Durasi fase"><span class="material-symbols-outlined text-[11px]">timer</span> ${hrDiff}j ${minDiff}m</div>`;
+                        
+                        timeDisplayHtml = `<td class="px-6 py-4 text-xs">${dateStr}${durationStr}</td>`;
+                    }
+                    
+                    qcHtmlRows += `<tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">`;
+                    qcHtmlRows += `<td class="px-6 py-4 font-semibold text-slate-800 dark:text-slate-200 border-r border-slate-200 dark:border-slate-700/50">${phase.title}</td>`;
+                    qcHtmlRows += timeDisplayHtml;
+                    
+                    if(phaseQc) {
+                        const qcDateObj = new Date(phaseQc.timestamp);
+                        const qcDateStr = `<div class="text-[10px] text-slate-500 mt-1.5 flex items-center gap-1 justify-center"><span class="material-symbols-outlined text-[12px]">calendar_month</span>${qcDateObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} ${qcDateObj.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' })}</div>`;
+                        const qcDescStr = phaseQc.desc ? `<div class="text-[11px] text-slate-600 dark:text-slate-400 mt-1 italic w-full text-center truncate max-w-[200px]" title="${phaseQc.desc}">"${phaseQc.desc}"</div>` : '';
+
+                        qcHtmlRows += `<td class="px-6 py-4">
+                            <div class="flex flex-col items-center">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] ring-1 ring-emerald-500/20">
+                                    <span class="material-symbols-outlined text-[14px]">verified</span>LULUS
+                                </span>
+                                ${qcDateStr}
+                                ${qcDescStr}
+                            </div>
+                        </td>`;
+                        qcHtmlRows += `<td class="px-6 py-4 text-sm font-medium text-primary dark:text-blue-400 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-400 text-[18px]">account_circle</span>${phaseQc.user || 'Admin'}
+                        </td>`;
+                    } else {
+                        qcHtmlRows += `<td class="px-6 py-4 text-center">
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 font-medium text-[11px]">
+                                <span class="material-symbols-outlined text-[14px]">pending</span>PENDING
+                            </span>
+                        </td>`;
+                        qcHtmlRows += `<td class="px-6 py-4 text-sm text-slate-400 dark:text-slate-600 italic">-</td>`;
+                    }
+                    qcHtmlRows += `</tr>`;
+                });
+                
+                if(qcTableBody) qcTableBody.innerHTML = qcHtmlRows;
+
+                if (cardHistories.length === 0) {
+                    // Fallback to minimal created state if it's an old placeholder card
+                    html = `
+                        <div class="relative flex items-start gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white dark:border-slate-900 bg-primary text-white z-10 shadow-sm" title="Buat Produk">
+                                <span class="material-symbols-outlined text-[16px]">add_task</span>
+                            </div>
+                            <div class="flex-1 pt-1.5 pb-2">
+                                <p class="text-sm text-slate-700 dark:text-slate-300">
+                                    <span class="font-semibold text-slate-900 dark:text-white">Hari Ini</span> 
+                                    Produk dibuat (Data Dummy) oleh <span class="font-medium text-primary dark:text-blue-400">Sistem</span>
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    cardHistories.forEach((hist, index) => {
+                        let icon = 'history';
+                        let bgClass = 'bg-slate-400 dark:bg-slate-600';
+                        let durationHtml = '';
+                        
+                        if (hist.type === 'create') {
+                            icon = 'add_task';
+                            bgClass = 'bg-primary';
+                        } else if (hist.type === 'move') {
+                            icon = 'sync_alt';
+                            bgClass = 'bg-amber-500';
+                            
+                            // Find the time it entered the previous phase
+                            let prevPhaseEvent = null;
+                            for (let j = index + 1; j < cardHistories.length; j++) {
+                                if (cardHistories[j].type === 'move' || cardHistories[j].type === 'create') {
+                                    prevPhaseEvent = cardHistories[j];
+                                    break;
+                                }
+                            }
+                            if (prevPhaseEvent) {
+                                let durationStr = window.calculateDurationStr(prevPhaseEvent.timestamp, hist.timestamp);
+                                durationHtml = `<div class="mt-1.5 inline-flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 text-amber-600 dark:text-amber-500 text-[11px] px-2 py-1 rounded-md font-bold border border-slate-200 dark:border-white/5 shadow-sm">
+                                    <span class="material-symbols-outlined text-[13px]">timer</span> Lama waktu di fase sebelumnya: ${durationStr}
+                                </div>`;
+                            }
+                        } else if (hist.type === 'edit') {
+                            icon = 'edit';
+                            bgClass = 'bg-slate-500';
+                        } else if (hist.type === 'qc') {
+                            icon = 'verified';
+                            bgClass = 'bg-emerald-500';
+                        } else if (hist.type === 'comment') {
+                            icon = 'forum';
+                            bgClass = 'bg-cyan-500';
+                        }
+                        
+                        const histUser = hist.user || 'Sistem';
+                        html += `
+                        <div class="relative flex items-start gap-4">
+                            <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-4 border-white dark:border-slate-900 ${bgClass} text-white z-10 shadow-sm">
+                                <span class="material-symbols-outlined text-[16px]">${icon}</span>
+                            </div>
+                            <div class="flex-1 pt-1.5 pb-2">
+                                <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                                    <span class="text-[11px] font-bold text-slate-500">${formatDateTime(hist.timestamp)}</span>
+                                    <span class="flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                                        <span class="material-symbols-outlined text-[12px]">person</span>
+                                        ${histUser}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-slate-700 dark:text-slate-300">${hist.desc}</p>
+                                ${durationHtml}
+                            </div>
+                        </div>
+                        `;
+                    });
+                    
+                    // CALCULATE LAMA PRODUKTIVITAS
+                    const durEl = document.getElementById('info-duration');
+                    if (durEl && cardHistories.length > 0) {
+                        const firstEvent = cardHistories[cardHistories.length - 1]; // oldest event (sorted desc)
+                        const startTime = firstEvent.timestamp;
+                        
+                        if (card.status === 'BATAL') {
+                            durEl.textContent = '- (Dibatalkan)';
+                            durEl.className = 'text-slate-500 font-bold bg-slate-100 dark:bg-slate-800 inline-block px-2 py-0.5 rounded';
+                        } else if (card.status === 'SELESAI') {
+                            const finishEvent = cardHistories.find(h => h.type === 'complete') || cardHistories[0]; 
+                            const endTime = finishEvent.timestamp;
+                            const totalDurationStr = window.calculateDurationStr(startTime, endTime);
+                            durEl.textContent = totalDurationStr + ' (Selesai)';
+                            durEl.className = 'text-emerald-700 dark:text-emerald-400 font-bold bg-emerald-100 dark:bg-emerald-900/30 inline-block px-2 py-0.5 rounded';
+                        } else {
+                            // Status Aktif / Berjalan
+                            const totalDurationStr = window.calculateDurationStr(startTime, new Date().toISOString());
+                            durEl.textContent = totalDurationStr + ' (Berjalan)';
+                            durEl.className = 'text-primary dark:text-blue-400 font-bold bg-primary/10 inline-block px-2 py-0.5 rounded';
+                        }
+                    }
+                }
+                tlContainer.innerHTML = html;
+                
+                // LINK TRACKER Logic
+                const btnTracker = document.getElementById('btn-copy-tracker');
+                if (btnTracker) {
+                    btnTracker.addEventListener('click', () => {
+                        const currentUrl = window.location.href;
+                        const trackerUrl = currentUrl.replace('product-detail.html', 'tracker.html');
+                        
+                        navigator.clipboard.writeText(trackerUrl).then(() => {
+                            const originalHtml = btnTracker.innerHTML;
+                            btnTracker.innerHTML = `<span class="material-symbols-outlined text-[14px] text-emerald-500">check</span><span class="text-emerald-500">Tersalin!</span>`;
+                            btnTracker.classList.add('border-emerald-500');
+                            setTimeout(() => {
+                                btnTracker.innerHTML = originalHtml;
+                                btnTracker.classList.remove('border-emerald-500');
+                            }, 2000);
+                        }).catch(err => {
+                            console.error('Gagal menyalin:', err);
+                            alert('Gagal menyalin link. Silakan coba lagi.');
+                        });
+                    });
+                }
+                
+                // LINK WA Logic
+                const btnWa = document.getElementById('btn-copy-wa');
+                if (btnWa) {
+                    btnWa.addEventListener('click', () => {
+                        const currentUrl = window.location.href;
+                        const trackerUrl = currentUrl.replace('product-detail.html', 'tracker.html');
+                        
+                        const titleParts2 = card.title.split(' ');
+                        const klienName = titleParts2.length > 1 ? titleParts2.slice(1).join(' ') : 'Klien';
+                        const adminNameStr = window.flowtaUser ? window.flowtaUser.name : 'Admin';
+                        
+                        const waText = `Terimakasih ${klienName}\nsudah mempercayakan pada TATA KELOLA,\nSaat ini (SPK ${window.currentSpkInfo.spkNo}, ${window.currentSpkInfo.title}),\nbisa Anda lihat progres nya : ${trackerUrl}\nTerimakasih - ${adminNameStr}`;
+                        
+                        navigator.clipboard.writeText(waText).then(() => {
+                            const originalHtml = btnWa.innerHTML;
+                            btnWa.innerHTML = `<span class="material-symbols-outlined text-[14px] text-emerald-500">check</span><span class="text-emerald-500">Tersalin!</span>`;
+                            btnWa.classList.add('border-emerald-500');
+                            setTimeout(() => {
+                                btnWa.innerHTML = originalHtml;
+                                btnWa.classList.remove('border-emerald-500');
+                            }, 2000);
+                        }).catch(err => {
+                            console.error('Gagal menyalin:', err);
+                            alert('Gagal menyalin draft WA. Silakan coba lagi.');
+                        });
+                    });
+                }
+            }
+        });
+
+        window.handleCancelSpk = function() {
+            if(confirm("Peringatan: Apakah Anda yakin ingin MEMBATALKAN SPK ini? Aksi ini akan menghapus kartu dari papan kanban utama dan mencatatnya sebagai pembatalan di histori.")) {
+                if(!window.consumeToken('Batal SPK', window.currentSpkInfo)) return;
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                const cardId = urlParams.get('id');
+                if(!cardId) return;
+
+                let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+                const cardIndex = kanbanCards.findIndex(c => c.id === cardId);
+                
+                if (cardIndex !== -1) {
+                    kanbanCards[cardIndex].status = 'BATAL';
+                    localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                    
+                    // LOG HISTORY: Batal
+                    const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                    histories.unshift({
+                        id: 'HIST-' + Date.now(),
+                        cardId: cardId,
+                        type: 'cancel',
+                        timestamp: new Date().toISOString(),
+                        user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                        desc: `Status Produk diubah menjadi <span class="font-bold text-red-500">BATAL</span> oleh <span class="font-medium text-primary dark:text-blue-400">Pengguna</span>`
+                    });
+                    localStorage.setItem('flowta_history', JSON.stringify(histories));
+                    
+                    alert('SPK berhasil dibatalkan. Anda akan dialihkan kembali ke Papan Kanban.');
+                    window.location.replace('kanban.html');
+                }
+            }
+        };
+
+        // handleEditSpk didefinisikan di bagian MODAL EDIT PRODUK di atas
+
+        window.handlePrintLabel = function() {
+            if(!window.consumeToken('Print Label', window.currentSpkInfo)) return;
+            window.print();
+        };
+
+        // EVENT LISTENER UNTUK TOMBOL PRODUKSI SELESAI
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+            const btnFinish = document.getElementById('btn-finish-production');
+            if (btnFinish) {
+                const urlParams = new URLSearchParams(window.location.search);
+                const cardId = urlParams.get('id');
+                
+                // Cek status awal apakah sudah SELESAI
+                let cardsInit = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+                let cardObj = cardsInit.find(c => c.id === cardId);
+                if (cardObj && cardObj.status === 'SELESAI') {
+                    btnFinish.disabled = true;
+                    btnFinish.className = "flex items-center gap-2 px-5 py-2.5 bg-slate-400 text-white rounded-lg text-sm font-bold cursor-not-allowed opacity-70";
+                    btnFinish.innerHTML = `<span class="material-symbols-outlined text-[20px]">verified</span> Sudah Selesai`;
+                }
+                
+                btnFinish.addEventListener('click', () => {
+                    if (!cardId) {
+                        alert('Data Produk tidak ditemukan!');
+                        return;
+                    }
+                    if(confirm("Apakah Anda yakin produksi ini telah selesai sepenuhnya? Tindakan ini akan:\n1. Mencatat aktivitas 'Produksi Selesai'.\n2. Menambah riwayat Quality Control final.\n3. Menghapus kartu dari Papan Kanban.\n4. Menambahkan data ke kotak 'Selesai' di Dashboard.")) {
+                        if (!window.consumeToken('Produksi Selesai', window.currentSpkInfo)) return;
+                        
+                        let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+                        const cardIndex = kanbanCards.findIndex(c => c.id === cardId);
+                        
+                        if (cardIndex !== -1) {
+                            const nowIso = new Date().toISOString();
+                            const currentPhaseId = kanbanCards[cardIndex].phaseId;
+                            
+                            // 1. UPDATE KANBAN STATUS: 'SELESAI' (Otomatis tidak tampil di papan kanban tapi terhitung di dashboard)
+                            kanbanCards[cardIndex].status = 'SELESAI';
+                            localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                            
+                            // 2. LOG HISTORY: Aktivitas Selesai
+                            const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                            histories.unshift({
+                                id: 'HIST-' + Date.now(),
+                                cardId: cardId,
+                                type: 'complete',
+                                timestamp: nowIso,
+                                user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                                desc: `Status Produk diubah menjadi <span class="font-bold text-emerald-500">SELESAI</span>`
+                            });
+                            localStorage.setItem('flowta_history', JSON.stringify(histories));
+                            
+                            // 3. LOG QC FINISHING
+                            let qcRecords = JSON.parse(localStorage.getItem('flowta_qc')) || [];
+                            qcRecords.push({
+                                id: 'QC-FINISH-' + Date.now(),
+                                cardId: cardId,
+                                phaseId: currentPhaseId,
+                                type: 'Hasil Akhir',
+                                timestamp: nowIso,
+                                user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                                desc: "Telah dikonfirmasi: Produksi Selesai Sepenuhnya."
+                            });
+                            localStorage.setItem('flowta_qc', JSON.stringify(qcRecords));
+                            
+                            btnFinish.innerHTML = `<span class="material-symbols-outlined text-[20px] animate-spin">sync</span> Menyinkronkan...`;
+                            btnFinish.disabled = true;
+                            
+                            setTimeout(() => {
+                                alert('Aktivitas berhasil disimpan! Data telah disinkronkan ke Database.');
+                                window.location.reload();
+                            }, 1500);
+                        } else {
+                            alert('Galat: SPK tidak ditemukan di database.');
+                        }
+                    }
+                });
+            }
+        });
+        // ─── REVIEW KONSUMEN — load dari flowta_reviews ───────────────────────────
+        function buildDetailStars(val) {
+            let h = '';
+            for (let i = 1; i <= 5; i++) {
+                const filled = i <= val ? "font-variation-settings:'FILL' 1" : "font-variation-settings:'FILL' 0;color:#cbd5e1";
+                h += `<span class="material-symbols-outlined text-amber-400 text-[20px]" style="${filled}">star</span>`;
+            }
+            return h;
+        }
+
+        function renderReviewOnDetail(cardId) {
+            const allReviews = JSON.parse(localStorage.getItem('flowta_reviews')) || [];
+            const review     = allReviews.find(r => r.cardId === cardId);
+            const body       = document.getElementById('review-body');
+            const badge      = document.getElementById('review-badge');
+            if (!body) return;
+
+            if (!review) {
+                // Placeholder already in HTML — nothing to do
+                return;
+            }
+
+            // Show Verified Purchase badge
+            if (badge) badge.classList.remove('hidden');
+
+            // Average rating
+            const avg = ((review.ratings.produk + review.ratings.layanan + review.ratings.pengiriman + review.ratings.waktu) / 4).toFixed(1);
+
+            // Date formatting
+            const d = new Date(review.timestamp);
+            const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+            const dateStr = `${d.getDate().toString().padStart(2,'0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+            // Initial for avatar
+            const validName = review.reviewerName || 'Anonim';
+            const initial = Array.from(validName.trim())[0].toUpperCase();
+
+            // Category rows
+            const cats = [
+                { label: 'Kualitas Produk',          key: 'produk' },
+                { label: 'Kualitas Layanan',          key: 'layanan' },
+                { label: 'Kualitas Pengiriman',       key: 'pengiriman' },
+                { label: 'Waktu Pengerjaan',          key: 'waktu' },
+            ];
+            let catHtml = '';
+            cats.forEach(c => {
+                const val = review.ratings[c.key] || 0;
+                catHtml += `
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs text-slate-500 font-medium w-28 shrink-0">${c.label}</span>
+                    <div class="flex items-center gap-0.5">${buildDetailStars(val)}</div>
+                    <span class="text-xs font-bold text-slate-400 ml-1">${val}/5</span>
+                </div>`;
+            });
+
+            body.innerHTML = `
+                <!-- Average row -->
+                <div class="flex items-center gap-1 mb-4">
+                    ${buildDetailStars(Math.round(parseFloat(avg)))}
+                    <span class="ml-2 font-black text-xl text-slate-800 dark:text-white">${avg}</span>
+                    <span class="text-slate-500 dark:text-slate-400 text-sm font-medium">/ 5.0</span>
+                </div>
+
+                <!-- Reviewer identity -->
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-bold text-white text-base shadow">${initial}</div>
+                    <div>
+                        <p class="text-sm font-bold text-slate-800 dark:text-white leading-snug">${escRev(validName)}</p>
+                        <p class="text-[11px] text-slate-500 font-medium">Penerima Pesanan</p>
+                    </div>
+                </div>
+
+                <!-- Per-category stars -->
+                <div class="space-y-2 mb-5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/40">
+                    ${catHtml}
+                </div>
+
+                <!-- Comment / masukan -->
+                ${review.comment ? `
+                <blockquote class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed italic border-l-4 border-amber-400/50 pl-4 py-1 mb-5">
+                    &ldquo;${escRev(review.comment)}&rdquo;
+                </blockquote>` : ''}
+
+                <!-- Date footer -->
+                <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    <span>Dipublikasikan pada:</span>
+                    <span class="font-bold text-slate-600 dark:text-slate-300">${dateStr}</span>
+                </div>
+            `;
+        }
+
+        function escRev(s) {
+            return String(s)
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Hook into existing DOMContentLoaded (second listener — runs after card is loaded)
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+            const cardId = new URLSearchParams(window.location.search).get('id');
+            if (cardId) renderReviewOnDetail(cardId);
+        });
+    </script>
+</body>
+</html>
+

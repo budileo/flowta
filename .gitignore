@@ -1,0 +1,17 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+
+# Temp/Dev files
+*.log
+error.txt
+inject_auth.py
+*.py
+
+# Node (if later added)
+node_modules/

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Pencarian</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel { background:rgba(30,41,59,.5); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.05); box-shadow:0 4px 6px -1px rgba(0,0,0,.1); }
+        .glass-nav   { background:rgba(15,23,42,.85); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,.05); }
+        ::-webkit-scrollbar{width:8px;height:8px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.3);border-radius:4px}
+        .table-row-hover:hover { background:rgba(255,255,255,.03); cursor:pointer; }
+        .qc-dot { width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0; }
+
+        /* highlight matched text */
+        mark { background:rgba(99,102,241,.3); color:inherit; border-radius:2px; padding:0 1px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
+</head>
+<body class="bg-background-dark font-display text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+
+        <!-- HEADER -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                <!-- Back button -->
+                <button onclick="history.back()" class="size-10 shrink-0 flex items-center justify-center rounded-xl bg-slate-800 text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </button>
+                <!-- Search form -->
+                <div class="relative flex-1 max-w-xl">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                    <input id="search-box" type="text"
+                        class="w-full bg-slate-800/70 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all placeholder:text-slate-500"
+                        placeholder="Cari No. SPK, Klien, atau Uraian... [Enter]" />
+                </div>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                </button>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-800 text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">contrast</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="p-8 max-w-full w-full space-y-6 pb-16">
+
+            <!-- Page title + meta -->
+            <div class="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-4xl">manage_search</span>
+                        Hasil Pencarian
+                    </h2>
+                    <p class="text-slate-500 mt-1 text-sm" id="search-meta">Memuat hasil…</p>
+                </div>
+                <div class="text-xs text-slate-500 bg-slate-800 px-3 py-1.5 rounded-lg" id="result-count"></div>
+            </div>
+
+            <!-- Keyword chip -->
+            <div class="flex items-center gap-2 flex-wrap" id="keyword-chip-area"></div>
+
+            <!-- RESULTS CONTAINER -->
+            <div id="results-container" class="space-y-6">
+                <!-- Empty state -->
+                <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center glass-panel rounded-2xl">
+                    <span class="material-symbols-outlined text-slate-700 text-7xl mb-4">search_off</span>
+                    <p class="text-slate-400 font-bold text-lg">Tidak ada hasil ditemukan</p>
+                    <p class="text-slate-600 text-sm mt-1">Coba kata kunci yang berbeda — No. SPK, nama klien, pengguna, atau catatan.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center py-4 text-slate-500 text-xs border-t border-slate-800/50">
+                Sistem Flowta — Budi Ariadi Tata Kelola 0811 767 4848 · Hak Cipta dilindungi Undang-Undang
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function highlight(text, q) {
+    if (!q) return esc(text);
+    const safe = q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    return esc(text).replace(new RegExp('(' + safe + ')', 'gi'), '<mark>$1</mark>');
+}
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return d.getDate().toString().padStart(2,'0') + ' ' + m[d.getMonth()] + ' ' + d.getFullYear()
+        + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function calcDur(startIso, endIso) {
+    let ms = new Date(endIso) - new Date(startIso);
+    if (ms < 0) ms = 0;
+    let m = Math.floor(ms / 60000);
+    if (m < 1) return '< 1 mnt';
+    if (m < 60) return m + ' mnt';
+    const h = Math.floor(m/60), rm = m%60;
+    if (h < 24) return rm ? h+' jam '+rm+' mnt' : h+' jam';
+    const d = Math.floor(h/24), rh = h%24;
+    return rh ? d+' hri '+rh+' jam' : d+' hri';
+}
+
+// ─── QC cell ────────────────────────────────────────────────────────────────
+function buildQcCell(cardId, allQcRecs) {
+    const recs = allQcRecs.filter(q => q.cardId === cardId);
+    if (!recs.length) return '<span class="text-xs text-slate-600 italic">—</span>';
+    const cfg = { 'Pra Produksi':{ dot:'bg-purple-400', short:'Pra' }, 'Produksi':{ dot:'bg-blue-400', short:'Prod' }, 'Hasil Akhir':{ dot:'bg-emerald-400', short:'Final' } };
+    const order = ['Pra Produksi','Produksi','Hasil Akhir'];
+    let h = '<div class="flex flex-col gap-1.5">';
+    order.forEach(type => {
+        const r = recs.find(q => q.type === type);
+        if (!r) return;
+        const c = cfg[type] || { dot:'bg-slate-400', short:type };
+        h += `<div class="flex items-start gap-1.5">
+            <span class="qc-dot mt-0.5 ${c.dot}"></span>
+            <div class="text-[11px] leading-snug">
+                <span class="font-bold text-slate-300">${c.short}</span>
+                <span class="text-slate-500 ml-1">${fmtDate(r.timestamp)}</span>
+                <span class="text-slate-400 ml-1">@${esc(r.user||'—')}</span>
+            </div>
+        </div>`;
+    });
+    return h + '</div>';
+}
+
+// ─── Status badge ────────────────────────────────────────────────────────────
+function statusBadge(card, phases) {
+    if (card.status === 'SELESAI') return '<span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">SELESAI</span>';
+    if (card.status === 'BATAL')   return '<span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-400 text-xs font-bold border border-rose-500/20">BATAL</span>';
+    return '<span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">AKTIF</span>';
+}
+
+// ─── Duration string ─────────────────────────────────────────────────────────
+function durBadge(card, histories) {
+    const cHists = histories.filter(h => h.cardId === card.id).sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
+    if (!cHists.length) return '<span class="text-xs text-slate-500">—</span>';
+    const first = cHists[0];
+    if (card.status === 'BATAL')   return '<span class="text-xs text-slate-500">— Batal</span>';
+    if (card.status === 'SELESAI') {
+        const last = [...cHists].reverse().find(h=>h.type==='complete') || cHists[cHists.length-1];
+        return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400">${calcDur(first.timestamp,last.timestamp)}</span>`;
+    }
+    return `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">${calcDur(first.timestamp,new Date().toISOString())}</span>`;
+}
+
+// ─── Core search ─────────────────────────────────────────────────────────────
+function doSearch(query) {
+    const q = query.trim();
+    document.getElementById('result-count').textContent = '';
+
+    const container = document.getElementById('results-container');
+    const emptyEl   = document.getElementById('empty-state');
+    
+    // Clear previous results (except empty-state)
+    Array.from(container.children).forEach(c => {
+        if(c.id !== 'empty-state') c.remove();
+    });
+
+    if (!q) {
+        document.getElementById('search-meta').textContent = 'Masukkan kata kunci pencarian.';
+        emptyEl.classList.remove('hidden'); emptyEl.classList.add('flex');
+        return;
+    }
+
+    const kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+    const histories   = JSON.parse(localStorage.getItem('flowta_history'))       || [];
+    const phases      = JSON.parse(localStorage.getItem('flowta_phases'))        || [];
+    const allQcRecs   = JSON.parse(localStorage.getItem('flowta_qc'))            || [];
+    const users       = JSON.parse(localStorage.getItem('flowta_users'))         || [];
+
+    const ql = q.toLowerCase();
+
+    // 1. SPK Search
+    const matchedSpk = kanbanCards.filter(c => {
+        const title  = (c.title || '').toLowerCase();
+        const type   = (c.type  || '').toLowerCase();
+        const createEv = histories.find(h => h.cardId === c.id && h.type === 'create');
+        const dl = window.calcDeadline(createEv ? createEv.timestamp : null, c.dueDate);
+        const due    = dl.text.toLowerCase();
+        const spkNo  = (c.spkNumber || '').toLowerCase();
+        const client = (c.client || '').toLowerCase();
+        return title.includes(ql) || type.includes(ql) || due.includes(ql) || spkNo.includes(ql) || client.includes(ql);
+    });
+
+    // 2. History Search
+    const matchedHist = histories.filter(h => {
+        const msg = (h.message || '').toLowerCase();
+        const usr = (h.user || '').toLowerCase();
+        return msg.includes(ql) || usr.includes(ql);
+    });
+
+    // 3. QC Search
+    const matchedQc = allQcRecs.filter(qRec => {
+        const note = (qRec.notes || '').toLowerCase();
+        const usr  = (qRec.user || '').toLowerCase();
+        const type = (qRec.type || '').toLowerCase();
+        return note.includes(ql) || usr.includes(ql) || type.includes(ql);
+    });
+
+    // 4. Users Search
+    const matchedUsers = users.filter(u => {
+        const name = (u.name || '').toLowerCase();
+        const role = (u.role || '').toLowerCase();
+        const dept = (u.department || '').toLowerCase();
+        const email= (u.email || '').toLowerCase();
+        return name.includes(ql) || role.includes(ql) || dept.includes(ql) || email.includes(ql);
+    });
+
+    const totalMatches = matchedSpk.length + matchedHist.length + matchedQc.length + matchedUsers.length;
+
+    // Update keyword chip
+    const chipArea = document.getElementById('keyword-chip-area');
+    chipArea.innerHTML = `
+        <span class="text-xs text-slate-400">Kata kunci:</span>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary border border-primary/20 rounded-full text-xs font-bold">
+            <span class="material-symbols-outlined text-[13px]">search</span>
+            ${esc(q)}
+        </span>
+        <a href="index.html" class="text-xs text-slate-500 hover:text-primary underline transition-colors ml-2">← Kembali ke Dasbor</a>`;
+
+    document.getElementById('search-meta').textContent = `Menampilkan ${totalMatches} hasil untuk "${q}"`;
+    document.getElementById('result-count').textContent = totalMatches + ' hasil ditemukan';
+
+    if (totalMatches === 0) {
+        emptyEl.classList.remove('hidden'); emptyEl.classList.add('flex');
+        return;
+    }
+    emptyEl.classList.add('hidden'); emptyEl.classList.remove('flex');
+
+    // Build UI blocks
+    if (matchedSpk.length > 0)   container.appendChild(buildSpkUI(matchedSpk, q, histories, phases, allQcRecs));
+    if (matchedQc.length > 0)    container.appendChild(buildQcUI(matchedQc, q, kanbanCards));
+    if (matchedHist.length > 0)  container.appendChild(buildHistUI(matchedHist, q, kanbanCards));
+    if (matchedUsers.length > 0) container.appendChild(buildUsersUI(matchedUsers, q));
+}
+
+// ─── Renderers ───────────────────────────────────────────────────────────────
+function buildSpkUI(cards, q, histories, phases, allQcRecs) {
+    const div = document.createElement('div');
+    div.className = 'glass-panel p-6 rounded-2xl overflow-x-auto';
+    div.innerHTML = `
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary">inventory_2</span> Hasil Produk / SPK <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">${cards.length}</span></h3>
+        <table class="w-full text-left min-w-[1000px]">
+            <thead>
+                <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                    <th class="pb-3 font-semibold w-6">#</th>
+                    <th class="pb-3 font-semibold">No. SPK <span class="normal-case font-normal text-slate-600">/ Dibuat Pada</span></th>
+                    <th class="pb-3 font-semibold">Klien &amp; Item</th>
+                    <th class="pb-3 font-semibold">Divisi / Fase</th>
+                    <th class="pb-3 font-semibold">Target Selesai <span class="normal-case font-normal text-slate-600">/ Tgl &amp; Jam</span></th>
+                    <th class="pb-3 font-semibold">Lama Produksi</th>
+                    <th class="pb-3 font-semibold">Status</th>
+                    <th class="pb-3 font-semibold">QC Histori</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                ${cards.map((card, idx) => {
+                    const parts   = (card.title || '').split(' ');
+                    const spkNo   = parts[0] || '—';
+                    const spkDesc = parts.length > 1 ? parts.slice(1).join(' ') : card.title;
+                    const phase   = phases.find(p => p.id === card.phaseId);
+                    const phaseName = phase ? phase.title : '—';
+                    const rowOp = card.status === 'SELESAI' ? 'opacity-75' : card.status === 'BATAL' ? 'opacity-50' : '';
+                    
+                    const createEv = histories.find(h => h.cardId === card.id && h.type === 'create');
+                    const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
+                    const createdStr = createdAt ? fmtDate(createdAt) : '—';
+                    const dl = window.calcDeadline(createdAt, card.dueDate);
+                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                    const targetStr = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+                    const targetDatetimeStr = card.dueDate ? fmtDate(card.dueDate) : '—';
+
+                    let targetTdClass = 'text-slate-400';
+                    if (targetStr.includes('Terlambat')) targetTdClass = 'text-rose-400 font-bold';
+                    else if (targetStr.includes('Hari Ini')) targetTdClass = 'text-orange-400 font-bold';
+
+                    return `<tr class="table-row-hover text-sm transition-colors ${rowOp}" onclick="window.location.href='product-detail.html?id=${esc(card.id)}'">
+                        <td class="py-3.5 pr-2 text-xs text-slate-600 font-medium">${idx+1}</td>
+                        <td class="py-3.5 whitespace-nowrap">
+                            <div class="font-mono text-slate-300 font-medium">${highlight(spkNo, q)}</div>
+                            <div class="flex items-center gap-1 mt-1 text-[11px] text-indigo-400/80"><span class="material-symbols-outlined text-[12px]">schedule</span>${esc(createdStr)}</div>
+                        </td>
+                        <td class="py-3.5">
+                            <div class="font-medium text-slate-200">${highlight(spkDesc, q)}</div>
+                            <div class="text-xs text-slate-500">${highlight(card.type||'—', q)}</div>
+                        </td>
+                        <td class="py-3.5 text-slate-300 text-xs whitespace-nowrap"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">architecture</span>${esc(phaseName)}</span></td>
+                        <td class="py-3.5 text-xs whitespace-nowrap">
+                            <div class="${targetTdClass} flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">flag</span>${highlight(targetStr, q)}</div>
+                            <div class="flex items-center gap-1 mt-1 text-[11px] text-slate-500"><span class="material-symbols-outlined text-[12px]">calendar_month</span>${esc(targetDatetimeStr)}</div>
+                        </td>
+                        <td class="py-3.5">${durBadge(card, histories)}</td>
+                        <td class="py-3.5">${statusBadge(card, phases)}</td>
+                        <td class="py-3.5 max-w-[260px]" onclick="event.stopPropagation()">${buildQcCell(card.id, allQcRecs)}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>`;
+    return div;
+}
+
+function buildQcUI(qcRecs, q, cards) {
+    const div = document.createElement('div');
+    div.className = 'glass-panel p-6 rounded-2xl overflow-x-auto';
+    div.innerHTML = `
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500">fact_check</span> Hasil Quality Control <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">${qcRecs.length}</span></h3>
+        <table class="w-full text-left min-w-[800px]">
+            <thead>
+                <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Tanggal &amp; Waktu</th>
+                    <th class="pb-3 font-semibold">SPK Terkait</th>
+                    <th class="pb-3 font-semibold">Tipe Inspeksi</th>
+                    <th class="pb-3 font-semibold">Catatan / Detail</th>
+                    <th class="pb-3 font-semibold">Inspektur</th>
+                    <th class="pb-3 font-semibold">Hasil</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                ${qcRecs.map(rec => {
+                    const card = cards.find(c => c.id === rec.cardId);
+                    const spkName = card ? (card.spkNumber || card.title) : '—';
+                    const resCls = rec.result === 'LULUS' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 border' : 'text-rose-400 bg-rose-500/10 border-rose-500/20 border';
+                    return `<tr class="table-row-hover text-sm" onclick="window.location.href='qc.html'">
+                        <td class="py-3.5 text-xs text-slate-400">${fmtDate(rec.timestamp)}</td>
+                        <td class="py-3.5 text-slate-300 font-medium">${esc(spkName)}</td>
+                        <td class="py-3.5 text-slate-300">${highlight(rec.type||'—', q)}</td>
+                        <td class="py-3.5 text-slate-400 text-xs italic">${highlight(rec.notes||'—', q)}</td>
+                        <td class="py-3.5 text-slate-300">${highlight(rec.user||'—', q)}</td>
+                        <td class="py-3.5"><span class="px-2 py-1.5 rounded-md text-[10px] font-bold ${resCls}">${esc(rec.result||'—')}</span></td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>`;
+    return div;
+}
+
+function buildHistUI(histories, q, cards) {
+    const div = document.createElement('div');
+    div.className = 'glass-panel p-6 rounded-2xl overflow-x-auto';
+    div.innerHTML = `
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-cyan-400">history</span> Hasil Histori / Log <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">${histories.length}</span></h3>
+        <table class="w-full text-left min-w-[800px]">
+            <thead>
+                <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Waktu Tercatat</th>
+                    <th class="pb-3 font-semibold">Aktor / User</th>
+                    <th class="pb-3 font-semibold">Tindakan / Pesan Log</th>
+                    <th class="pb-3 font-semibold">SPK Terkait</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                ${histories.map(h => {
+                    const card = cards.find(c => c.id === h.cardId);
+                    const spkName = card ? (card.spkNumber || card.title) : '—';
+                    return `<tr class="table-row-hover text-sm" onclick="window.location.href='history.html'">
+                        <td class="py-3.5 text-xs text-slate-400">${fmtDate(h.timestamp)}</td>
+                        <td class="py-3.5 text-slate-300 font-bold">${highlight(h.user||'—', q)}</td>
+                        <td class="py-3.5 text-slate-300">${highlight(h.message||'—', q)}</td>
+                        <td class="py-3.5 text-slate-500 text-xs">${esc(spkName)}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>`;
+    return div;
+}
+
+function buildUsersUI(users, q) {
+    const div = document.createElement('div');
+    div.className = 'glass-panel p-6 rounded-2xl overflow-x-auto';
+    div.innerHTML = `
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-amber-500">group</span> Hasil Pengguna Sistem <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">${users.length}</span></h3>
+        <table class="w-full text-left min-w-[800px]">
+            <thead>
+                <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                    <th class="pb-3 font-semibold w-12 text-center">Profil</th>
+                    <th class="pb-3 font-semibold">Nama Lengkap</th>
+                    <th class="pb-3 font-semibold">Email</th>
+                    <th class="pb-3 font-semibold">Jabatan / Role</th>
+                    <th class="pb-3 font-semibold">Departemen</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+                ${users.map(u => {
+                    const initial = (u.name||'A').charAt(0).toUpperCase();
+                    return `<tr class="table-row-hover text-sm" onclick="window.location.href='sistem.html'">
+                        <td class="py-3.5">
+                            <div class="size-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-white mx-auto">${initial}</div>
+                        </td>
+                        <td class="py-3.5 text-white font-medium">${highlight(u.name||'—', q)}</td>
+                        <td class="py-3.5 text-slate-400">${highlight(u.email||'—', q)}</td>
+                        <td class="py-3.5 text-slate-300">${highlight(u.role||'—', q)}</td>
+                        <td class="py-3.5 text-slate-300">${highlight(u.department||'—', q)}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        </table>`;
+    return div;
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+    const params = new URLSearchParams(window.location.search);
+    const qParam = params.get('q') || '';
+
+    const box = document.getElementById('search-box');
+    box.value = qParam;
+
+    // Redirect on Enter
+    box.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && this.value.trim()) {
+            if(!window.consumeToken('Pencarian Data')) return;
+            const newUrl = 'search.html?q=' + encodeURIComponent(this.value.trim());
+            window.location.href = newUrl;
+        }
+    });
+
+    // Run search on page load if query exists
+    if (qParam) {
+        doSearch(qParam);
+    } else {
+        document.getElementById('search-meta').textContent = 'Masukkan kata kunci dan tekan Enter.';
+        document.getElementById('keyword-chip-area').innerHTML =
+            `<a href="index.html" class="text-xs text-slate-500 hover:text-primary underline transition-colors">← Kembali ke Dasbor</a>`;
+    }
+});
+</script>
+</body>
+</html>

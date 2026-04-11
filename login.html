@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Login - Flowta Tata Kelola</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+        input {
+            background: rgba(15,23,42,0.6) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            color: #e2e8f0 !important;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        input:focus {
+            outline: none !important;
+            border-color: rgba(99,102,241,0.6) !important;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.12) !important;
+        }
+        input::placeholder { color: #475569 !important; }
+
+        /* Fix autocomplete styling */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active{
+            -webkit-box-shadow: 0 0 0 30px #0f172a inset !important;
+            -webkit-text-fill-color: #e2e8f0 !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="db.js"></script>
+    <script src="auth.js"></script>
+</head>
+<body class="bg-background-dark font-display text-slate-100 min-h-screen selection:bg-primary/30 flex items-center justify-center relative overflow-hidden">
+    <!-- Background Decor -->
+    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary/10 rounded-full blur-[120px] pointer-events-none"></div>
+
+    <div class="w-full max-w-md p-8 relative z-10 glass-panel rounded-2xl mx-4">
+        <div class="mb-8 text-center">
+            <div class="size-14 mx-auto bg-gradient-to-br from-primary to-indigo-800 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30 mb-4">
+                <span class="material-symbols-outlined text-white text-3xl font-light">campaign</span>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight mb-1">Masuk ke Flowta</h1>
+            <p class="text-sm text-slate-400">Silakan masukkan username dan password Anda.</p>
+        </div>
+
+        <div id="error-msg" class="hidden mb-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm string text-center font-medium">
+            Username atau password salah!
+        </div>
+
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Username</label>
+                <input id="username" type="text" required class="w-full rounded-xl px-4 py-3 text-sm" placeholder="Contoh: budileo" />
+            </div>
+            <div>
+                <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Password</label>
+                <input id="password" type="password" required class="w-full rounded-xl px-4 py-3 text-sm" placeholder="••••••••" />
+            </div>
+            <button type="submit" class="w-full py-3 mt-6 rounded-xl bg-primary hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+                <span>Masuk Sekarang</span>
+                <span class="material-symbols-outlined text-[20px]">login</span>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center text-xs text-slate-500">
+            Sistem Flowta &copy; 2026<br/> Hak Cipta dilindungi Undang Undang
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const u = document.getElementById('username').value.trim();
+            const p = document.getElementById('password').value;
+            const err = document.getElementById('error-msg');
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined text-[20px] animate-spin">progress_activity</span> Memverifikasi...';
+
+            try {
+                const found = await window.db.login(u, p);
+                if (found) {
+                    localStorage.setItem('flowta_currentUser', found.id);
+                    window.location.href = 'index.html';
+                } else {
+                    err.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>Masuk Sekarang</span><span class="material-symbols-outlined text-[20px]">login</span>';
+                }
+            } catch(ex) {
+                console.error('Login error:', ex);
+                err.textContent = 'Gagal terhubung ke server. Periksa koneksi internet.';
+                err.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerHTML = '<span>Masuk Sekarang</span><span class="material-symbols-outlined text-[20px]">login</span>';
+            }
+        });
+    </script>
+</body>
+</html>

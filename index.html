@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Dasbor</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1", // Indigo for creative/digital feel
+                        "secondary": "#f43f5e", // Rose accent
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a", // Slate 900
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.5);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col overflow-y-auto">
+            <!-- TOP HEADER -->
+            <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-4 flex-1">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">data_usage</span> 
+                        Monitoring Produksi
+                    </h1>
+                    <div class="relative w-full max-w-md hidden md:block ml-8">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                        <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Cari SPK, Klien, atau Nama Produk... [Enter]" type="text" />
+                    </div>
+                </div>
+                <div id="greeting-box" class="hidden text-right mr-4">
+                    <p class="text-sm font-bold text-slate-800 dark:text-white leading-tight"><span id="greeting-dept" class="text-primary">—</span></p>
+                    <p class="text-xs text-slate-400 mt-0.5">User : <span id="greeting-name" class="font-semibold text-slate-300">—</span>, Sisa Token : <span id="greeting-token" class="font-bold text-emerald-400">—</span></p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                    </button>
+                    <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">mail</span>
+                    </button>
+                    <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                    <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined">contrast</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- PAGE CONTENT -->
+            <div class="p-8 max-w-7xl mx-auto w-full space-y-8 pb-16">
+                
+                <!-- SUMMARY METRICS -->
+                <section>
+                    <div class="flex flex-col gap-1 mb-6">
+                        <h2 class="text-3xl font-black tracking-tight">Status Workshop Hari Ini</h2>
+                        <p class="text-slate-500 dark:text-slate-400">Pemantauan real-time Produksi</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- Metric 1 -->
+                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 size-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-lg">local_printshop</span>
+                                <span class="text-emerald-500 text-xs font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-md">
+                                    <span class="material-symbols-outlined text-[14px]">trending_up</span>+12
+                                </span>
+                            </div>
+                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total SPK Aktif</p>
+                            <p class="text-3xl font-bold mt-1" id="stat-total-aktif">0</p>
+                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                                <span class="size-2 rounded-full bg-primary"></span> Semua progress
+                            </div>
+                        </div>
+
+                        <!-- Metric 2 -->
+                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 size-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-amber-500 p-2 bg-amber-500/10 rounded-lg">autorenew</span>
+                                <span class="text-amber-500 text-xs font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-md">
+                                    <span class="material-symbols-outlined text-[14px]">bolt</span>Aktif
+                                </span>
+                            </div>
+                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Sedang Dikerjakan</p>
+                            <p class="text-3xl font-bold mt-1 text-amber-500" id="stat-progress">0</p>
+                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                                <span class="size-2 rounded-full bg-amber-500 animate-pulse"></span> Di Luar Antrean Awal
+                            </div>
+                        </div>
+
+                        <!-- Metric 3 -->
+                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 size-24 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-secondary p-2 bg-secondary/10 rounded-lg">cancel</span>
+                                <span class="text-secondary text-xs font-bold flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded-md">
+                                    <span class="material-symbols-outlined text-[14px]">warning</span>Batal
+                                </span>
+                            </div>
+                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">SPK Dibatalkan</p>
+                            <p class="text-3xl font-bold mt-1 text-secondary" id="stat-batal">0</p>
+                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                                <span class="size-2 rounded-full bg-secondary"></span> Tidak Masuk Antrean
+                            </div>
+                        </div>
+
+                        <!-- Metric 4 -->
+                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 size-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-emerald-500 p-2 bg-emerald-500/10 rounded-lg">check_circle</span>
+                                <span class="text-emerald-500 text-xs font-bold flex items-center gap-1">Hari Ini</span>
+                            </div>
+                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Selesai / Siap Kirim</p>
+                            <p class="text-3xl font-bold mt-1" id="stat-selesai">0</p>
+                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                                <span class="size-2 rounded-full bg-emerald-500"></span> Siap Diambil Klien
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- DETAILED METRICS GRID (Same as Laporan Produksi) -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- TENGGAT WAKTU (AKTIF) -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-amber-400 text-[18px]">timer</span> Tenggat Waktu SPK Berjalan</h3>
+                        <div id="index-stat-tenggat" class="flex-1 space-y-2 mt-2"></div>
+                    </div>
+
+                    <!-- PRIORITAS (AKTIF) & PERFORMA (AKTIF) -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-rose-400 text-[18px]">priority_high</span> Prioritas & Performa Aktif</h3>
+                        <div id="index-stat-prioritas" class="space-y-2 mt-2"></div>
+                        <div class="h-px w-full bg-white/10 my-2"></div>
+                        <div id="index-stat-performa" class="space-y-2"></div>
+                    </div>
+
+                    <!-- REALISASI KINERJA (SELESAI) -->
+                    <div class="glass-panel rounded-2xl p-5 flex flex-col gap-3">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-widest flex items-center gap-2"><span class="material-symbols-outlined text-emerald-400 text-[18px]">verified</span> Kinerja SPK Selesai (Realisasi)</h3>
+                        <div id="index-stat-kinerja" class="flex-1 mt-2 space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- CHARTS & TABLES -->
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <!-- Productivity Chart area -->
+                        <div class="glass-panel p-6 rounded-2xl">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-100">Kinerja Produksi</h3>
+                                    <p class="text-sm text-slate-400 mt-1">Produktivitas Produksi</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button id="btn-chart-dibuat" onclick="renderChart('dibuat')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 transition">SPK Dibuat</button>
+                                    <button id="btn-chart-selesai" onclick="renderChart('selesai')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">SPK Selesai</button>
+                                    <button id="btn-chart-batal" onclick="renderChart('batal')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">SPK Batal</button>
+                                </div>
+                            </div>
+                            <div class="h-[280px] w-full relative flex items-end justify-between px-2 gap-4" id="development-chart-container">
+                                <!-- Dynamic Chart Bars injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="glass-panel p-6 rounded-2xl">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold">Daftar Order Prioritas Kritis</h3>
+                                <button class="flex items-center gap-1 text-sm text-primary hover:text-indigo-400 font-medium transition-colors">
+                                    Lihat Antrean <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                </button>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left">
+                                    <thead>
+                                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                                            <th class="pb-3 font-semibold">No. SPK</th>
+                                            <th class="pb-3 font-semibold">Klien & Item</th>
+                                            <th class="pb-3 font-semibold">User SPK</th>
+                                            <th class="pb-3 font-semibold">Divisi</th>
+                                            <th class="pb-3 font-semibold">Tenggat Waktu</th>
+                                            <th class="pb-3 font-semibold">Lama Produksi</th>
+                                            <th class="pb-3 font-semibold">Fase / Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-800" id="dashboard-table-body">
+                                        <!-- Dynamic rows injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SIDE PANEL -->
+                    <div class="space-y-6">
+                        
+                        <!-- SPK Per Fase Chart -->
+                        <div class="glass-panel p-6 rounded-2xl">
+                            <h3 class="text-xl font-bold flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-primary">schema</span>
+                                Sebaran SPK Aktif
+                            </h3>
+                            <p class="text-[13px] text-slate-400 mb-6">Jumlah pesanan di setiap fase</p>
+                            
+                            <div class="space-y-4" id="dashboard-phase-distribution">
+                                <!-- Dynamic Phase Bars injected here -->
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 rounded-2xl flex flex-col">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-xl font-bold flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-slate-400">history</span>
+                                    Aktivitas  Produksi
+                                </h3>
+                                <button class="text-primary text-sm font-semibold hover:underline bg-primary/10 px-2 py-1 rounded-md">Filter</button>
+                            </div>
+                            
+                            <div class="space-y-6 flex-1 mt-2" id="dashboard-activity-feed">
+                                <!-- Dynamic history items injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FOOTER -->
+                <div class="w-full text-center py-6 text-slate-500 text-sm mt-8 border-t border-slate-200 dark:border-slate-800/50">
+                    Sistem Flowta di oleh Budi Ariadi Tata kelola 0811 767 4848 - Hak Cipta dilindungi Undang Undang
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JS untuk Load Data Real-Time ke Dasbor -->
+    <script>
+        window.calculateDurationStr = function(startStr, endStr) {
+            let startD = new Date(startStr);
+            let endD = new Date(endStr);
+            let diffMs = endD - startD;
+            if(diffMs < 0) diffMs = 0;
+            
+            let diffMins = Math.floor(diffMs / 60000);
+            if (diffMins === 0) return 'kurang dari 1 menit';
+            if (diffMins < 60) return `${diffMins} mnt`;
+            
+            let h = Math.floor(diffMins / 60);
+            let m = diffMins % 60;
+            if (h < 24) return m > 0 ? `${h} jam ${m} mnt` : `${h} jam`;
+            
+            let d = Math.floor(h / 24);
+            h = h % 24;
+            return h > 0 ? `${d} hri ${h} jam` : `${d} hri`;
+        };
+
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+            // Load Data
+            let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+            let histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+            let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [
+                { id: 1, title: 'Antrian' }, { id: 2, title: 'Proses' }
+            ];
+
+            // 1. UPDATE METRICS
+            const activeCards = kanbanCards.filter(c => c.status !== 'BATAL' && c.status !== 'SELESAI');
+            const batalCards = kanbanCards.filter(c => c.status === 'BATAL');
+            const selesaiCards = kanbanCards.filter(c => c.status === 'SELESAI');
+            
+            // Sedang dikerjakan (berarti sudah bukan di kolom ID paling awal, atau simply status aktif)
+            // Just assume anything active that is not in the very first phase is "In Progress"
+            const firstPhaseId = phasesData.length > 0 ? phasesData[0].id : 1;
+            const inProgressCards = activeCards.filter(c => c.phaseId !== firstPhaseId);
+
+            document.getElementById('stat-total-aktif').textContent = activeCards.length;
+            document.getElementById('stat-progress').textContent = inProgressCards.length;
+            document.getElementById('stat-batal').textContent = batalCards.length;
+            document.getElementById('stat-selesai').textContent = selesaiCards.length;
+
+            // 1.5. COMPUTE DETAILED METRICS
+            let twSangatAman = 0, twAman = 0, twWarning = 0, twTerlambat = 0, twSangatTerlambat = 0;
+            let pCritical = 0, pHigh = 0, pMedium = 0, pLow = 0;
+            let pfOnTrack = 0, pfTertinggal = 0;
+            let kSangatCepat = 0, kLebihCepat = 0, kTepatWaktu = 0, kSedikitTerlambat = 0, kTerlambat = 0, kSangatTerlambat = 0;
+
+            activeCards.forEach(c => {
+                const dueDate = c.targetDate || c.dueDate;
+                if (dueDate) {
+                    const dl = window.calcDeadline(c.createdAt, dueDate);
+                    if(dl.level === 1) twSangatAman++;
+                    else if(dl.level === 2) twAman++;
+                    else if(dl.level === 3) twWarning++;
+                    else if(dl.level === 4) twTerlambat++;
+                    else if(dl.level === 5) twSangatTerlambat++;
+
+                    if (dl.level <= 3) pfOnTrack++;
+                    else pfTertinggal++;
+                }
+
+                const prio = (c.priority || 'NORMAL').toUpperCase();
+                if(prio === 'CRITICAL') pCritical++;
+                else if(prio === 'HIGH') pHigh++;
+                else if(prio === 'MEDIUM') pMedium++;
+                else pLow++;
+            });
+
+            selesaiCards.forEach(c => {
+                const completeLog = histories.find(h => h.cardId === c.id && h.type === 'complete');
+                if (completeLog && (c.targetDate || c.dueDate)) {
+                    const tMs = new Date(c.targetDate || c.dueDate).getTime();
+                    const cMs = new Date(c.createdAt).getTime();
+                    const sMs = new Date(completeLog.timestamp).getTime();
+                    
+                    const targetJam = (tMs - cMs) / 3600000;
+                    const realisasiJam = (sMs - cMs) / 3600000;
+
+                    let persen = 0;
+                    let valid = false;
+
+                    if (targetJam > 0) {
+                        if (realisasiJam >= 0) {
+                            persen = (realisasiJam / targetJam) * 100;
+                            valid = true;
+                        }
+                    } else {
+                        // Target kadaluarsa sewaktu mulai
+                        persen = (sMs <= tMs) ? 100 : 999;
+                        valid = true;
+                    }
+
+                    if (valid) {
+                        if (persen < 70) kSangatCepat++;
+                        else if (persen < 100) kLebihCepat++;
+                        else if (persen === 100) kTepatWaktu++;
+                        else if (persen <= 130) kSedikitTerlambat++;
+                        else if (persen <= 180) kTerlambat++;
+                        else kSangatTerlambat++;
+                    }
+                }
+            });
+
+            // UPDATE DOM PANELS
+            document.getElementById('index-stat-tenggat').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold">1. Sangat Aman</span><span class="font-bold border border-emerald-500/30 rounded px-2 bg-emerald-500/10 text-emerald-400">${twSangatAman} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-sky-400 font-semibold">2. Aman</span><span class="font-bold border border-sky-500/30 rounded px-2 bg-sky-500/10 text-sky-400">${twAman} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">3. Warning</span><span class="font-bold border border-amber-500/30 rounded px-2 bg-amber-500/10 text-amber-400">${twWarning} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">4. Terlambat</span><span class="font-bold border border-orange-500/30 rounded px-2 bg-orange-500/10 text-orange-400">${twTerlambat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-rose-500 font-semibold">5. Sangat Terlambat</span><span class="font-bold border border-rose-500/30 rounded px-2 bg-rose-500/10 text-rose-500">${twSangatTerlambat} SPK</span></div>
+            `;
+            document.getElementById('index-stat-prioritas').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-rose-400 font-semibold">• Critical</span><span class="font-bold text-slate-300">${pCritical} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">• High</span><span class="font-bold text-slate-300">${pHigh} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">• Medium</span><span class="font-bold text-slate-300">${pMedium} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-slate-400 font-semibold">• Low / Normal</span><span class="font-bold text-slate-300">${pLow} SPK</span></div>
+            `;
+            document.getElementById('index-stat-performa').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold"><span class="material-symbols-outlined text-[14px] align-middle mr-1">trending_up</span>ON TRACK</span><span class="font-bold border border-emerald-500/30 rounded px-2 bg-emerald-500/10 text-emerald-400">${pfOnTrack} SPK</span></div>
+                <div class="flex justify-between items-center text-sm mt-1"><span class="text-rose-400 font-semibold"><span class="material-symbols-outlined text-[14px] align-middle mr-1">trending_down</span>TERTINGGAL</span><span class="font-bold border border-rose-500/30 rounded px-2 bg-rose-500/10 text-rose-400">${pfTertinggal} SPK</span></div>
+            `;
+            document.getElementById('index-stat-kinerja').innerHTML = `
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold">1. Sangat Cepat</span><span class="font-bold text-emerald-400">${kSangatCepat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-emerald-500 font-semibold">2. Lebih Cepat</span><span class="font-bold text-emerald-500">${kLebihCepat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-sky-400 font-semibold">3. Tepat Waktu</span><span class="font-bold text-sky-400">${kTepatWaktu} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">4. Sedikit Terlambat</span><span class="font-bold text-amber-400">${kSedikitTerlambat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">5. Terlambat</span><span class="font-bold text-orange-400">${kTerlambat} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-rose-500 font-semibold">6. Sangat Terlambat</span><span class="font-bold text-rose-500">${kSangatTerlambat} SPK</span></div>
+            `;
+
+            // 2. UPDATE TABLE
+            const tbBody = document.getElementById('dashboard-table-body');
+            let tbHtml = '';
+            
+            // Limit to 15 cards, sort active first - explicitly excluding SELESAI and BATAL is usually done in the activeCards definition, so just use activeCards.
+            const displayCards = [...activeCards].slice(0, 15);
+            
+            if(displayCards.length === 0) {
+                tbHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-500">Belum ada data pesanan (SPK) yang tersimpan.</td></tr>`;
+            } else {
+                displayCards.forEach(card => {
+                    // Extract SPK No from title (assuming format "NO - Klien")
+                    const titleParts = card.title.split(' ');
+                    const spkNo = titleParts[0];
+                    const spkTitleDesc = titleParts.length > 1 ? titleParts.slice(1).join(' ') : card.title;
+                    
+                    const phase = phasesData.find(p => p.id === card.phaseId);
+                    const phaseName = phase ? phase.title : 'Unknown';
+                    
+                    let statusBadge = `<span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 text-xs font-bold border border-amber-500/20">${phaseName}</span>`;
+                    if(card.status === 'BATAL') {
+                        statusBadge = `<span class="px-2.5 py-1 rounded-md bg-secondary/10 text-secondary text-xs font-bold border border-secondary/20">BATAL</span>`;
+                    }
+                    let durationBadge = `<span class="text-xs text-slate-500">-</span>`;
+                    const cardHistories = histories.filter(h => h.cardId === card.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    if (cardHistories.length > 0) {
+                        const firstEvent = cardHistories[cardHistories.length - 1]; // oldest
+                        const startTime = firstEvent.timestamp;
+                        if (card.status === 'BATAL') {
+                            durationBadge = `<span class="text-xs text-slate-500">- Batal</span>`;
+                        } else if (card.status === 'SELESAI') {
+                            const finishEvent = cardHistories.find(h => h.type === 'complete') || cardHistories[0];
+                            const durationStr = window.calculateDurationStr(startTime, finishEvent.timestamp);
+                            durationBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-500">${durationStr}</span>`;
+                        } else {
+                            const durationStr = window.calculateDurationStr(startTime, new Date().toISOString());
+                            durationBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">${durationStr}</span>`;
+                        }
+                    }
+
+                    const createEv = cardHistories.find(h => h.type === 'create');
+                    const creatorName = createEv && createEv.user ? createEv.user : 'Sistem';
+                    const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
+
+                    const dl = window.calcDeadline(createdAt, card.dueDate);
+                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+                    const dlText = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+                    const targetClass = isFinished ? 'text-slate-400 font-medium' : (dl.level >= 4 ? `text-${dl.color}-400 font-bold` : `text-${dl.color}-400 font-medium`);
+
+                    tbHtml += `
+                    <tr class="text-sm hover:bg-white/5 transition-colors cursor-pointer" onclick="window.location.href='product-detail.html?id=${card.id}'">
+                        <td class="py-4 font-mono text-slate-400 font-medium">${spkNo}</td>
+                        <td class="py-4">
+                            <div class="font-medium text-slate-200">${spkTitleDesc}</div>
+                            <div class="text-xs text-slate-500">${card.type || 'Undefined type'}</div>
+                        </td>
+                        <td class="py-4 text-slate-400"><div class="flex items-center gap-1 text-[11px]"><span class="material-symbols-outlined text-[13px]">person</span> ${creatorName}</div></td>
+                        <td class="py-4 text-slate-300"><span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">architecture</span> ${phaseName}</span></td>
+                        <td class="py-4 ${targetClass}">${dlText}</td>
+                        <td class="py-4">${durationBadge}</td>
+                        <td class="py-4">${statusBadge}</td>
+                    </tr>
+                    `;
+                });
+            }
+            tbBody.innerHTML = tbHtml;
+
+            // 3. UPDATE HISTORY FEED
+            const actFeed = document.getElementById('dashboard-activity-feed');
+            let feedHtml = '';
+            
+            // Limit to 20 histories
+            const recentHistories = histories.slice(0, 20);
+            
+            if(recentHistories.length === 0) {
+                 feedHtml = `<p class="text-slate-500 text-sm">Belum ada aktivitas terekam.</p>`;
+            } else {
+                 recentHistories.forEach((hist, index) => {
+                     let icon = 'history';
+                     let bgClass = 'bg-slate-500/20 text-slate-400 border border-slate-500/30 ring-background-dark';
+                     let lineClass = index === recentHistories.length - 1 ? '' : 'before:content-[\'\'] before:absolute before:left-[15px] before:top-2 before:bottom-[-24px] before:w-[1px] before:bg-slate-700';
+                     
+                     if (hist.type === 'create') {
+                         icon = 'add_task';
+                         bgClass = 'bg-primary/20 text-primary border border-primary/30 ring-background-dark';
+                     } else if (hist.type === 'move') {
+                         icon = 'sync_alt';
+                         bgClass = 'bg-amber-500/20 text-amber-500 border border-amber-500/30 ring-background-dark';
+                     } else if (hist.type === 'cancel') {
+                         icon = 'cancel';
+                         bgClass = 'bg-secondary/20 text-secondary border border-secondary/30 ring-background-dark';
+                     } else if (hist.type === 'complete') {
+                         icon = 'task_alt';
+                         bgClass = 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 ring-background-dark';
+                     }
+                     
+                     // Helper formatting for datetime into "JAM LALU / 15 MNT LALU" etc is complex, we just use formatDateTime for now or display real timestamp
+                     const d = new Date(hist.timestamp);
+                     const timeStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+
+                     // To pull out card name from cardId
+                     const cardRelated = kanbanCards.find(c => c.id === hist.cardId);
+                     const cardName = cardRelated ? cardRelated.title : hist.cardId;
+
+                     feedHtml += `
+                     <div class="relative pl-10 ${lineClass}">
+                         <div class="absolute left-0 top-0 size-8 rounded-full ${bgClass} flex items-center justify-center ring-4">
+                             <span class="material-symbols-outlined text-[16px]">${icon}</span>
+                         </div>
+                         <div class="flex flex-col">
+                             <p class="text-sm font-semibold text-slate-200">${cardName}</p>
+                             <p class="text-[13px] text-slate-400 mt-1 line-clamp-2">${hist.desc.replace(/<[^>]*>?/gm, '')}</p> 
+                             <div class="flex items-center justify-between mt-2">
+                                 <span class="text-[10px] text-slate-500 font-bold uppercase tracking-widest"><i class="not-italic">●</i> ${timeStr}</span>
+                                 <span class="text-[10px] border border-slate-700 px-1.5 rounded text-slate-400">${hist.user}</span>
+                             </div>
+                         </div>
+                     </div>
+                     `;
+                 });
+            }
+            actFeed.innerHTML = feedHtml;
+
+            // 4. CHART RENDERING
+            window.renderChart = function(type) {
+                // Update Button Styles
+                const btnCols = ['dibuat', 'selesai', 'batal'];
+                btnCols.forEach(col => {
+                    const el = document.getElementById(`btn-chart-${col}`);
+                    if (!el) return;
+                    if (col === type) {
+                        el.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 transition";
+                    } else {
+                        el.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition";
+                    }
+                });
+
+                // Prepare 7-day data initialized to 0
+                const daysOfWeek = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
+                const fullDaysOfWeek = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                const monthsIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                let dailyCounts = {};
+                let displayDays = []; // store objects of {label, dateStr, fullDateStr}
+                
+                // Get the last 7 dates
+                for (let i = 6; i >= 0; i--) {
+                    let d = new Date();
+                    d.setDate(d.getDate() - i);
+                    let label = daysOfWeek[d.getDay()];
+                    let fullDay = fullDaysOfWeek[d.getDay()];
+                    let fullDateStr = `${fullDay} ${d.getDate()} ${monthsIndo[d.getMonth()]} ${d.getFullYear()}`;
+                    let dateStr = d.toISOString().split('T')[0];
+                    dailyCounts[dateStr] = 0;
+                    displayDays.push({label, dateStr, fullDateStr});
+                }
+
+                if (type === 'dibuat') {
+                    histories.forEach(h => {
+                        if (h.type === 'create') {
+                            const dStr = new Date(h.timestamp).toISOString().split('T')[0];
+                            if (dailyCounts[dStr] !== undefined) dailyCounts[dStr]++;
+                        }
+                    });
+                } else if (type === 'selesai' || type === 'batal') {
+                    // For cancel/complete, we check the histories where type === cancel/complete
+                    const searchType = type === 'batal' ? 'cancel' : 'complete';
+                    histories.forEach(h => {
+                        if (h.type === searchType || (type === 'batal' && h.type === 'cancel')) {
+                            const dStr = new Date(h.timestamp).toISOString().split('T')[0];
+                            if (dailyCounts[dStr] !== undefined) dailyCounts[dStr]++;
+                        }
+                    });
+                }
+
+                // Render Chart
+                const chartContainer = document.getElementById('development-chart-container');
+                let chartHtml = '';
+                
+                // Find Max
+                let maxVal = 0;
+                for (const k in dailyCounts) {
+                    if (dailyCounts[k] > maxVal) maxVal = dailyCounts[k];
+                }
+                if(maxVal === 0) maxVal = 5; // Default max to show some small bars
+
+                let colorBasis = 'indigo-500';
+                if (type === 'selesai') colorBasis = 'emerald-500';
+                if (type === 'batal') colorBasis = 'secondary'; // pink/red
+                
+                // if it's secondary we map it since tailwind config is named secondary, let's use custom class if needed, or just arbitrary
+                let barClass = `bg-indigo-500/20 border-indigo-500/30 group-hover:bg-indigo-500/40`;
+                if (type === 'selesai') barClass = `bg-emerald-500/20 border-emerald-500/30 group-hover:bg-emerald-500/40`;
+                if (type === 'batal') barClass = `bg-rose-500/20 border-rose-500/30 group-hover:bg-rose-500/40`;
+
+                displayDays.forEach((dayObj, index) => {
+                    const count = dailyCounts[dayObj.dateStr];
+                    const percent = Math.max(5, (count / maxVal) * 90); // Min 5% height to be visible
+                    
+                    const isToday = index === 6;
+                    const labelColor = isToday ? 'text-primary font-bold' : 'text-slate-500 font-medium';
+                    
+                    let bgHtml = `<div class="w-full border rounded-t-lg h-[${percent}%] transition-all relative ${barClass}">`;
+                    if (count === 0 && !isToday) {
+                        bgHtml = `<div class="w-full bg-slate-800 border-slate-700 rounded-t-lg h-[15%] border-dashed relative">`;
+                    }
+
+                    chartHtml += `
+                    <div class="flex flex-col items-center gap-1 flex-1 h-full justify-end group cursor-pointer">
+                        ${bgHtml}
+                            ${count > 0 ? `<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${count} SPK</div>` : `<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${dayObj.fullDateStr}</div>`}
+                        </div>
+                        <div class="flex flex-col items-center mt-1 text-center">
+                            <span class="text-xs tracking-wide font-bold ${labelColor}">${dayObj.label}</span>
+                            <span class="text-[9px] text-slate-500 whitespace-nowrap mt-0.5" style="transform: scale(0.9);">${dayObj.fullDateStr}</span>
+                        </div>
+                    </div>
+                    `;
+                });
+
+                chartContainer.innerHTML = chartHtml;
+            };
+
+            // 5. PHASE DISTRIBUTION CHART
+            window.renderPhaseDistribution = function() {
+                const phaseContainer = document.getElementById('dashboard-phase-distribution');
+                if (!phaseContainer) return;
+                
+                let phaseHtml = '';
+                
+                // Active cards only (not cancelled or done)
+                const currentActiveCards = kanbanCards.filter(c => c.status !== 'BATAL' && c.status !== 'SELESAI');
+                
+                // Count cards per phase
+                const phaseCounts = {};
+                phasesData.forEach(p => {
+                    phaseCounts[p.id] = 0;
+                });
+                
+                currentActiveCards.forEach(c => {
+                    if (phaseCounts[c.phaseId] !== undefined) {
+                        phaseCounts[c.phaseId]++;
+                    }
+                });
+                
+                // Find Max for bar width
+                let maxCards = 0;
+                for (let pid in phaseCounts) {
+                    if (phaseCounts[pid] > maxCards) maxCards = phaseCounts[pid];
+                }
+                if (maxCards === 0) maxCards = 1; // Prevent division by zero
+                
+                phasesData.forEach(p => {
+                    const count = phaseCounts[p.id] || 0;
+                    const widthPercent = (count / maxCards) * 100;
+                    const formattedWidth = Math.max(widthPercent, count > 0 ? 5 : 0); // At least 5% if > 0
+                    
+                    // Determine Color based on density/count
+                    let barColorClass = 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]';
+                    let textColorClass = 'text-emerald-400';
+                    let statusLabel = '(Sedikit)';
+
+                    if (count > 5) {
+                        barColorClass = 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]';
+                        textColorClass = 'text-rose-400';
+                        statusLabel = '(Sangat Padat)';
+                    } else if (count >= 3) {
+                        barColorClass = 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.3)]';
+                        textColorClass = 'text-amber-400';
+                        statusLabel = '(Cukup Padat)';
+                    } else if (count === 0) {
+                        barColorClass = 'bg-slate-700';
+                        textColorClass = 'text-slate-500';
+                        statusLabel = '(Kosong)';
+                    }
+                    
+                    phaseHtml += `
+                    <div class="w-full">
+                        <div class="flex justify-between text-xs mb-1.5 align-bottom">
+                            <span class="font-medium text-slate-300 relative translate-y-0.5">${p.title} <span class="text-[10px] ml-1 opacity-70 ${textColorClass}">${statusLabel}</span></span>
+                            <span class="font-black text-[14px] ${textColorClass}">${count} <span class="text-[10px] font-medium text-slate-500">SPK</span></span>
+                        </div>
+                        <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-white/5">
+                            <div class="${barColorClass} h-2 rounded-full transition-all duration-700 ease-out" style="width: ${formattedWidth}%"></div>
+                        </div>
+                    </div>
+                    `;
+                });
+                
+                if (phasesData.length === 0) {
+                    phaseHtml = `<p class="text-sm text-slate-500">Belum ada fase terdefinisi.</p>`;
+                }
+                
+                phaseContainer.innerHTML = phaseHtml;
+            }
+
+            // Init charts
+            renderChart('dibuat');
+            renderPhaseDistribution();
+        });
+
+         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+            if (window.flowtaUser) {
+                document.getElementById('greeting-box').classList.remove('hidden');
+                document.getElementById('greeting-name').textContent = window.flowtaUser.name;
+                
+                const depts = JSON.parse(localStorage.getItem('flowta_departments')) || [];
+                const activeDeptId = localStorage.getItem('flowta_active_dept');
+                const myDept = depts.find(d => d.id === (activeDeptId || window.flowtaUser.deptId));
+                
+                if (myDept) {
+                    document.getElementById('greeting-dept').textContent = myDept.name;
+                    document.getElementById('greeting-token').textContent = myDept.token || '0';
+                } else {
+                    document.getElementById('greeting-dept').textContent = 'Flowta';
+                    document.getElementById('greeting-token').textContent = '∞';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

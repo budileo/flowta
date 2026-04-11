@@ -1,0 +1,362 @@
+﻿<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Review Konsumen</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF + AutoTable for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel { background:rgba(30,41,59,.5); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.05); box-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -1px rgba(0,0,0,.06); }
+        .glass-nav   { background:rgba(15,23,42,.85); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border-bottom:1px solid rgba(255,255,255,.05); }
+        ::-webkit-scrollbar{width:8px;height:8px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:rgba(148,163,184,.3);border-radius:4px} ::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,.5)}
+        .star-fill { color:#f59e0b; font-variation-settings:'FILL' 1,'wght' 600,'GRAD' 0,'opsz' 24; }
+        .star-empty{ color:#334155; font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+        .table-row-hover:hover { background:rgba(255,255,255,.03); }
+        .export-btn { transition:all .18s; }
+        .export-btn:hover { transform:translateY(-1px); }
+
+        /* Search highlight */
+        mark { background:rgba(99,102,241,.25); color:inherit; border-radius:2px;        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
+
+    <!-- ───────────── MAIN ───────────── -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+
+        <!-- Header -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4 flex-1">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-400">reviews</span>
+                    Laporan Review Konsumen
+                </h1>
+                <div class="relative w-full max-w-md hidden md:block ml-8">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                    <input id="search-input" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Cari No. SPK, Klien, atau Reviewer..." type="text" />
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                </button>
+                <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">contrast</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8 max-w-full mx-auto w-full space-y-6 pb-16">
+
+            <!-- Title + export buttons -->
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight">Review Konsumen</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Semua penilaian yang dikirimkan konsumen melalui halaman Tracker</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="if(window.consumeToken('Download Excel')) exportExcel();" class="export-btn flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20">
+                        <span class="material-symbols-outlined text-[18px]">table_view</span> Download Excel
+                    </button>
+                    <button onclick="if(window.consumeToken('Download PDF')) exportPdf();" class="export-btn flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-sm font-bold shadow-md shadow-rose-600/20">
+                        <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span> Download PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary badges -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-amber-400 bg-amber-400/10 p-2 rounded-lg text-[20px]">rate_review</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total Review</p><p class="text-2xl font-black" id="badge-total">0</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-emerald-400 bg-emerald-400/10 p-2 rounded-lg text-[20px]">star</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Rata-rata Keseluruhan</p><p class="text-2xl font-black text-amber-400" id="badge-avg">—</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-indigo-400 bg-indigo-400/10 p-2 rounded-lg text-[20px]">thumb_up</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Rating 5 ⭐</p><p class="text-2xl font-black text-indigo-400" id="badge-five">0</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-rose-400 bg-rose-400/10 p-2 rounded-lg text-[20px]">thumb_down</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Rating ≤ 2 ⭐</p><p class="text-2xl font-black text-rose-400" id="badge-low">0</p></div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="glass-panel p-6 rounded-2xl overflow-x-auto">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="text-xs text-slate-500" id="result-count">Menampilkan 0 review</span>
+                </div>
+                <table class="w-full text-left min-w-[1100px]" id="review-table">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                            <th class="pb-3 font-semibold w-8">#</th>
+                            <th class="pb-3 font-semibold">No. SPK</th>
+                            <th class="pb-3 font-semibold">Klien &amp; Item</th>
+                            <th class="pb-3 font-semibold">Reviewer</th>
+                            <th class="pb-3 font-semibold">Kualitas</th>
+                            <th class="pb-3 font-semibold text-center">Rata-rata</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800" id="review-table-body"></tbody>
+                </table>
+                <!-- Empty state -->
+                <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center">
+                    <span class="material-symbols-outlined text-slate-700 text-6xl mb-4">rate_review</span>
+                    <p class="text-slate-500 font-semibold">Belum ada review dari konsumen.</p>
+                    <p class="text-slate-600 text-sm mt-1">Review akan muncul setelah konsumen mengisi formulir di halaman Tracker.</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="w-full text-center py-6 text-slate-500 text-sm border-t border-slate-200 dark:border-slate-800/50">
+                Sistem Flowta — Budi Ariadi Tata Kelola 0811 767 4848 · Hak Cipta dilindungi Undang-Undang
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return d.getDate().toString().padStart(2,'0') + ' ' + m[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function starsHtml(label, val) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        stars += `<span class="material-symbols-outlined text-[13px] ${i <= val ? 'star-fill' : 'star-empty'}">star</span>`;
+    }
+    return `<div class="flex items-center gap-1 whitespace-nowrap">
+        <span class="text-[11px] text-slate-400 font-medium w-[68px] shrink-0">${label}</span>
+        <span class="inline-flex items-center gap-[1px]">${stars}</span>
+        <span class="text-[11px] font-bold ml-1 ${val >= 4 ? 'text-amber-400' : val >= 3 ? 'text-slate-400' : 'text-rose-400'}">${val}</span>
+    </div>`;
+}
+
+function avgColor(avg) {
+    if (avg >= 4.5) return 'text-emerald-400';
+    if (avg >= 3.5) return 'text-amber-400';
+    if (avg >= 2.5) return 'text-orange-400';
+    return 'text-rose-400';
+}
+
+// ─── Data ───────────────────────────────────────────────────────────────────
+let kanbanCards = [];
+let allReviews  = [];
+let searchQuery = '';
+
+// Build enriched rows: join review with card data
+function buildRows() {
+    const q = searchQuery.toLowerCase();
+    return allReviews.map(r => {
+        const card = kanbanCards.find(c => c.id === r.cardId);
+        const parts   = card ? card.title.split(' ') : [];
+        const spkNo   = parts[0] || r.cardId;
+        const spkDesc = parts.length > 1 ? parts.slice(1).join(' ') : (card ? card.title : r.cardId);
+        const type    = card ? (card.type || '—') : '—';
+        const avg     = ((r.ratings.produk + r.ratings.layanan + r.ratings.pengiriman + r.ratings.waktu) / 4).toFixed(1);
+        return { r, card, spkNo, spkDesc, type, avg };
+    }).filter(row => {
+        if (!q) return true;
+        return (row.spkNo + row.spkDesc + row.type + (row.r.name || '')).toLowerCase().includes(q);
+    });
+}
+
+// ─── Render Table ────────────────────────────────────────────────────────────
+function renderTable() {
+    const rows    = buildRows();
+    const tbody   = document.getElementById('review-table-body');
+    const emptyEl = document.getElementById('empty-state');
+    document.getElementById('result-count').textContent = `Menampilkan ${rows.length} review`;
+
+    if (!rows.length) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden'); emptyEl.classList.add('flex');
+        return;
+    }
+    emptyEl.classList.add('hidden'); emptyEl.classList.remove('flex');
+
+    let html = '';
+    rows.forEach(({r, spkNo, spkDesc, type, avg}, idx) => {
+        const color = avgColor(parseFloat(avg));
+        html += `<tr class="table-row-hover text-sm transition-colors cursor-pointer" onclick="window.location.href='product-detail.html?id=${esc(r.cardId)}'">
+            <td class="py-3.5 pr-2 text-xs text-slate-600 font-medium">${idx+1}</td>
+            <td class="py-3.5 font-mono text-slate-400 font-medium whitespace-nowrap">${esc(spkNo)}</td>
+            <td class="py-3.5">
+                <div class="font-medium text-slate-200">${esc(spkDesc)}</div>
+                <div class="text-xs text-slate-500">${esc(type)}</div>
+            </td>
+            <td class="py-3.5 min-w-[200px]">
+                <!-- Nama Reviewer -->
+                <div class="flex items-center gap-2 mb-1.5">
+                    <div class="size-7 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-[11px] font-black shrink-0">${Array.from(r.name.trim())[0].toUpperCase()}</div>
+                    <span class="font-semibold text-slate-200 text-sm">${esc(r.name)}</span>
+                </div>
+                <!-- Isi Masukan -->
+                ${r.comment
+                    ? `<p class="text-xs text-slate-400 italic leading-snug mb-1.5 pl-1 border-l-2 border-amber-500/40">&ldquo;${esc(r.comment)}&rdquo;</p>`
+                    : `<p class="text-xs text-slate-600 italic mb-1.5">Tidak ada masukan</p>`}
+                <!-- Tgl Review -->
+                <div class="flex items-center gap-1 text-[11px] text-slate-500">
+                    <span class="material-symbols-outlined text-[12px]">calendar_today</span>
+                    ${fmtDate(r.timestamp)}
+                </div>
+            </td>
+            <td class="py-3.5 space-y-1">
+                ${starsHtml('Produk', r.ratings.produk)}
+                ${starsHtml('Layanan', r.ratings.layanan)}
+                ${starsHtml('Pengiriman', r.ratings.pengiriman)}
+                ${starsHtml('Pengerjaan', r.ratings.waktu)}
+            </td>
+            <td class="py-3.5 text-center">
+                <span class="text-xl font-black ${color}">${avg}</span>
+                <span class="text-[10px] text-slate-500 block">/5.0</span>
+            </td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+// ─── Summary Badges ──────────────────────────────────────────────────────────
+function renderBadges() {
+    const total = allReviews.length;
+    const avgAll = total ? (allReviews.reduce((s,r) => {
+        return s + (r.ratings.produk+r.ratings.layanan+r.ratings.pengiriman+r.ratings.waktu)/4;
+    }, 0) / total).toFixed(1) : '—';
+    const five = allReviews.filter(r => ((r.ratings.produk+r.ratings.layanan+r.ratings.pengiriman+r.ratings.waktu)/4) >= 4.5).length;
+    const low  = allReviews.filter(r => ((r.ratings.produk+r.ratings.layanan+r.ratings.pengiriman+r.ratings.waktu)/4) <= 2).length;
+    document.getElementById('badge-total').textContent = total;
+    document.getElementById('badge-avg').textContent   = avgAll;
+    document.getElementById('badge-five').textContent  = five;
+    document.getElementById('badge-low').textContent   = low;
+}
+
+// ─── Export helpers ──────────────────────────────────────────────────────────
+function buildExportRows() {
+    return buildRows().map((row, idx) => ({
+        'No':                       idx + 1,
+        'No. SPK':                  row.spkNo,
+        'Klien & Item':             row.spkDesc,
+        'Jenis':                    row.type,
+        'Nama Reviewer':            row.r.name,
+        'Kualitas Produk (1-5)':    row.r.ratings.produk,
+        'Kualitas Layanan (1-5)':   row.r.ratings.layanan,
+        'Kualitas Pengiriman (1-5)':row.r.ratings.pengiriman,
+        'Waktu Pengerjaan (1-5)':   row.r.ratings.waktu,
+        'Rata-rata':                row.avg,
+        'Masukan':                  row.r.comment || '—',
+        'Tanggal Review':           fmtDate(row.r.timestamp),
+    }));
+}
+
+window.exportExcel = function() {
+    const rows = buildExportRows();
+    if (!rows.length) { alert('Tidak ada data untuk di-export.'); return; }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [4,14,32,16,12,16,18,18,18,10,60,16].map(w=>({wch:w}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Review Konsumen');
+    const now = new Date();
+    XLSX.writeFile(wb, `Flowta_Review_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.xlsx`);
+};
+
+window.exportPdf = function() {
+    const rows = buildExportRows();
+    if (!rows.length) { alert('Tidak ada data untuk di-export.'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.text('Laporan Review Konsumen - Flowta', 14, 18);
+    doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(120);
+    doc.text('Dicetak: ' + dateStr, 14, 25); doc.setTextColor(0);
+    doc.autoTable({
+        head: [['#','No. SPK','Klien & Item','Reviewer','Produk','Layanan','Pengiriman','Waktu','Avg','Masukan','Tanggal']],
+        body: rows.map(r => [r['No'],r['No. SPK'],r['Klien & Item'],r['Nama Reviewer'],r['Kualitas Produk (1-5)'],r['Kualitas Layanan (1-5)'],r['Kualitas Pengiriman (1-5)'],r['Waktu Pengerjaan (1-5)'],r['Rata-rata'],r['Masukan'],r['Tanggal Review']]),
+        startY: 30,
+        styles: { fontSize:7.5, cellPadding:2, overflow:'linebreak' },
+        headStyles: { fillColor:[245,158,11], textColor:255, fontStyle:'bold', fontSize:7.5 },
+        columnStyles: {
+            0:{cellWidth:6}, 1:{cellWidth:20}, 2:{cellWidth:38}, 3:{cellWidth:28},
+            4:{cellWidth:13}, 5:{cellWidth:13}, 6:{cellWidth:15}, 7:{cellWidth:14},
+            8:{cellWidth:10}, 9:{cellWidth:50}, 10:{cellWidth:18},
+        },
+        alternateRowStyles: { fillColor:[255,252,245] },
+        margin: { left:14, right:14 },
+    });
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i=1;i<=pageCount;i++) {
+        doc.setPage(i); doc.setFontSize(7); doc.setTextColor(150);
+        doc.text('Flowta - Laporan Review Konsumen | Halaman '+i+' / '+pageCount, 14, doc.internal.pageSize.getHeight()-8);
+    }
+    doc.save(`Flowta_Review_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.pdf`);
+};
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+    kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+    allReviews  = JSON.parse(localStorage.getItem('flowta_reviews'))      || [];
+
+    // Polyfill name for existing logic
+    allReviews.forEach(r => r.name = r.reviewerName || 'Anonim');
+
+    // Sort newest first
+    allReviews.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    renderBadges();
+    renderTable();
+
+    document.getElementById('search-input').addEventListener('input', function() {
+        searchQuery = this.value;
+        renderTable();
+    });
+});
+</script>
+</body>
+</html>

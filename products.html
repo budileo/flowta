@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Semua SPK</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF + AutoTable for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .glass-nav {
+            background: rgba(15,23,42,0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
+        .period-tab-active { background:#6366f1; color:#fff; box-shadow:0 0 16px rgba(99,102,241,0.35); }
+        .table-row-hover:hover { background:rgba(255,255,255,0.03); cursor:pointer; }
+        .qc-dot { width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0; }
+        .export-btn { transition:all .2s; }
+        .export-btn:hover { transform:translateY(-1px); }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR (loaded dynamically) -->
+        <div id="sidebar-container"></div>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col overflow-y-auto">
+        <!-- HEADER -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4 flex-1">
+                    <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-emerald-400">inventory_2</span>
+                    Semua Produk / SPK
+                </h1>
+                <div class="relative w-full max-w-md hidden md:block ml-8">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+                    <input id="global-search" onkeydown="if(event.key==='Enter'&&this.value.trim()){ if(!window.consumeToken('Pencarian Data')) return; window.location.href='search.html?q='+encodeURIComponent(this.value.trim())}" class="w-full bg-slate-100 dark:bg-slate-800/70 border-none rounded-xl pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-slate-500 shadow-inner" placeholder="Pencarian Global... [Enter]" type="text" />
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 size-2 bg-secondary rounded-full animate-pulse"></span>
+                </button>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">mail</span>
+                </button>
+                <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">contrast</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="p-8 max-w-full mx-auto w-full space-y-6 pb-16">
+
+            <!-- TITLE + EXPORT BUTTONS -->
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight">Semua SPK</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Riwayat seluruh Surat Perintah Kerja — aktif, selesai, maupun dibatalkan</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="if(window.consumeToken('Download Excel')) exportExcel();" class="export-btn flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-md shadow-emerald-600/20">
+                        <span class="material-symbols-outlined text-[18px]">table_view</span>
+                        Download Excel
+                    </button>
+                    <button onclick="if(window.consumeToken('Download PDF')) exportPdf();" class="export-btn flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-sm font-bold shadow-md shadow-rose-600/20">
+                        <span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+                        Download PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- SUMMARY BADGES -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg text-[20px]">local_printshop</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">SPK Aktif</p><p class="text-2xl font-black" id="badge-aktif">0</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-amber-400 bg-amber-500/10 p-2 rounded-lg text-[20px]">autorenew</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sedang Dikerjakan</p><p class="text-2xl font-black text-amber-400" id="badge-sedang">0</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-emerald-400 bg-emerald-500/10 p-2 rounded-lg text-[20px]">check_circle</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Selesai</p><p class="text-2xl font-black text-emerald-400" id="badge-selesai">0</p></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
+                    <span class="material-symbols-outlined text-rose-400 bg-secondary/10 p-2 rounded-lg text-[20px]">cancel</span>
+                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Batal</p><p class="text-2xl font-black text-rose-400" id="badge-batal">0</p></div>
+                </div>
+            </div>
+
+            <!-- FILTERS -->
+            <div class="glass-panel rounded-2xl p-5 flex flex-col gap-5">
+                <!-- Period Tabs -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-widest mr-2">Periode:</span>
+                    <button id="tab-hari"   onclick="setPeriod('hari')"   class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all">Hari Ini</button>
+                    <button id="tab-minggu" onclick="setPeriod('minggu')" class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all">Minggu Ini</button>
+                    <button id="tab-bulan"  onclick="setPeriod('bulan')"  class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all">Bulan Ini</button>
+                    <button id="tab-semua"  onclick="setPeriod('semua')"  class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all period-tab-active">Semua</button>
+                </div>
+                <!-- Status Pills -->
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs text-slate-400 font-bold uppercase tracking-widest mr-2">Filter:</span>
+                    <button id="pill-aktif"   onclick="toggleFilter('aktif')"   class="status-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border border-slate-700 text-slate-400 hover:border-indigo-500/50 transition-all"><span class="size-2 rounded-full bg-indigo-400"></span> SPK Aktif</button>
+                    <button id="pill-sedang"  onclick="toggleFilter('sedang')"  class="status-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border border-slate-700 text-slate-400 hover:border-amber-500/50 transition-all"><span class="size-2 rounded-full bg-amber-400 animate-pulse"></span> Sedang Dikerjakan</button>
+                    <button id="pill-selesai" onclick="toggleFilter('selesai')" class="status-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border border-slate-700 text-slate-400 hover:border-emerald-500/50 transition-all"><span class="size-2 rounded-full bg-emerald-400"></span> Selesai</button>
+                    <button id="pill-batal"   onclick="toggleFilter('batal')"   class="status-pill flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border border-slate-700 text-slate-400 hover:border-rose-500/50 transition-all"><span class="size-2 rounded-full bg-rose-400"></span> Batal</button>
+                    <span class="ml-auto text-xs text-slate-500" id="result-count">Menampilkan 0 SPK</span>
+                </div>
+            </div>
+
+            <!-- TABLE -->
+            <div class="glass-panel p-6 rounded-2xl overflow-x-auto">
+                <table class="w-full text-left min-w-[1000px]" id="spk-table">
+                    <thead>
+                        <tr class="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                            <th class="pb-3 font-semibold w-8">#</th>
+                            <th class="pb-3 font-semibold">No. SPK <span class="normal-case font-normal text-slate-600">/ Dibuat Pada</span></th>
+                            <th class="pb-3 font-semibold">Klien &amp; Item</th>
+                            <th class="pb-3 font-semibold">Divisi / Fase</th>
+                            <th class="pb-3 font-semibold">Target Selesai <span class="normal-case font-normal text-slate-600">/ Tgl &amp; Jam</span></th>
+                            <th class="pb-3 font-semibold">Lama Produksi</th>
+                            <th class="pb-3 font-semibold">Status</th>
+                            <!-- QC COLUMN -->
+                            <th class="pb-3 font-semibold">QC Histori</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-800" id="products-table-body"></tbody>
+                </table>
+                <!-- Empty state -->
+                <div id="empty-state" class="hidden flex-col items-center justify-center py-20 text-center">
+                    <span class="material-symbols-outlined text-slate-700 text-6xl mb-4">inventory_2</span>
+                    <p class="text-slate-500 font-semibold">Tidak ada SPK ditemukan</p>
+                    <p class="text-slate-600 text-sm mt-1">Coba ubah filter periode atau status.</p>
+                </div>
+            </div>
+
+            <!-- FOOTER -->
+            <div class="w-full text-center py-6 text-slate-500 text-sm border-t border-slate-200 dark:border-slate-800/50">
+                Sistem Flowta — Budi Ariadi Tata Kelola 0811 767 4848 · Hak Cipta dilindungi Undang-Undang
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+// ─── Helpers ────────────────────────────────────────────────────────────────
+window.calculateDurationStr = function(startStr, endStr) {
+    let ms = new Date(endStr) - new Date(startStr);
+    if (ms < 0) ms = 0;
+    let m = Math.floor(ms / 60000);
+    if (m === 0) return '<1 mnt';
+    if (m < 60) return m + ' mnt';
+    let h = Math.floor(m / 60), rm = m % 60;
+    if (h < 24) return rm > 0 ? h + ' jam ' + rm + ' mnt' : h + ' jam';
+    let d = Math.floor(h / 24), rh = h % 24;
+    return rh > 0 ? d + ' hri ' + rh + ' jam' : d + ' hri';
+};
+
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const m = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+    return d.getDate().toString().padStart(2,'0') + ' ' + m[d.getMonth()] + ' ' + d.getFullYear()
+        + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+}
+
+function startOfDay(d)   { let r=new Date(d); r.setHours(0,0,0,0); return r; }
+function startOfWeek(d)  { let r=new Date(d); r.setDate(r.getDate()-r.getDay()); r.setHours(0,0,0,0); return r; }
+function startOfMonth(d) { let r=new Date(d); r.setDate(1); r.setHours(0,0,0,0); return r; }
+
+// ─── State ──────────────────────────────────────────────────────────────────
+let currentPeriod = 'semua';
+let activeFilters = new Set();
+let searchQuery   = '';
+
+// ─── Data ───────────────────────────────────────────────────────────────────
+let kanbanCards = [];
+let histories   = [];
+let phasesData  = [];
+let allQcRecs   = [];
+let firstPhaseId = null;
+
+// ─── Period Tabs ────────────────────────────────────────────────────────────
+window.setPeriod = function(period) {
+    currentPeriod = period;
+    document.querySelectorAll('.period-tab').forEach(btn => {
+        btn.classList.remove('period-tab-active');
+        btn.classList.add('text-slate-400');
+    });
+    const el = document.getElementById('tab-' + period);
+    if (el) { el.classList.add('period-tab-active'); el.classList.remove('text-slate-400'); }
+    renderTable();
+};
+
+// ─── Status Pills ────────────────────────────────────────────────────────────
+window.toggleFilter = function(type) {
+    const pill = document.getElementById('pill-' + type);
+    const cls = {aktif:['bg-indigo-500/15','text-indigo-300','border-indigo-500/40'],sedang:['bg-amber-500/15','text-amber-300','border-amber-500/40'],selesai:['bg-emerald-500/15','text-emerald-300','border-emerald-500/40'],batal:['bg-rose-500/15','text-rose-300','border-rose-500/40']};
+    if (activeFilters.has(type)) {
+        activeFilters.delete(type);
+        (cls[type]||[]).forEach(c => pill.classList.remove(c));
+        pill.classList.add('border-slate-700','text-slate-400');
+    } else {
+        activeFilters.add(type);
+        pill.classList.remove('border-slate-700','text-slate-400');
+        (cls[type]||[]).forEach(c => pill.classList.add(c));
+    }
+    renderTable();
+};
+
+// ─── Filtering ───────────────────────────────────────────────────────────────
+function getCardCreatedAt(card) {
+    const ev = histories.find(h => h.cardId === card.id && h.type === 'create');
+    if (ev) return new Date(ev.timestamp);
+    if (card.createdAt) return new Date(card.createdAt);
+    return new Date(0);
+}
+
+function filterCards() {
+    const now = new Date();
+    let result = [...kanbanCards];
+    if (currentPeriod !== 'semua') {
+        const start = currentPeriod === 'hari' ? startOfDay(now)
+                    : currentPeriod === 'minggu' ? startOfWeek(now)
+                    : startOfMonth(now);
+        result = result.filter(c => getCardCreatedAt(c) >= start);
+    }
+    if (activeFilters.size > 0) {
+        result = result.filter(c => {
+            const isActive = c.status !== 'BATAL' && c.status !== 'SELESAI';
+            if (activeFilters.has('batal')   && c.status === 'BATAL')  return true;
+            if (activeFilters.has('selesai') && c.status === 'SELESAI') return true;
+            if (activeFilters.has('aktif')   && isActive)               return true;
+            if (activeFilters.has('sedang')  && isActive && c.phaseId !== firstPhaseId) return true;
+            return false;
+        });
+    }
+    if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        result = result.filter(c => c.title && c.title.toLowerCase().includes(q));
+    }
+    return result;
+}
+
+// ─── QC Cell ─────────────────────────────────────────────────────────────────
+function buildQcCell(cardId) {
+    const recs = allQcRecs.filter(q => q.cardId === cardId);
+    if (!recs.length) return '<span class="text-xs text-slate-600 italic">—</span>';
+
+    const labels = { 'Pra Produksi': { color: 'bg-purple-400', label: 'Pra' },
+                     'Produksi':     { color: 'bg-blue-400',   label: 'Prod' },
+                     'Hasil Akhir':  { color: 'bg-emerald-400',label: 'Final' } };
+
+    const order = ['Pra Produksi', 'Produksi', 'Hasil Akhir'];
+    let html = '<div class="flex flex-col gap-1.5">';
+    order.forEach(type => {
+        const r = recs.find(q => q.type === type);
+        if (!r) return;
+        const cfg = labels[type] || { color: 'bg-slate-400', label: type };
+        const dateStr = fmtDate(r.timestamp);
+        const user    = r.user || '—';
+        const desc    = r.desc ? (' · <span class="italic text-slate-500">' + escHtml(r.desc.substring(0,40)) + (r.desc.length > 40 ? '…' : '') + '</span>') : '';
+        html += `<div class="flex items-start gap-1.5" title="${escAttr(r.desc||'')}">
+            <span class="qc-dot mt-0.5 ${cfg.color} shrink-0"></span>
+            <div class="text-[11px] leading-snug">
+                <span class="font-bold text-slate-300">${cfg.label}</span>
+                <span class="text-slate-500 ml-1">${dateStr}</span>
+                <span class="text-slate-400 ml-1">@${escHtml(user)}</span>
+                ${desc}
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    return html;
+}
+
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escAttr(s) { return String(s).replace(/"/g,'&quot;'); }
+
+// ─── Render Table ─────────────────────────────────────────────────────────────
+function renderTable() {
+    const cards   = filterCards();
+    const tbody   = document.getElementById('products-table-body');
+    const emptyEl = document.getElementById('empty-state');
+    document.getElementById('result-count').textContent = 'Menampilkan ' + cards.length + ' SPK';
+
+    if (!cards.length) {
+        tbody.innerHTML = '';
+        emptyEl.classList.remove('hidden'); emptyEl.classList.add('flex');
+        return;
+    }
+    emptyEl.classList.add('hidden'); emptyEl.classList.remove('flex');
+
+    let html = '';
+    cards.forEach((card, idx) => {
+        const parts  = card.title ? card.title.split(' ') : ['—'];
+        const spkNo  = parts[0];
+        const spkDesc= parts.length > 1 ? parts.slice(1).join(' ') : card.title;
+
+        const phase  = phasesData.find(p => p.id === card.phaseId);
+        const phaseN = phase ? phase.title : '—';
+
+        let statusBadge;
+        if (card.status === 'SELESAI') statusBadge = `<span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20">SELESAI</span>`;
+        else if (card.status === 'BATAL') statusBadge = `<span class="px-2.5 py-1 rounded-md bg-secondary/10 text-secondary text-xs font-bold border border-secondary/20">BATAL</span>`;
+        else statusBadge = `<span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-400 text-xs font-bold border border-amber-500/20">AKTIF</span>`;
+
+        let durBadge = '<span class="text-xs text-slate-500">—</span>';
+        const cHists = histories.filter(h => h.cardId === card.id).sort((a,b) => new Date(a.timestamp)-new Date(b.timestamp));
+        if (cHists.length) {
+            const first = cHists[0];
+            if (card.status === 'BATAL') durBadge = '<span class="text-xs text-slate-500">— Batal</span>';
+            else if (card.status === 'SELESAI') {
+                const last = [...cHists].reverse().find(h => h.type==='complete') || cHists[cHists.length-1];
+                durBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-400">${window.calculateDurationStr(first.timestamp,last.timestamp)}</span>`;
+            } else {
+                durBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">${window.calculateDurationStr(first.timestamp,new Date().toISOString())}</span>`;
+            }
+        }
+
+        const rowOpacity = card.status === 'SELESAI' ? 'opacity-75' : card.status === 'BATAL' ? 'opacity-50' : '';
+
+        // SPK Dibuat Pada: cari event 'create' di histories
+        const createEv = histories.find(h => h.cardId === card.id && h.type === 'create');
+        const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
+        const createdStr = createdAt ? fmtDate(createdAt) : '—';
+
+        // Target Selesai: dynamic calculation using calcDeadline
+        const dl = window.calcDeadline(createdAt, card.dueDate);
+        const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
+        const targetStr = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
+        const dlColor = isFinished ? 'slate' : dl.color;
+        let targetClass = `text-${dlColor}-400`;
+        if (!isFinished && dl.level >= 4) targetClass = `text-${dlColor}-400 font-bold`;
+        const targetDatetimeStr = card.dueDate ? fmtDate(card.dueDate) : '—';
+
+        html += `<tr class="text-sm table-row-hover transition-colors ${rowOpacity}" onclick="window.location.href='product-detail.html?id=${card.id}'">
+            <td class="py-3.5 pr-2 text-slate-600 font-medium text-xs">${idx+1}</td>
+            <td class="py-3.5 whitespace-nowrap">
+                <div class="font-mono text-slate-400 font-medium">${escHtml(spkNo)}</div>
+                <div class="flex items-center gap-1 mt-1 text-[11px] text-indigo-400/80">
+                    <span class="material-symbols-outlined text-[12px]">schedule</span>
+                    <span>${escHtml(createdStr)}</span>
+                </div>
+            </td>
+            <td class="py-3.5">
+                <div class="font-medium text-slate-200">${escHtml(spkDesc)}</div>
+                <div class="text-xs text-slate-500">${escHtml(card.type||'—')}</div>
+            </td>
+            <td class="py-3.5 text-slate-300 text-xs whitespace-nowrap">
+                <span class="flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">architecture</span>${escHtml(phaseN)}</span>
+            </td>
+            <td class="py-3.5 text-xs whitespace-nowrap">
+                <div class="${targetClass} flex items-center gap-1"><span class="material-symbols-outlined text-[13px]">flag</span>${escHtml(targetStr)}</div>
+                <div class="flex items-center gap-1 mt-1 text-[11px] text-slate-500">
+                    <span class="material-symbols-outlined text-[12px]">calendar_month</span>
+                    <span>${escHtml(targetDatetimeStr)}</span>
+                </div>
+            </td>
+            <td class="py-3.5">${durBadge}</td>
+            <td class="py-3.5">${statusBadge}</td>
+            <td class="py-3.5 max-w-[280px]" onclick="event.stopPropagation()">${buildQcCell(card.id)}</td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+}
+
+// ─── Summary Badges (global) ────────────────────────────────────────────────
+function renderBadges() {
+    const active  = kanbanCards.filter(c => c.status!=='BATAL'&&c.status!=='SELESAI');
+    const sedang  = active.filter(c => c.phaseId !== firstPhaseId);
+    const selesai = kanbanCards.filter(c => c.status==='SELESAI');
+    const batal   = kanbanCards.filter(c => c.status==='BATAL');
+    document.getElementById('badge-aktif').textContent   = active.length;
+    document.getElementById('badge-sedang').textContent  = sedang.length;
+    document.getElementById('badge-selesai').textContent = selesai.length;
+    document.getElementById('badge-batal').textContent   = batal.length;
+}
+
+// ─── QC plain text for export ────────────────────────────────────────────────
+function getQcPlain(cardId) {
+    const recs = allQcRecs.filter(q => q.cardId === cardId);
+    if (!recs.length) return '—';
+    const order = ['Pra Produksi','Produksi','Hasil Akhir'];
+    return order.filter(t => recs.find(r => r.type===t))
+        .map(t => {
+            const r = recs.find(q => q.type===t);
+            return `${t}: ${fmtDate(r.timestamp)} @${r.user||'—'}${r.desc?' "'+r.desc+'"':''}`;
+        }).join('\n');
+}
+
+function getDurPlain(card) {
+    const cHists = histories.filter(h => h.cardId===card.id).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
+    if (!cHists.length) return '—';
+    const first = cHists[0];
+    if (card.status==='BATAL') return '— Batal';
+    if (card.status==='SELESAI') {
+        const last = [...cHists].reverse().find(h=>h.type==='complete')||cHists[cHists.length-1];
+        return window.calculateDurationStr(first.timestamp,last.timestamp);
+    }
+    return window.calculateDurationStr(first.timestamp,new Date().toISOString());
+}
+
+function buildExportRows() {
+    const cards = filterCards();
+    return cards.map((card, idx) => {
+        const parts  = card.title ? card.title.split(' ') : ['—'];
+        const spkNo  = parts[0];
+        const spkDesc= parts.slice(1).join(' ')||card.title;
+        const phase  = phasesData.find(p=>p.id===card.phaseId);
+        const createEv = histories.find(h => h.cardId === card.id && h.type === 'create');
+        const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
+        return {
+            'No':                    idx+1,
+            'No. SPK':               spkNo,
+            'Klien & Item':          spkDesc,
+            'Jenis':                 card.type||'—',
+            'Fase':                  phase?phase.title:'—',
+            'SPK Dibuat Pada':       createdAt ? fmtDate(createdAt) : '—',
+            'Target Selesai':        window.calcDeadline(createdAt, card.dueDate).text,
+            'Target Selesai (Tgl+Jam)': card.dueDate ? fmtDate(card.dueDate) : '—',
+            'Lama Produksi':         getDurPlain(card),
+            'Status':                card.status||'AKTIF',
+            'QC Histori':            getQcPlain(card.id),
+        };
+    });
+}
+
+// ─── Export Excel ────────────────────────────────────────────────────────────
+window.exportExcel = function() {
+    const rows = buildExportRows();
+    if (!rows.length) { alert('Tidak ada data untuk di-export.'); return; }
+    const ws = XLSX.utils.json_to_sheet(rows);
+    // Column widths
+    ws['!cols'] = [4,12,30,14,20,18,14,10,55].map(w=>({wch:w}));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'SPK');
+    const now = new Date();
+    const fname = `Flowta_SPK_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.xlsx`;
+    XLSX.writeFile(wb, fname);
+};
+
+// ─── Export PDF ──────────────────────────────────────────────────────────────
+window.exportPdf = function() {
+    const rows = buildExportRows();
+    if (!rows.length) { alert('Tidak ada data untuk di-export.'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+
+    // Header
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
+    doc.text('Laporan Semua SPK - Flowta', 14, 18);
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.setTextColor(120);
+    doc.text('Dicetak: ' + dateStr + '   |   Filter: ' + (currentPeriod==='semua'?'Semua Periode': currentPeriod==='hari'?'Hari Ini': currentPeriod==='minggu'?'Minggu Ini':'Bulan Ini'), 14, 25);
+    doc.setTextColor(0);
+
+    const head = [['#','No. SPK','Klien & Item','Jenis','Fase','Tenggat','Lama','Status','QC Histori']];
+    const body = rows.map(r => [r['No'],r['No. SPK'],r['Klien & Item'],r['Jenis'],r['Fase'],r['Tenggat Waktu'],r['Lama Produksi'],r['Status'],r['QC Histori']]);
+
+    doc.autoTable({
+        head, body,
+        startY: 30,
+        styles: { fontSize: 7, cellPadding: 2, overflow: 'linebreak' },
+        headStyles: { fillColor: [99,102,241], textColor: 255, fontStyle: 'bold', fontSize: 7 },
+        columnStyles: {
+            0: { cellWidth: 6 },
+            1: { cellWidth: 22 },
+            2: { cellWidth: 45 },
+            3: { cellWidth: 22 },
+            4: { cellWidth: 25 },
+            5: { cellWidth: 22 },
+            6: { cellWidth: 20 },
+            7: { cellWidth: 16 },
+            8: { cellWidth: 60 },
+        },
+        alternateRowStyles: { fillColor: [245,247,250] },
+        margin: { left: 14, right: 14 },
+    });
+
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(7); doc.setTextColor(150);
+        doc.text('Flowta - Sistem Monitoring Produksi | Halaman ' + i + ' / ' + pageCount, 14, doc.internal.pageSize.getHeight() - 8);
+    }
+
+    const fname = `Flowta_SPK_${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}.pdf`;
+    doc.save(fname);
+};
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+ document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+    kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+    histories   = JSON.parse(localStorage.getItem('flowta_history'))       || [];
+    phasesData  = JSON.parse(localStorage.getItem('flowta_phases'))        || [{ id:1, title:'Antrian' },{ id:2, title:'Proses' }];
+    allQcRecs   = JSON.parse(localStorage.getItem('flowta_qc'))            || [];
+    firstPhaseId = phasesData.length > 0 ? phasesData[0].id : 1;
+
+    setPeriod('semua');
+    renderBadges();
+
+    document.getElementById('search-input').addEventListener('input', function() {
+        searchQuery = this.value;
+        renderTable();
+    });
+});
+</script>
+</body>
+</html>
