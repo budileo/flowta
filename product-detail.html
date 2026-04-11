@@ -1005,7 +1005,8 @@
                         const klienName = titleParts2.length > 1 ? titleParts2.slice(1).join(' ') : 'Klien';
                         const adminNameStr = window.flowtaUser ? window.flowtaUser.name : 'Admin';
                         
-                        const waText = `Terimakasih ${klienName}\nsudah mempercayakan pada TATA KELOLA,\nSaat ini (SPK ${window.currentSpkInfo.spkNo}, ${window.currentSpkInfo.title}),\nbisa Anda lihat progres nya : ${trackerUrl}\nTerimakasih - ${adminNameStr}`;
+                        const adminDeptStr = (window.flowtaUser && window.flowtaUser.role) ? window.flowtaUser.role.toUpperCase() : 'SISTEM';
+                        const waText = `Terimakasih Bapak/Ibu ${klienName}\nsudah mempercayakan pada ${adminDeptStr},\nSaat ini (SPK ${window.currentSpkInfo.spkNo}, ${window.currentSpkInfo.title}),\nbisa Anda lihat progres nya : ${trackerUrl}\nTerimakasih - ${adminNameStr}`;
                         
                         navigator.clipboard.writeText(waText).then(() => {
                             const originalHtml = btnWa.innerHTML;
