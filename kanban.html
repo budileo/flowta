@@ -698,11 +698,11 @@
                                 const hasAkhir = cardQc.some(q => q.type === 'Hasil Akhir');
                                 
                                 let checks = '';
-                                if(hasPra) checks += `<div class="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 ${sz.qcBadge} rounded font-bold border border-emerald-500/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> PRA</div>`;
-                                if(hasProd) checks += `<div class="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 ${sz.qcBadge} rounded font-bold border border-emerald-500/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> PROD</div>`;
-                                if(hasAkhir) checks += `<div class="flex items-center gap-0.5 text-emerald-500 bg-emerald-500/10 ${sz.qcBadge} rounded font-bold border border-emerald-500/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> FINAL</div>`;
+                                if(hasPra) checks += `<div class="flex items-center gap-0.5 text-slate-900 bg-black/10 ${sz.qcBadge} rounded font-bold border border-black/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> PRA</div>`;
+                                if(hasProd) checks += `<div class="flex items-center gap-0.5 text-slate-900 bg-black/10 ${sz.qcBadge} rounded font-bold border border-black/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> PROD</div>`;
+                                if(hasAkhir) checks += `<div class="flex items-center gap-0.5 text-slate-900 bg-black/10 ${sz.qcBadge} rounded font-bold border border-black/20"><span class="material-symbols-outlined ${sz.qcIcon}">check</span> FINAL</div>`;
                                 
-                                qcIndicatorHtml = `<div class="flex gap-0.5 pointer-events-none items-center">${checks}</div>`;
+                                qcIndicatorHtml = `<div class="flex gap-0.5 pointer-events-none items-center overflow-hidden">${checks}</div>`;
                             } else {
                                 qcIndicatorHtml = `<div class="pointer-events-none"></div>`;
                             }
@@ -710,7 +710,6 @@
                             const dl = window.calcDeadline(card.createdAt, card.dueDate);
                             const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
                             const cardStyle = !isFinished && dl.kanbanBg ? `background: ${dl.kanbanBg};` : '';
-                            const textColorAttr = !isFinished && dl.kanbanText ? `color: ${dl.kanbanText};` : '';
                             const pulseCls = (!isFinished && dl.pulse) ? 'animate-pulse' : '';
                             
                             // Badge info
@@ -718,36 +717,36 @@
                             const dlText = isFinished ? (card.status === 'SELESAI' ? 'SELESAI' : 'BATAL') : dl.text;
 
                             cardsHtml += `
-                                <div style="${cardStyle} ${textColorAttr}" class="glass-panel border-t border-t-white/20 dark:border-t-white/10 dark:border-slate-700/50 rounded-xl ${sz.p} shadow-lg relative group transition-all duration-300 cursor-grab active:cursor-grabbing ${pulseCls}" data-card-id="${card.id}">
-                                    <div class="flex flex-col ${sz.gapCol}">
+                                <div style="${cardStyle}" class="glass-panel border-t border-t-white/20 dark:border-t-white/10 dark:border-slate-700/50 rounded-xl ${sz.p} shadow-lg relative group transition-all duration-300 cursor-grab active:cursor-grabbing overflow-hidden ${pulseCls}" data-card-id="${card.id}">
+                                    <div class="flex flex-col ${sz.gapCol} overflow-hidden">
                                         
                                         <!-- Area ini yang memicu double click -->
-                                        <div ondblclick="window.location.href='product-detail.html?id=${card.id}'" title="Double click for details" class="cursor-pointer">
-                                            <div class="flex justify-between items-start mb-2">
-                                                <div class="flex flex-col gap-1 pointer-events-none">
-                                                    <span class="${sz.typeText} font-bold tracking-widest text-${themeColor}-400 uppercase leading-none">${card.type}</span>
+                                        <div ondblclick="window.location.href='product-detail.html?id=${card.id}'" title="Double click for details" class="cursor-pointer overflow-hidden">
+                                            <div class="flex justify-between items-start mb-2 overflow-hidden">
+                                                <div class="flex flex-col gap-1 pointer-events-none min-w-0 overflow-hidden">
+                                                    <span class="${sz.typeText} font-bold tracking-widest text-slate-900 uppercase leading-none truncate">${card.type}</span>
                                                 </div>
                                                 <div class="flex items-center gap-1.5 shrink-0 text-right">
-                                                    <div class="flex items-center ${sz.innerGap} ${sz.dueBadge} rounded bg-${dlColor}-500/10 text-${dlColor}-600 dark:text-${dlColor}-400 ring-1 ring-${dlColor}-500/20 pointer-events-none font-semibold whitespace-nowrap">
+                                                    <div class="flex items-center ${sz.innerGap} ${sz.dueBadge} rounded bg-black/10 text-slate-900 ring-1 ring-black/20 pointer-events-none font-semibold whitespace-nowrap">
                                                         <span class="material-symbols-outlined ${sz.dueIcon}">event</span>
-                                                        <span class="uppercase tracking-wide leading-none">${dlText}</span>
+                                                        <span class="uppercase tracking-wide leading-none truncate max-w-[80px]">${dlText}</span>
                                                     </div>
-                                                    <span class="${sz.tagBadge} rounded bg-${card.tagColor}-500/10 text-${card.tagColor}-500 font-bold uppercase ring-1 ring-${card.tagColor}-500/30 whitespace-nowrap">${card.tagDesc}</span>
+                                                    <span class="${sz.tagBadge} rounded bg-black/10 text-slate-900 font-bold uppercase ring-1 ring-black/20 whitespace-nowrap">${card.tagDesc}</span>
                                                 </div>
                                             </div>
-                                            <h4 style="${textColorAttr}" class="text-slate-800 dark:text-white ${sz.titleText} font-bold pointer-events-none">${card.title}</h4>
+                                            <h4 class="text-slate-900 ${sz.titleText} font-bold pointer-events-none truncate">${card.title}</h4>
                                         </div>
 
                                         <!-- Area bawah untuk aksi mandiri (non-navigasi dblclick) -->
-                                        <div class="${sz.footerMt} border-t border-slate-200 dark:border-white/10 flex items-center justify-between pt-2">
+                                        <div class="${sz.footerMt} border-t border-black/10 flex items-center justify-between pt-2 overflow-hidden">
                                             ${qcIndicatorHtml}
                                             <div class="flex items-center ${sz.gapMeta}">
                                                 <div class="flex items-center gap-0.5 shrink-0">
                                                     <!-- Buttons are now isolated from the dblclick wrapper -->
-                                                    <button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openQcModal('${card.id}');" class="${sz.actionP} relative z-50 rounded text-slate-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors flex items-center justify-center cursor-pointer" title="Quality Control">
+                                                    <button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.openQcModal('${card.id}');" class="${sz.actionP} relative z-50 rounded text-slate-900 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer" title="Quality Control">
                                                         <span class="material-symbols-outlined ${sz.actionIco} pointer-events-none leading-none">fact_check</span>
                                                     </button>
-                                                    <button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.location.href='product-detail.html?id=${card.id}&tab=comments';" class="${sz.actionP} relative z-50 rounded text-slate-400 hover:text-primary hover:bg-primary/10 transition-colors flex items-center justify-center cursor-pointer" title="Komentar">
+                                                    <button type="button" onclick="event.preventDefault(); event.stopPropagation(); window.location.href='product-detail.html?id=${card.id}&tab=comments';" class="${sz.actionP} relative z-50 rounded text-slate-900 hover:bg-black/10 transition-colors flex items-center justify-center cursor-pointer" title="Komentar">
                                                         <span class="material-symbols-outlined ${sz.actionIco} pointer-events-none leading-none">chat</span>
                                                     </button>
                                                 </div>
