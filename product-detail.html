@@ -1005,7 +1005,15 @@
                         const klienName = titleParts2.length > 1 ? titleParts2.slice(1).join(' ') : 'Klien';
                         const adminNameStr = window.flowtaUser ? window.flowtaUser.name : 'Admin';
                         
-                        const adminDeptStr = (window.flowtaUser && window.flowtaUser.role) ? window.flowtaUser.role.toUpperCase() : 'SISTEM';
+                        let adminDeptStr = 'KAMI';
+                        if (window.flowtaActiveDept) {
+                            const depts = JSON.parse(localStorage.getItem('flowta_departments') || '[]');
+                            const d = depts.find(x => x.id === window.flowtaActiveDept);
+                            if (d) adminDeptStr = d.name.toUpperCase();
+                        } else if (window.flowtaUser && window.flowtaUser.role) {
+                            adminDeptStr = window.flowtaUser.role.toUpperCase();
+                        }
+                        
                         const waText = `Terimakasih Bapak/Ibu ${klienName}\nsudah mempercayakan pada ${adminDeptStr},\nSaat ini (SPK ${window.currentSpkInfo.spkNo}, ${window.currentSpkInfo.title}),\nbisa Anda lihat progres nya : ${trackerUrl}\nTerimakasih - ${adminNameStr}`;
                         
                         navigator.clipboard.writeText(waText).then(() => {
