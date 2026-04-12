@@ -1019,12 +1019,8 @@
 
             window.scrollToPhase = function(phaseId) {
                 const col = document.getElementById('column-phase-' + phaseId);
-                const board = document.getElementById('kanban-board');
-                if (col && board) {
-                    board.scrollTo({
-                        left: col.offsetLeft - board.offsetLeft,
-                        behavior: 'smooth'
-                    });
+                if (col) {
+                    col.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
                 }
             };
 
@@ -1102,12 +1098,12 @@
                         const alertColor = count >= maxLoad ? 'text-rose-400 bg-rose-500/10 border-rose-500/30' 
                                          : count >= 5 ? 'text-orange-400 bg-orange-500/10 border-orange-500/30'
                                          : 'text-amber-400 bg-amber-500/10 border-amber-500/30';
-                        alertsHtml += `<span onclick="scrollToPhase(${phase.id})" class="heatmap-alert-enter inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[8px] font-bold whitespace-nowrap ${alertColor} cursor-pointer hover:opacity-80 transition-opacity" title="Klik untuk menuju fase ini">⚠ ${shortName} Overload (${count} job)</span>`;
+                        alertsHtml += `<span onclick="scrollToPhase('${phase.id}')" class="heatmap-alert-enter inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[8px] font-bold whitespace-nowrap ${alertColor} cursor-pointer hover:opacity-80 transition-opacity" title="Klik untuk menuju fase ini">⚠ ${shortName} Overload (${count} job)</span>`;
                     }
 
                     // Badge compact dengan mini horizontal bar
                     badgesHtml += `
-                        <div onclick="scrollToPhase(${phase.id})" class="heatmap-badge ${bgColor} border ${borderColor} rounded px-2 py-1 flex items-center gap-1.5 min-w-[90px] cursor-pointer hover:opacity-80 transition-opacity" title="${phase.title}: ${count} SPK aktif (Klik untuk menuju fase ini)">
+                        <div onclick="scrollToPhase('${phase.id}')" class="heatmap-badge ${bgColor} border ${borderColor} rounded px-2 py-1 flex items-center gap-1.5 min-w-[90px] cursor-pointer hover:opacity-80 transition-opacity" title="${phase.title}: ${count} SPK aktif (Klik untuk menuju fase ini)">
                             <div class="flex items-center gap-1 shrink-0">
                                 <span class="w-1.5 h-1.5 rounded-full ${dotColor} shrink-0"></span>
                                 <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider leading-none">${shortName}</span>
