@@ -369,7 +369,7 @@
                                         <input class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed" disabled type="date" id="spkStartDate" />
                                     </div>
                                     <div class="w-32 relative">
-                                        <input class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed" disabled type="time" value="08:00"/>
+                                        <input id="spkStartTime" class="w-full bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-3 text-slate-400 cursor-not-allowed" disabled type="time" value="08:00"/>
                                     </div>
                                 </div>
                             </div>
@@ -488,9 +488,23 @@
             const modal = document.getElementById('spkModal');
             const cont = document.getElementById('spkModalContent');
             
-            // Set today's date in disabled start date
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('spkStartDate').value = today;
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            const hh = String(now.getHours()).padStart(2, '0');
+            const min = String(now.getMinutes()).padStart(2, '0');
+            const todayStr = `${yyyy}-${mm}-${dd}`;
+            const timeStr = `${hh}:${min}`;
+
+            document.getElementById('spkStartDate').value = todayStr;
+            const spkStartTime = document.getElementById('spkStartTime');
+            if(spkStartTime) spkStartTime.value = timeStr;
+            
+            const spkDueDate = document.getElementById('spkDueDate');
+            if(spkDueDate) spkDueDate.value = todayStr;
+            const spkDueTime = document.getElementById('spkDueTime');
+            if(spkDueTime) spkDueTime.value = timeStr;
             
             // Generate arbitrary PO number based on timestamp
             document.getElementById('spkNo').value = `PROD-${Date.now().toString().slice(-6)}`;
@@ -966,9 +980,18 @@
                 
                 // Store due date as ISO string for dynamic calculation
                 const dueDateInput = document.getElementById('spkDueDate').value;
+                const dueTimeInput = document.getElementById('spkDueTime').value || '17:00';
                 let dueDateIso = '';
                 if (dueDateInput) {
-                    dueDateIso = new Date(dueDateInput + 'T17:00:00').toISOString();
+                    dueDateIso = new Date(dueDateInput + 'T' + dueTimeInput + ':00').toISOString();
+                }
+
+                const startDateInput = document.getElementById('spkStartDate').value;
+                const spkStartTime = document.getElementById('spkStartTime');
+                const startTimeInput = spkStartTime ? spkStartTime.value : '08:00';
+                let createdAtIso = new Date().toISOString();
+                if (startDateInput) {
+                    createdAtIso = new Date(startDateInput + 'T' + startTimeInput + ':00').toISOString();
                 }
                 
                 let targetPhase = document.getElementById('spkTargetPhaseId').value;
@@ -981,6 +1004,7 @@
                     type: item,
                     tagDesc: tagDesc,
                     tagColor: tagColor,
+                    createdAt: createdAtIso,
                     dueDate: dueDateIso,
                     priority: priorityDesc,
                     priorityIcon: priorityIcon
