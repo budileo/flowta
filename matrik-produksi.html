@@ -389,39 +389,73 @@
             // Urutkan histori kartu ini dari lama ke baru
             const hx = allHistories.filter(h => h.cardId === card.id).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
+            // Perbaikan: Kanban lama hanya menyematkan 'from' dan 'to' di dalam teks HTML `desc`.
+            const parsePhase = (ev) => {
+                let fromId = ev.fromPhase;
+                let toId = ev.toPhase;
+                if (!fromId && !toId && ev.type === 'move' && ev.desc) {
+                    const matchDari = ev.desc.match(/dari <span[^>]*>(.*?)<\/span>/);
+                    const matchKe = ev.desc.match(/ke <span[^>]*>(.*?)<\/span>/);
+                    if (matchDari) {
+                        const p = allPhases.find(p => p.title === matchDari[1]);
+                        if (p) fromId = p.id;
+                    }
+                    if (matchKe) {
+                        const p = allPhases.find(p => p.title === matchKe[1]);
+                        if (p) toId = p.id;
+                    }
+                }
+                return { fromId, toId };
+            };
+
             let lastPhase = null;
             let firstMove = hx.find(ev => ev.type === 'move');
+            let firstMoveParsed = firstMove ? parsePhase(firstMove) : {fromId: null, toId: null};
 
             hx.forEach(ev => {
                 const ts = new Date(ev.timestamp);
+                const parsed = parsePhase(ev);
+
                 if (ev.type === 'create') {
-                    let initialPhase = ev.phaseId || ev.toPhase || (firstMove ? firstMove.fromPhase : card.phaseId);
+                    let initialPhase = ev.phaseId || ev.toPhase || firstMoveParsed.fromId || card.phaseId;
                     if (initialPhase) {
                         lastPhase = initialPhase;
-                        row.phases[lastPhase] = { start: ts, end: null };
+                        row.phases[lastPhase] = { start: ts, end: null, totalMs: 0 };
                     }
                 } else if (ev.type === 'move') {
-                    // Jika lastPhase terlewat, deduksi dari fromPhase event ini
-                    if (!lastPhase && ev.fromPhase) {
-                        lastPhase = ev.fromPhase;
-                        row.phases[lastPhase] = { start: creates, end: null };
+                    const fromPhase = parsed.fromId;
+                    const toPhase = parsed.toId;
+
+                    // Jika masuk histori pertama (dan bypass create), tetapkan dari mana ia berasal
+                    if (!lastPhase && fromPhase) {
+                        lastPhase = fromPhase;
+                        row.phases[lastPhase] = { start: creates, end: null, totalMs: 0 };
                     }
 
                     // Menutup fase lama
-                    if (ev.fromPhase && row.phases[ev.fromPhase]) {
-                        row.phases[ev.fromPhase].end = ts;
+                    if (fromPhase && row.phases[fromPhase]) {
+                        row.phases[fromPhase].end = ts;
+                        row.phases[fromPhase].totalMs += (ts - row.phases[fromPhase].start);
                     } else if (lastPhase && row.phases[lastPhase]) {
                         row.phases[lastPhase].end = ts;
+                        row.phases[lastPhase].totalMs += (ts - row.phases[lastPhase].start);
                     }
 
                     // Membuka fase baru
-                    if (ev.toPhase) {
-                        lastPhase = ev.toPhase;
-                        row.phases[lastPhase] = { start: ts, end: null };
+                    if (toPhase) {
+                        lastPhase = toPhase;
+                        if (!row.phases[lastPhase]) {
+                            row.phases[lastPhase] = { start: ts, end: null, totalMs: 0 };
+                        } else {
+                            // Bila mundur kembali ke fase ini (revisi)
+                            row.phases[lastPhase].start = ts; 
+                            row.phases[lastPhase].end = null;
+                        }
                     }
                 } else if (ev.type === 'complete') {
                     if (lastPhase && row.phases[lastPhase] && !row.phases[lastPhase].end) {
                         row.phases[lastPhase].end = ts;
+                        row.phases[lastPhase].totalMs += (ts - row.phases[lastPhase].start);
                     }
                 }
             });
@@ -525,12 +559,25 @@
 
                         if (phaseRec.end) {
                             endStr = formatPhaseTime(phaseRec.end);
-                            durStr = diffHoursMinutes(phaseRec.start, phaseRec.end);
+                            
+                            // Gunakan agregasi kalkulasi jika SPK bolak-balik phase
+                            let useMs = phaseRec.totalMs;
+                            if (useMs < 0) useMs = 0;
+                            const totalMins = Math.floor(useMs / 60000);
+                            const h = Math.floor(totalMins / 60);
+                            const m = totalMins % 60;
+                            durStr = (h === 0) ? `${m}mnt` : (m === 0 ? `${h}jam` : `${h}j ${m}m`);
+                            
                             badgeClass = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400';
                             ringClass = '';
                         } else {
-                            // calculate live duration till now
-                            durStr = diffHoursMinutes(phaseRec.start, new Date());
+                            // hitung waktu berjalan saat ini dengan ditambah histori rekaman jika dia kembali ke fase
+                            let useMs = phaseRec.totalMs + (new Date() - phaseRec.start);
+                            if (useMs < 0) useMs = 0;
+                            const totalMins = Math.floor(useMs / 60000);
+                            const h = Math.floor(totalMins / 60);
+                            const m = totalMins % 60;
+                            durStr = (h === 0) ? `${m}mnt` : (m === 0 ? `${h}jam` : `${h}j ${m}m`);
                         }
 
                         bHtml += `
