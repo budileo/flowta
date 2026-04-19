@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Matrik Produksi</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .glass-nav {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: calc(100% + 0.5rem);
+            min-w: 240px;
+            z-index: 50;
+            border-radius: 1rem;
+            padding: 0.5rem;
+        }
+        .dropdown-wrapper:hover .dropdown-content {
+            display: block;
+            animation: fadeIn 0.2s ease forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Fixed columns behavior for horizontal scrolling */
+        .sticky-col-1 { position: sticky; left: 0; z-index: 10; }
+        .sticky-col-2 { position: sticky; left: 140px; z-index: 10; }
+        .sticky-col-3 { position: sticky; left: 290px; z-index: 10; }
+        .sticky-shadow::after {
+            content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 8px;
+            background: linear-gradient(to right, rgba(0,0,0,0.2) 0%, transparent 100%);
+            transform: translateX(100%); pointer-events: none;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+    <!-- SIDEBAR -->
+    <div id="sidebar-container"></div>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- TOP HEADER -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-4 flex-1">
+                <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">table_chart</span>
+                    Matrik Produksi
+                </h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="h-8 w-[1px] bg-slate-200 dark:bg-slate-700 mx-2"></div>
+                <button class="size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">contrast</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT (SCROLLABLE AREA) -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col w-full h-full">
+            
+            <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-6 mb-6">
+                <div>
+                    <h2 class="text-2xl font-black tracking-tight uppercase">Matrik Operasional Produksi</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">Lacak waktu pengerjaan 1 SPK lengkap di setiap fase produksinya.</p>
+                </div>
+                
+                <div class="flex flex-wrap items-center gap-3">
+                    <!-- Period Filter Container -->
+                    <div class="flex items-center gap-2 flex-wrap bg-slate-800/40 p-1.5 rounded-2xl border border-slate-700/50">
+                        <button onclick="setPeriod('today')"      id="p-today"      class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-transparent">Hari Ini</button>
+                        <button onclick="setPeriod('yesterday')"  id="p-yesterday"  class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-transparent">Kemarin</button>
+                        <button onclick="setPeriod('week')"       id="p-week"       class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-transparent">Minggu Ini</button>
+                        <button onclick="setPeriod('last_week')"  id="p-last_week"  class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-transparent">Minggu Lalu</button>
+                        <button onclick="setPeriod('month')"      id="p-month"      class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-transparent">Bulan Ini</button>
+                        <button onclick="setPeriod('last_month')" id="p-last_month" class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border border-transparent">Bulan Lalu</button>
+                        
+                        <div class="flex items-center gap-1 bg-slate-900/50 rounded-xl px-2 py-1 ml-1 border border-slate-700">
+                            <span class="material-symbols-outlined text-slate-400 text-[14px] ml-1">event</span>
+                            <input type="date" id="range-from" class="bg-transparent border-none outline-none text-[11px] text-slate-400 w-24 p-0 m-0 text-center cursor-pointer">
+                            <span class="text-slate-500 text-xs">-</span>
+                            <input type="date" id="range-to" class="bg-transparent border-none outline-none text-[11px] text-slate-400 w-24 p-0 m-0 text-center cursor-pointer">
+                            <button onclick="if(window.consumeToken('Pencarian Data')) applyRange()" class="ml-1 px-2.5 py-1 rounded-lg bg-primary text-white hover:bg-indigo-500 transition-colors text-[10px] font-bold">Terapkan</button>
+                        </div>
+                    </div>
+
+                    <!-- Column Toggler (Dropdown) -->
+                    <div class="relative dropdown-wrapper">
+                        <button class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-all shadow-lg border border-slate-600 cursor-pointer">
+                            <span class="material-symbols-outlined text-[16px]">view_column</span>
+                            Kolom Fase
+                            <span class="material-symbols-outlined text-[16px] ml-1">arrow_drop_down</span>
+                        </button>
+                        <div class="dropdown-content bg-slate-800 border border-slate-700 shadow-2xl overflow-y-auto max-h-96" id="column-toggler-panel">
+                            <!-- Injected checkboxes -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABLE WRAPPER -->
+            <div class="glass-panel flex-1 rounded-2xl overflow-hidden flex flex-col relative h-[600px] border border-slate-700/50">
+                <div class="overflow-x-auto overflow-y-auto w-full h-full custom-scroll">
+                    <table class="w-full text-left border-collapse whitespace-nowrap min-w-max">
+                        <thead class="sticky top-0 z-20">
+                            <tr class="bg-slate-900/95 text-slate-300 text-[10px] uppercase tracking-wider backdrop-blur-md shadow-sm border-b border-slate-700/80" id="matrix-head-row">
+                                <!-- Headers injected here -->
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800" id="matrix-table-body">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    // ==================== DATA LAYER ====================
+    let allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+    let kanbanCards  = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+    let allPhases    = JSON.parse(localStorage.getItem('flowta_phases')) || [];
+    
+    // Konfigurasi Toggle Kolom
+    let visiblePhases = new Set();
+
+    let currentPeriod = 'today';
+    let customFrom = null;
+    let customTo = null;
+
+    let filteredCards = [];
+    let matrixData = [];
+
+    // ==================== WAKTU & DURASI ====================
+    function formatDateTime(dStr) {
+        if (!dStr) return '-';
+        const d = new Date(dStr);
+        if (isNaN(d)) return '-';
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yy = d.getFullYear();
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mn = String(d.getMinutes()).padStart(2, '0');
+        return `${dd}/${mm}/${yy} ${hh}:${mn}`;
+    }
+
+    function formatPhaseTime(dStr) {
+        if (!dStr) return '-';
+        const d = new Date(dStr);
+        if (isNaN(d)) return '-';
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const hh = String(d.getHours()).padStart(2, '0');
+        const mn = String(d.getMinutes()).padStart(2, '0');
+        return `${dd}-${mm} ${hh}:${mn}`;
+    }
+
+    function diffHoursMinutes(start, end) {
+        const ms = end.getTime() - start.getTime();
+        if (ms < 0) return '0h';
+        const totalMinutes = Math.floor(ms / 60000);
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        if (h === 0) return `${m}mnt`;
+        if (m === 0) return `${h}jam`;
+        return `${h}j ${m}m`;
+    }
+
+    // ==================== MAIN LOGIC ====================
+    function initMatrix() {
+        if (allPhases.length === 0) {
+            allPhases = [
+                {id: 1, title: 'Antrian', dept: 'ADM'},
+                {id: 2, title: 'Desain', dept: 'DES'},
+                {id: 3, title: 'Cetak', dept: 'PRT'}
+            ];
+        }
+
+        // Tampilkan 3 kolom pertama secara default
+        allPhases.forEach((p, idx) => {
+            if (idx < 3) visiblePhases.add(p.id);
+        });
+
+        renderTogglers();
+        setPeriod('today');
+    }
+
+    // ==================== RENDER TOGGLER ====================
+    function renderTogglers() {
+        const panel = document.getElementById('column-toggler-panel');
+        let html = `<div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-700/50 mb-2">Tampilkan Fase</div>`;
+        
+        allPhases.forEach(p => {
+            const isChecked = visiblePhases.has(p.id) ? 'checked' : '';
+            html += `
+            <label class="flex items-center gap-3 px-3 py-2 hover:bg-slate-700/50 rounded-lg cursor-pointer transition-colors group">
+                <div class="relative flex items-center">
+                    <input type="checkbox" class="peer appearance-none w-4 h-4 border border-slate-600 rounded bg-slate-900 checked:bg-primary checked:border-primary transition-all cursor-pointer" 
+                     value="${p.id}" onchange="togglePhase(this, ${p.id})" ${isChecked}>
+                    <span class="material-symbols-outlined absolute left-0 top-0 text-[16px] text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity">check</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-xs font-semibold text-slate-200 group-hover:text-white transition-colors">${p.title}</span>
+                    <span class="text-[9px] text-slate-500 font-bold">${p.dept || '-'}</span>
+                </div>
+            </label>
+            `;
+        });
+        panel.innerHTML = html;
+        
+        // Prevent click inside dropdown from closing it
+        panel.addEventListener('click', (e) => e.stopPropagation());
+    }
+
+    window.togglePhase = function(checkbox, id) {
+        if (checkbox.checked) {
+            visiblePhases.add(id);
+        } else {
+            visiblePhases.delete(id);
+        }
+        renderTable(); 
+    };
+
+    // ==================== FILTERING & KOMPUTASI ====================
+    const PERIOD_IDS = ['today','yesterday','week','last_week','month','last_month'];
+    const periodStyle = {
+        active:   'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-emerald-500/30',
+        inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700',
+    };
+
+    window.setPeriod = function(period) {
+        currentPeriod = period;
+        customFrom = null; customTo = null;
+        PERIOD_IDS.forEach(k => {
+            const el = document.getElementById('p-'+k);
+            if (el) { el.className = 'period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ' + (k===period ? periodStyle.active : periodStyle.inactive); }
+        });
+        compute();
+    };
+
+    window.applyRange = function() {
+        const f = document.getElementById('range-from').value;
+        const t = document.getElementById('range-to').value;
+        if (!f || !t) { alert('Pilih tanggal awal dan akhir.'); return; }
+        customFrom = new Date(f + 'T00:00:00');
+        customTo = new Date(t + 'T23:59:59');
+        currentPeriod = null;
+        PERIOD_IDS.forEach(k => {
+            const el = document.getElementById('p-'+k);
+            if (el) { el.className = 'period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ' + periodStyle.inactive; }
+        });
+        compute();
+    };
+
+    window.getDateRange = function() {
+        const now = new Date();
+        if (customFrom && customTo) return { from: customFrom, to: customTo };
+        
+        const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+        if (currentPeriod === 'today') return { from: new Date(y, m, d, 0, 0, 0), to: new Date(y, m, d, 23, 59, 59) };
+        if (currentPeriod === 'yesterday') {
+            const yd = new Date(now); yd.setDate(now.getDate() - 1);
+            return { from: new Date(yd.getFullYear(), yd.getMonth(), yd.getDate(), 0, 0, 0), to: new Date(yd.getFullYear(), yd.getMonth(), yd.getDate(), 23, 59, 59) };
+        }
+        if (currentPeriod === 'week') {
+            const day = now.getDay();
+            const mon = new Date(now); mon.setDate(d - (day === 0 ? 6 : day - 1)); mon.setHours(0,0,0,0);
+            const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+            return { from: mon, to: sun };
+        }
+        if (currentPeriod === 'last_week') {
+            const day = now.getDay();
+            const lastSun = new Date(now); lastSun.setDate(d - (day === 0 ? 6 : day - 1) - 1); lastSun.setHours(23,59,59,999);
+            const lastMon = new Date(lastSun); lastMon.setDate(lastSun.getDate() - 6); lastMon.setHours(0,0,0,0);
+            return { from: lastMon, to: lastSun };
+        }
+        if (currentPeriod === 'month') return { from: new Date(y, m, 1, 0, 0, 0), to: new Date(y, m + 1, 0, 23, 59, 59) };
+        if (currentPeriod === 'last_month') return { from: new Date(y, m - 1, 1, 0, 0, 0), to: new Date(y, m, 0, 23, 59, 59) };
+        
+        return { from: new Date(0), to: new Date() };
+    };
+
+    function getCreateTime(card) {
+        const createEvt = allHistories.find(h => h.cardId === card.id && h.type === 'create');
+        if (createEvt) return new Date(createEvt.timestamp);
+        if (card.createdAt) return new Date(card.createdAt);
+        return new Date();
+    }
+
+    function compute() {
+        const range = window.getDateRange();
+
+        // 1. Dapatkan SPK yang DIBUAT dalam rentang waktu yang dipilih
+        filteredCards = kanbanCards.filter(c => {
+            const cd = getCreateTime(c);
+            return cd >= range.from && cd <= range.to;
+        });
+
+        // 2. Kalkulasi Array Matrix per SPK
+        matrixData = filteredCards.map(card => {
+            const creates = getCreateTime(card);
+            const row = {
+                id: card.id,
+                noSpk: card.spkNumber || card.id,
+                client: card.client || '-',
+                dibuat: creates,
+                target: card.deadline ? new Date(card.deadline) : null,
+                phases: {} // phaseId -> { start, end }
+            };
+
+            // Urutkan histori kartu ini dari lama ke baru
+            const hx = allHistories.filter(h => h.cardId === card.id).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            let currentPhaseId = null;
+
+            hx.forEach(ev => {
+                const ts = new Date(ev.timestamp);
+                if (ev.type === 'create') {
+                    // Terkadang saat create, dia otomatis masuk ke phase tertentu
+                    if (ev.phaseId) {
+                        currentPhaseId = ev.phaseId;
+                        row.phases[currentPhaseId] = { start: ts, end: null };
+                    }
+                } else if (ev.type === 'move') {
+                    // Keluar dari fase lama
+                    if (ev.fromPhase && row.phases[ev.fromPhase]) {
+                        row.phases[ev.fromPhase].end = ts;
+                    }
+                    // Masuk ke fase baru
+                    if (ev.toPhase) {
+                        currentPhaseId = ev.toPhase;
+                        if (!row.phases[currentPhaseId]) {
+                            row.phases[currentPhaseId] = { start: ts, end: null };
+                        } else {
+                            // Jika SPK di-move kembali ke fase yang sama lagi di lain waktu (revisi), timpa start? 
+                            // Untuk kesederhanaan laporan operational, ambil range waktu terakhir dia dimasukkan.
+                            row.phases[currentPhaseId].start = ts;
+                            row.phases[currentPhaseId].end = null;
+                        }
+                    }
+                } else if (ev.type === 'complete') {
+                    if (currentPhaseId && row.phases[currentPhaseId] && !row.phases[currentPhaseId].end) {
+                        row.phases[currentPhaseId].end = ts;
+                    }
+                }
+            });
+
+            return row;
+        });
+
+        // Sort descending by create date
+        matrixData.sort((a,b) => b.dibuat - a.dibuat);
+
+        renderTable();
+    }
+
+    // ==================== RENDERING HTML ====================
+    function renderTable() {
+        const thead = document.getElementById('matrix-head-row');
+        const tbody = document.getElementById('matrix-table-body');
+        
+        let cols = allPhases.filter(p => visiblePhases.has(p.id));
+
+        // RENDER HEADER
+        let hHtml = `
+            <th class="px-4 py-3 min-w-[100px] w-[110px] sticky-col-1 bg-slate-900 border-r border-slate-700/50">No SPK</th>
+            <th class="px-4 py-3 min-w-[150px] w-[150px] sticky-col-2 bg-slate-900 border-r border-slate-700/50">Klien</th>
+            <th class="px-4 py-3 min-w-[160px] w-[160px] sticky-col-3 bg-slate-900 sticky-shadow border-r border-slate-700/80 text-center">Dibuat / Target</th>
+        `;
+
+        if (cols.length === 0) {
+            hHtml += `<th class="px-4 py-3 min-w-[300px]">Silakan pilih kolom fase untuk ditampilkan</th>`;
+        } else {
+            cols.forEach(p => {
+                hHtml += `
+                <th class="px-4 py-3 min-w-[200px] border-r border-slate-800/60 align-middle">
+                    <div class="flex flex-col items-center justify-center">
+                        <span class="font-bold text-white tracking-widest text-[11px]">${p.title}</span>
+                        <span class="text-[9px] text-slate-500 font-bold">${p.dept || '-'}</span>
+                    </div>
+                </th>`;
+            });
+        }
+        thead.innerHTML = hHtml;
+
+        // RENDER BODY
+        if (matrixData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="${3 + Math.max(1, cols.length)}" class="px-8 py-16 text-center text-slate-500">
+                <span class="material-symbols-outlined text-4xl block mb-2 opacity-30">inbox</span>
+                <p class="text-sm">Tidak ada SPK yang dibuat pada periode ini.</p>
+            </td></tr>`;
+            return;
+        }
+
+        let bHtml = '';
+        matrixData.forEach(row => {
+            
+            // Format Dibuat/Target
+            const tDibuat = formatDateTime(row.dibuat);
+            const tTarget = row.target ? formatDateTime(row.target) : '-';
+
+            // Fixed columns
+            bHtml += `
+            <tr onclick="window.location.href='product-detail.html?id=${row.id}'" class="hover:bg-primary/10 transition-colors group cursor-pointer bg-background-light dark:bg-slate-800/10">
+                <td class="px-4 py-3 font-bold text-xs sticky-col-1 bg-slate-800/80 group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/30 text-indigo-400 align-middle">${row.noSpk}</td>
+                <td class="px-4 py-3 font-semibold text-xs sticky-col-2 bg-slate-800/80 group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/30 truncate max-w-[150px] align-middle">${row.client}</td>
+                <td class="px-4 py-3 sticky-col-3 bg-slate-800/80 sticky-shadow group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/80 text-center align-middle">
+                    <div class="flex flex-col items-center justify-center gap-0.5 whitespace-nowrap text-slate-400">
+                        <span class="text-[10px]"><span class="material-symbols-outlined text-[12px] align-middle mr-1 relative -top-[1px]">add_circle</span>${tDibuat}</span>
+                        <span class="w-8 h-px bg-slate-700/50"></span>
+                        <span class="text-[10px] text-rose-400"><span class="material-symbols-outlined text-[12px] align-middle mr-1 relative -top-[1px]">flag</span>${tTarget}</span>
+                    </div>
+                </td>
+            `;
+
+            // Phase Columns
+            if (cols.length === 0) {
+                bHtml += `<td class="px-4 py-3 text-center text-slate-600 text-xs">-</td>`;
+            } else {
+                cols.forEach(p => {
+                    const phaseRec = row.phases[p.id];
+                    if (!phaseRec) {
+                        // Belum pernah masuk fase ini
+                        bHtml += `<td class="px-4 py-3 text-center text-slate-600 text-xs font-medium border-r border-slate-800/30 align-middle">—</td>`;
+                    } else {
+                        const startStr = formatPhaseTime(phaseRec.start);
+                        let endStr = 'ON';
+                        let durStr = '-';
+                        let badgeClass = 'bg-amber-500/20 border-amber-500/50 text-amber-400';
+                        let ringClass = 'animate-pulse ring-1 ring-amber-500/50';
+
+                        if (phaseRec.end) {
+                            endStr = formatPhaseTime(phaseRec.end);
+                            durStr = diffHoursMinutes(phaseRec.start, phaseRec.end);
+                            badgeClass = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400';
+                            ringClass = '';
+                        } else {
+                            // calculate live duration till now
+                            durStr = diffHoursMinutes(phaseRec.start, new Date());
+                        }
+
+                        bHtml += `
+                        <td class="px-4 py-3 border-r border-slate-800/30 align-middle">
+                            <div class="flex flex-col items-center justify-center">
+                                <div class="px-2 py-1 rounded-md text-[10px] font-bold border ${badgeClass} ${ringClass} flex flex-col items-center w-[160px]">
+                                    <div class="flex justify-between w-full opacity-70 text-[9px]">
+                                        <span>IN</span>
+                                        <span>OUT</span>
+                                    </div>
+                                    <div class="flex justify-between items-center w-full mt-0.5">
+                                        <span>${startStr}</span>
+                                        <span class="text-slate-500 mx-1">➜</span>
+                                        <span class="${!phaseRec.end ? 'font-black drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]' : ''}">${endStr}</span>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[13px]">timer</span> ${durStr}
+                                </span>
+                            </div>
+                        </td>`;
+                    }
+                });
+            }
+
+            bHtml += `</tr>`;
+        });
+
+        tbody.innerHTML = bHtml;
+    }
+
+    // ==================== RUN ====================
+    document.addEventListener('DOMContentLoaded', async () => { 
+        await window.waitForSync();
+        initMatrix();
+    });
+
+</script>
+</body>
+</html>
