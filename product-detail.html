@@ -725,8 +725,9 @@
                     }
                 }
                 
-                // RENDER TIMELINE HISTORY
-                const allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                // RENDER TIMELINE HISTORY (Ambil langsung via db.js untuk bypass limit 1000 history lokal)
+                const cardHistoriesUnsorted = await window.db.getHistoryByCard(cardId);
+                const allHistories = cardHistoriesUnsorted;
 
                 // Populate Tgl. SPK Dibuat dan Pembuat
                 const createEv = allHistories.find(h => h.cardId === cardId && h.type === 'create');
@@ -745,7 +746,7 @@
                     }
                 }
                 // Filter by cardId, sort by newest first (descending)
-                const cardHistories = allHistories.filter(h => h.cardId === cardId).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const cardHistories = allHistories.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                 const tlContainer = document.getElementById('history-timeline');
                 let html = '';
                 
@@ -757,8 +758,8 @@
                     { id: 4, title: 'Quality Control & Finishing' }
                 ];
                 
-                const allQcRecords = JSON.parse(localStorage.getItem('flowta_qc')) || [];
-                const cardQcRecords = allQcRecords.filter(q => q.cardId === cardId);
+                const allQcRecords = await window.db.getQcByCard(cardId);
+                const cardQcRecords = allQcRecords;
                 const qcTableBody = document.getElementById('qc-table-body');
                 
                 // Initialize top Checklist UI based on history
