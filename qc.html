@@ -105,19 +105,40 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
                     <span class="material-symbols-outlined text-slate-400 bg-slate-700/50 p-2 rounded-lg text-[20px]">inventory_2</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total SPK</p><p class="text-2xl font-black" id="b-total">—</p></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Total SPK</p>
+                        <p class="text-2xl font-black leading-none mt-1" id="b-total">—</p>
+                    </div>
                 </div>
                 <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
                     <span class="material-symbols-outlined text-emerald-400 bg-emerald-500/10 p-2 rounded-lg text-[20px]">verified</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sudah QC Penuh</p><p class="text-2xl font-black text-emerald-400" id="b-full">—</p></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sudah QC Penuh</p>
+                        <div class="flex items-end gap-1.5 mt-1">
+                            <p class="text-2xl font-black text-emerald-400 leading-none" id="b-full">—</p>
+                            <p class="text-[11px] font-bold text-emerald-500/80 mb-[2px]" id="pct-b-full"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
                     <span class="material-symbols-outlined text-amber-400 bg-amber-500/10 p-2 rounded-lg text-[20px]">pending_actions</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sebagian QC</p><p class="text-2xl font-black text-amber-400" id="b-partial">—</p></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sebagian QC</p>
+                        <div class="flex items-end gap-1.5 mt-1">
+                            <p class="text-2xl font-black text-amber-400 leading-none" id="b-partial">—</p>
+                            <p class="text-[11px] font-bold text-amber-500/80 mb-[2px]" id="pct-b-partial"></p>
+                        </div>
+                    </div>
                 </div>
                 <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
                     <span class="material-symbols-outlined text-rose-400 bg-rose-500/10 p-2 rounded-lg text-[20px]">cancel</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Belum QC</p><p class="text-2xl font-black text-rose-400" id="b-none">—</p></div>
+                    <div>
+                        <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Belum QC</p>
+                        <div class="flex items-end gap-1.5 mt-1">
+                            <p class="text-2xl font-black text-rose-400 leading-none" id="b-none">—</p>
+                            <p class="text-[11px] font-bold text-rose-500/80 mb-[2px]" id="pct-b-none"></p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -267,6 +288,13 @@ function renderBadges() {
     document.getElementById('b-full').textContent    = full;
     document.getElementById('b-partial').textContent = partial;
     document.getElementById('b-none').textContent    = none;
+    
+    // Persentase
+    const calcPct = (val) => total === 0 ? 0 : Math.round((val / total) * 100);
+    document.getElementById('pct-b-full').textContent    = '(' + calcPct(full) + '%)';
+    document.getElementById('pct-b-partial').textContent = '(' + calcPct(partial) + '%)';
+    document.getElementById('pct-b-none').textContent    = '(' + calcPct(none) + '%)';
+
     document.getElementById('donut-center-num').textContent = total;
     return { total, full, partial, none };
 }
