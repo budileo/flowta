@@ -946,7 +946,18 @@
                             // Update data
                             let freshCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || kanbanCards;
                             const cardIndex = freshCards.findIndex(c => c.id === cardId);
+                            
                             if (cardIndex !== -1) {
+                                // --- VALIDASI STALE UI ---
+                                // Cek apakah posisi di database terbaru SAMA dengan posisi asal di layar saat ini.
+                                const actualPhaseId = freshCards[cardIndex].phaseId;
+                                if (actualPhaseId !== oldPhaseId) {
+                                    alert(`AKSI DITOLAK: Kartu ini sebelumnya telah dipindahkan ke fase lain oleh sistem atau perangkat lain.\n\nPapan Kanban akan disegarkan ulang otomatis agar sesuai dengan data terbaru.`);
+                                    window.location.reload();
+                                    return;
+                                }
+                                // -------------------------
+
                                 freshCards[cardIndex].phaseId = newPhaseId;
                                 localStorage.setItem('flowta_kanban_cards', JSON.stringify(freshCards));
                                 kanbanCards = freshCards;
