@@ -647,6 +647,24 @@
                 kanbanCards = [];
             }
             
+            // --- AUTO-CLEANUP (SELF-HEALING) ---
+            // Secara rahasia mendeteksi dan menyelesaikan kartu korup yang statusnya belum selesai tapi sudah ada log 'complete'
+            const allCleanHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+            const completedCardIds = allCleanHistories.filter(h => h.type === 'complete').map(h => h.cardId);
+            
+            let isFixed = false;
+            kanbanCards = kanbanCards.map(c => {
+                if (c.status !== 'SELESAI' && c.status !== 'BATAL' && completedCardIds.includes(c.id)) {
+                    c.status = 'SELESAI';
+                    isFixed = true;
+                }
+                return c;
+            });
+            if (isFixed) {
+                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+            }
+            // ------------------------------------
+            
             // Ukuran Kartu Kanban Global
             let currentCardSize = localStorage.getItem('flowta_card_size') || 'lg'; // 'sm', 'md', 'lg'
 
@@ -926,10 +944,12 @@
                             const newPhaseName = newPhase ? newPhase.title : 'Fase Baru';
                             
                             // Update data
-                            const cardIndex = kanbanCards.findIndex(c => c.id === cardId);
+                            let freshCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || kanbanCards;
+                            const cardIndex = freshCards.findIndex(c => c.id === cardId);
                             if (cardIndex !== -1) {
-                                kanbanCards[cardIndex].phaseId = newPhaseId;
-                                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                                freshCards[cardIndex].phaseId = newPhaseId;
+                                localStorage.setItem('flowta_kanban_cards', JSON.stringify(freshCards));
+                                kanbanCards = freshCards;
                                 
                                 // LOG HISTORY: Move Phase
                                 const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
@@ -1015,8 +1035,10 @@
                     priorityIcon: priorityIcon
                 };
                 
-                kanbanCards.push(newCard);
-                localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+                let freshCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || kanbanCards;
+                freshCards.push(newCard);
+                localStorage.setItem('flowta_kanban_cards', JSON.stringify(freshCards));
+                kanbanCards = freshCards;
                 
                 // LOG HISTORY: Create Product
                 const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
