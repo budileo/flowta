@@ -360,51 +360,64 @@
         // 2. Kalkulasi Array Matrix per SPK
         matrixData = filteredCards.map(card => {
             const creates = getCreateTime(card);
+            
+            const parts  = card.title ? card.title.split(' ') : ['—'];
+            const spkNo  = parts[0];
+            const spkDesc= parts.length > 1 ? parts.slice(1).join(' ') : card.title;
+
             const row = {
                 id: card.id,
-                noSpk: card.spkNumber || card.id,
-                client: card.client || '-',
+                noSpk: spkNo,
+                client: spkDesc,
                 dibuat: creates,
-                target: card.deadline ? new Date(card.deadline) : null,
+                target: card.dueDate ? new Date(card.dueDate) : null,
                 phases: {} // phaseId -> { start, end }
             };
 
             // Urutkan histori kartu ini dari lama ke baru
             const hx = allHistories.filter(h => h.cardId === card.id).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
 
-            let currentPhaseId = null;
+            let lastPhase = null;
+            let firstMove = hx.find(ev => ev.type === 'move');
 
             hx.forEach(ev => {
                 const ts = new Date(ev.timestamp);
                 if (ev.type === 'create') {
-                    // Terkadang saat create, dia otomatis masuk ke phase tertentu
-                    if (ev.phaseId) {
-                        currentPhaseId = ev.phaseId;
-                        row.phases[currentPhaseId] = { start: ts, end: null };
+                    let initialPhase = ev.phaseId || ev.toPhase || (firstMove ? firstMove.fromPhase : card.phaseId);
+                    if (initialPhase) {
+                        lastPhase = initialPhase;
+                        row.phases[lastPhase] = { start: ts, end: null };
                     }
                 } else if (ev.type === 'move') {
-                    // Keluar dari fase lama
+                    // Jika lastPhase terlewat, deduksi dari fromPhase event ini
+                    if (!lastPhase && ev.fromPhase) {
+                        lastPhase = ev.fromPhase;
+                        row.phases[lastPhase] = { start: creates, end: null };
+                    }
+
+                    // Menutup fase lama
                     if (ev.fromPhase && row.phases[ev.fromPhase]) {
                         row.phases[ev.fromPhase].end = ts;
+                    } else if (lastPhase && row.phases[lastPhase]) {
+                        row.phases[lastPhase].end = ts;
                     }
-                    // Masuk ke fase baru
+
+                    // Membuka fase baru
                     if (ev.toPhase) {
-                        currentPhaseId = ev.toPhase;
-                        if (!row.phases[currentPhaseId]) {
-                            row.phases[currentPhaseId] = { start: ts, end: null };
-                        } else {
-                            // Jika SPK di-move kembali ke fase yang sama lagi di lain waktu (revisi), timpa start? 
-                            // Untuk kesederhanaan laporan operational, ambil range waktu terakhir dia dimasukkan.
-                            row.phases[currentPhaseId].start = ts;
-                            row.phases[currentPhaseId].end = null;
-                        }
+                        lastPhase = ev.toPhase;
+                        row.phases[lastPhase] = { start: ts, end: null };
                     }
                 } else if (ev.type === 'complete') {
-                    if (currentPhaseId && row.phases[currentPhaseId] && !row.phases[currentPhaseId].end) {
-                        row.phases[currentPhaseId].end = ts;
+                    if (lastPhase && row.phases[lastPhase] && !row.phases[lastPhase].end) {
+                        row.phases[lastPhase].end = ts;
                     }
                 }
             });
+
+            // Tembok pertahanan: Jika histori benar-benar kosong selain create tapi target fase ada
+            if (Object.keys(row.phases).length === 0 && card.phaseId) {
+                row.phases[card.phaseId] = { start: creates, end: card.status === 'SELESAI' ? (card.updatedAt ? new Date(card.updatedAt) : new Date()) : null };
+            }
 
             return row;
         });
