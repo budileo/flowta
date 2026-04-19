@@ -118,34 +118,84 @@
             </div>
 
             <!-- SUMMARY BADGES -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg text-[20px]">local_printshop</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">SPK Aktif</p><p class="text-2xl font-black" id="badge-aktif">0</p></div>
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 size-24 bg-slate-500/10 rounded-full blur-2xl group-hover:bg-slate-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="material-symbols-outlined text-slate-500 p-2 bg-slate-500/10 rounded-lg">inventory_2</span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Total SPK</p>
+                    <p class="text-3xl font-bold mt-1 text-slate-800 dark:text-slate-100" id="badge-total">0</p>
                 </div>
-                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-amber-400 bg-amber-500/10 p-2 rounded-lg text-[20px]">autorenew</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Sedang Dikerjakan</p><p class="text-2xl font-black text-amber-400" id="badge-sedang">0</p></div>
+
+                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 size-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-lg">local_printshop</span>
+                        <span id="pct-aktif" class="text-primary text-[11px] font-bold flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md">
+                            0%
+                        </span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">SPK Aktif</p>
+                    <p class="text-3xl font-bold mt-1 text-slate-800 dark:text-slate-100" id="badge-aktif">0</p>
                 </div>
-                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-emerald-400 bg-emerald-500/10 p-2 rounded-lg text-[20px]">check_circle</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Selesai</p><p class="text-2xl font-black text-emerald-400" id="badge-selesai">0</p></div>
+
+                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 size-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="material-symbols-outlined text-amber-500 p-2 bg-amber-500/10 rounded-lg">autorenew</span>
+                        <span id="pct-sedang" class="text-amber-600 dark:text-amber-500 text-[11px] font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-md">
+                            0%
+                        </span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Sedang Dikerjakan</p>
+                    <p class="text-3xl font-bold mt-1 text-amber-600 dark:text-amber-500" id="badge-sedang">0</p>
                 </div>
-                <div class="glass-panel rounded-xl p-4 flex items-center gap-3">
-                    <span class="material-symbols-outlined text-rose-400 bg-secondary/10 p-2 rounded-lg text-[20px]">cancel</span>
-                    <div><p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Batal</p><p class="text-2xl font-black text-rose-400" id="badge-batal">0</p></div>
+
+                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 size-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="material-symbols-outlined text-emerald-500 p-2 bg-emerald-500/10 rounded-lg">check_circle</span>
+                        <span id="pct-selesai" class="text-emerald-600 dark:text-emerald-500 text-[11px] font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-md">
+                            0%
+                        </span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Selesai</p>
+                    <p class="text-3xl font-bold mt-1 text-emerald-600 dark:text-emerald-500" id="badge-selesai">0</p>
+                </div>
+
+                <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 size-24 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-all"></div>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="material-symbols-outlined text-secondary p-2 bg-secondary/10 rounded-lg">cancel</span>
+                        <span id="pct-batal" class="text-secondary text-[11px] font-bold flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded-md">
+                            0%
+                        </span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Batal</p>
+                    <p class="text-3xl font-bold mt-1 text-secondary" id="badge-batal">0</p>
                 </div>
             </div>
 
             <!-- FILTERS -->
             <div class="glass-panel rounded-2xl p-5 flex flex-col gap-5">
                 <!-- Period Tabs -->
-                <div class="flex items-center gap-2 flex-wrap">
+                <div class="flex items-center gap-2 flex-wrap" id="period-filter-container">
                     <span class="text-xs text-slate-400 font-bold uppercase tracking-widest mr-2">Periode:</span>
-                    <button id="tab-hari"   onclick="setPeriod('hari')"   class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all">Hari Ini</button>
-                    <button id="tab-minggu" onclick="setPeriod('minggu')" class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all">Minggu Ini</button>
-                    <button id="tab-bulan"  onclick="setPeriod('bulan')"  class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all">Bulan Ini</button>
-                    <button id="tab-semua"  onclick="setPeriod('semua')"  class="period-tab px-4 py-2 rounded-xl text-sm font-semibold border border-transparent text-slate-400 transition-all period-tab-active">Semua</button>
+                    <button onclick="setPeriod('today')"      id="p-today"      class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Hari Ini</button>
+                    <button onclick="setPeriod('yesterday')"  id="p-yesterday"  class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Kemarin</button>
+                    <button onclick="setPeriod('week')"       id="p-week"       class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Minggu Ini</button>
+                    <button onclick="setPeriod('last_week')"  id="p-last_week"  class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Minggu Lalu</button>
+                    <button onclick="setPeriod('month')"      id="p-month"      class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30">Bulan Ini</button>
+                    <button onclick="setPeriod('last_month')" id="p-last_month" class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Bulan Lalu</button>
+                    
+                    <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl px-2 py-1 ml-2 border border-slate-200 dark:border-slate-700">
+                        <span class="material-symbols-outlined text-slate-400 text-[14px] ml-1">event</span>
+                        <input type="date" id="range-from" class="bg-transparent border-none outline-none text-[11px] text-slate-600 dark:text-slate-300 w-24 p-0 m-0 text-center cursor-pointer">
+                        <span class="text-slate-400 text-xs">-</span>
+                        <input type="date" id="range-to" class="bg-transparent border-none outline-none text-[11px] text-slate-600 dark:text-slate-300 w-24 p-0 m-0 text-center cursor-pointer">
+                        <button onclick="if(window.consumeToken('Pencarian Data')) applyRange()" class="ml-1 px-2.5 py-1 rounded-lg bg-primary text-white hover:bg-indigo-500 transition-colors text-[10px] font-bold">Terapkan</button>
+                    </div>
                 </div>
                 <!-- Status Pills -->
                 <div class="flex items-center gap-2 flex-wrap">
@@ -219,9 +269,11 @@ function startOfWeek(d)  { let r=new Date(d); r.setDate(r.getDate()-r.getDay());
 function startOfMonth(d) { let r=new Date(d); r.setDate(1); r.setHours(0,0,0,0); return r; }
 
 // ─── State ──────────────────────────────────────────────────────────────────
-let currentPeriod = 'semua';
+let currentPeriod = 'month';
 let activeFilters = new Set();
 let searchQuery   = '';
+let customFrom = null;
+let customTo = null;
 
 // ─── Data ───────────────────────────────────────────────────────────────────
 let kanbanCards = [];
@@ -231,15 +283,70 @@ let allQcRecs   = [];
 let firstPhaseId = null;
 
 // ─── Period Tabs ────────────────────────────────────────────────────────────
+const PERIOD_IDS = ['today','yesterday','week','last_week','month','last_month'];
+
+const periodStyle = {
+    active:   'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-emerald-500/30',
+    inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700',
+};
+
 window.setPeriod = function(period) {
     currentPeriod = period;
-    document.querySelectorAll('.period-tab').forEach(btn => {
-        btn.classList.remove('period-tab-active');
-        btn.classList.add('text-slate-400');
+    customFrom = null; customTo = null;
+    PERIOD_IDS.forEach(k => {
+        const el = document.getElementById('p-'+k);
+        if (el) {
+            el.className = 'period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ' + (k===period ? periodStyle.active : periodStyle.inactive);
+        }
     });
-    const el = document.getElementById('tab-' + period);
-    if (el) { el.classList.add('period-tab-active'); el.classList.remove('text-slate-400'); }
-    renderTable();
+    renderPage();
+};
+
+window.applyRange = function() {
+    const f = document.getElementById('range-from').value;
+    const t = document.getElementById('range-to').value;
+    if (!f || !t) { alert('Pilih tanggal awal dan akhir.'); return; }
+    customFrom = new Date(f + 'T00:00:00');
+    customTo = new Date(t + 'T23:59:59');
+    currentPeriod = null;
+    PERIOD_IDS.forEach(k => {
+        const el = document.getElementById('p-'+k);
+        if (el) { el.className = 'period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ' + periodStyle.inactive; }
+    });
+    renderPage();
+};
+
+window.getDateRange = function() {
+    const now = new Date();
+    if (customFrom && customTo) return { from: customFrom, to: customTo };
+    
+    const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+    if (currentPeriod === 'today') {
+        return { from: new Date(y, m, d, 0, 0, 0), to: new Date(y, m, d, 23, 59, 59) };
+    }
+    if (currentPeriod === 'yesterday') {
+        const yd = new Date(now); yd.setDate(now.getDate() - 1);
+        return { from: new Date(yd.getFullYear(), yd.getMonth(), yd.getDate(), 0, 0, 0), to: new Date(yd.getFullYear(), yd.getMonth(), yd.getDate(), 23, 59, 59) };
+    }
+    if (currentPeriod === 'week') {
+        const day = now.getDay();
+        const mon = new Date(now); mon.setDate(d - (day === 0 ? 6 : day - 1)); mon.setHours(0,0,0,0);
+        const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+        return { from: mon, to: sun };
+    }
+    if (currentPeriod === 'last_week') {
+        const day = now.getDay();
+        const lastSun = new Date(now); lastSun.setDate(d - (day === 0 ? 6 : day - 1) - 1); lastSun.setHours(23,59,59,999);
+        const lastMon = new Date(lastSun); lastMon.setDate(lastSun.getDate() - 6); lastMon.setHours(0,0,0,0);
+        return { from: lastMon, to: lastSun };
+    }
+    if (currentPeriod === 'month') {
+        return { from: new Date(y, m, 1, 0, 0, 0), to: new Date(y, m + 1, 0, 23, 59, 59) };
+    }
+    if (currentPeriod === 'last_month') {
+        return { from: new Date(y, m - 1, 1, 0, 0, 0), to: new Date(y, m, 0, 23, 59, 59) };
+    }
+    return { from: null, to: null };
 };
 
 // ─── Status Pills ────────────────────────────────────────────────────────────
@@ -255,7 +362,7 @@ window.toggleFilter = function(type) {
         pill.classList.remove('border-slate-700','text-slate-400');
         (cls[type]||[]).forEach(c => pill.classList.add(c));
     }
-    renderTable();
+    renderPage();
 };
 
 // ─── Filtering ───────────────────────────────────────────────────────────────
@@ -266,15 +373,21 @@ function getCardCreatedAt(card) {
     return new Date(0);
 }
 
-function filterCards() {
-    const now = new Date();
+function filterCardsByPeriodOnly() {
+    const range = window.getDateRange();
     let result = [...kanbanCards];
-    if (currentPeriod !== 'semua') {
-        const start = currentPeriod === 'hari' ? startOfDay(now)
-                    : currentPeriod === 'minggu' ? startOfWeek(now)
-                    : startOfMonth(now);
-        result = result.filter(c => getCardCreatedAt(c) >= start);
+    
+    if (range.from && range.to) {
+        result = result.filter(c => {
+            const dt = getCardCreatedAt(c);
+            return dt >= range.from && dt <= range.to;
+        });
     }
+    return result;
+}
+
+function filterCards(periodCards) {
+    let result = [...periodCards];
     if (activeFilters.size > 0) {
         result = result.filter(c => {
             const isActive = c.status !== 'BATAL' && c.status !== 'SELESAI';
@@ -327,9 +440,15 @@ function buildQcCell(cardId) {
 function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function escAttr(s) { return String(s).replace(/"/g,'&quot;'); }
 
-// ─── Render Table ─────────────────────────────────────────────────────────────
-function renderTable() {
-    const cards   = filterCards();
+// ─── Main Render ─────────────────────────────────────────────────────────────
+function renderPage() {
+    const periodCards = filterCardsByPeriodOnly();
+    renderBadges(periodCards);
+    renderTable(periodCards);
+}
+
+function renderTable(periodCards) {
+    const cards   = filterCards(periodCards);
     const tbody   = document.getElementById('products-table-body');
     const emptyEl = document.getElementById('empty-state');
     document.getElementById('result-count').textContent = 'Menampilkan ' + cards.length + ' SPK';
@@ -416,15 +535,24 @@ function renderTable() {
 }
 
 // ─── Summary Badges (global) ────────────────────────────────────────────────
-function renderBadges() {
-    const active  = kanbanCards.filter(c => c.status!=='BATAL'&&c.status!=='SELESAI');
+function renderBadges(periodCards) {
+    const active  = periodCards.filter(c => c.status!=='BATAL'&&c.status!=='SELESAI');
     const sedang  = active.filter(c => c.phaseId !== firstPhaseId);
-    const selesai = kanbanCards.filter(c => c.status==='SELESAI');
-    const batal   = kanbanCards.filter(c => c.status==='BATAL');
+    const selesai = periodCards.filter(c => c.status==='SELESAI');
+    const batal   = periodCards.filter(c => c.status==='BATAL');
+    const total   = periodCards.length;
+
+    document.getElementById('badge-total').textContent   = total;
     document.getElementById('badge-aktif').textContent   = active.length;
     document.getElementById('badge-sedang').textContent  = sedang.length;
     document.getElementById('badge-selesai').textContent = selesai.length;
     document.getElementById('badge-batal').textContent   = batal.length;
+
+    const calcPct = (v) => total === 0 ? 0 : Math.round((v / total) * 100);
+    document.getElementById('pct-aktif').innerHTML    = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(active.length)}%`;
+    document.getElementById('pct-sedang').innerHTML   = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(sedang.length)}%`;
+    document.getElementById('pct-selesai').innerHTML  = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(selesai.length)}%`;
+    document.getElementById('pct-batal').innerHTML    = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(batal.length)}%`;
 }
 
 // ─── QC plain text for export ────────────────────────────────────────────────
@@ -452,7 +580,8 @@ function getDurPlain(card) {
 }
 
 function buildExportRows() {
-    const cards = filterCards();
+    const periodCards = filterCardsByPeriodOnly();
+    const cards = filterCards(periodCards);
     return cards.map((card, idx) => {
         const parts  = card.title ? card.title.split(' ') : ['—'];
         const spkNo  = parts[0];
@@ -505,7 +634,8 @@ window.exportPdf = function() {
     doc.text('Laporan Semua SPK - Flowta', 14, 18);
     doc.setFontSize(9); doc.setFont('helvetica','normal');
     doc.setTextColor(120);
-    doc.text('Dicetak: ' + dateStr + '   |   Filter: ' + (currentPeriod==='semua'?'Semua Periode': currentPeriod==='hari'?'Hari Ini': currentPeriod==='minggu'?'Minggu Ini':'Bulan Ini'), 14, 25);
+    const pLabel = (customFrom && customTo) ? 'Range Kustom' : (currentPeriod || 'Semua Periode');
+    doc.text('Dicetak: ' + dateStr + '   |   Periode Tampil: ' + pLabel, 14, 25);
     doc.setTextColor(0);
 
     const head = [['#','No. SPK','Klien & Item','Jenis','Fase','Tenggat','Lama','Status','QC Histori']];
@@ -551,12 +681,18 @@ window.exportPdf = function() {
     allQcRecs   = JSON.parse(localStorage.getItem('flowta_qc'))            || [];
     firstPhaseId = phasesData.length > 0 ? phasesData[0].id : 1;
 
-    setPeriod('semua');
-    renderBadges();
+    // Set init date form values for custom range fallbacks
+    const n = new Date();
+    const y = n.getFullYear(), mo = n.getMonth();
+    document.getElementById('range-from').value = `${y}-${(mo+1).toString().padStart(2,'0')}-01`;
+    const lastDay = new Date(y,mo+1,0).getDate();
+    document.getElementById('range-to').value = `${y}-${(mo+1).toString().padStart(2,'0')}-${lastDay.toString().padStart(2,'0')}`;
 
-    document.getElementById('search-input').addEventListener('input', function() {
+    setPeriod('month');
+
+    document.getElementById('global-search').addEventListener('input', function() {
         searchQuery = this.value;
-        renderTable();
+        renderPage();
     });
 });
 </script>
