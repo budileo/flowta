@@ -6,6 +6,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Manajemen Sistem - Flowta</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="icon" type="image/png" href="logo.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <script id="tailwind-config">
@@ -368,11 +369,23 @@
                             <p class="text-4xl font-black text-rose-400 mt-2"><span id="recap-total-usage">0</span></p>
                             <p class="text-xs font-semibold text-slate-500 mt-1">Token</p>
                         </div>
-                        <!-- Breakdown per user list -->
+                        <!-- Breakdown Daily list -->
                         <div class="md:col-span-2 bg-slate-800/20 rounded-xl p-4 border border-slate-700/30">
-                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Penggunaan Token per Karyawan</p>
-                            <div id="recap-user-list" class="space-y-3 max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
-                                <!-- user bars injected by JS -->
+                            <p class="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-3">Rekapan Harian (Top Up & Pemakaian)</p>
+                            <div class="max-h-[140px] overflow-y-auto pr-2 custom-scrollbar">
+                                <table class="w-full text-left text-[11px]">
+                                    <thead class="text-slate-400 border-b border-slate-700/50 sticky top-0 bg-slate-800/90 z-10 backdrop-blur-md">
+                                        <tr>
+                                            <th class="py-1.5 px-2 font-semibold">Tanggal</th>
+                                            <th class="py-1.5 px-2 font-semibold text-right text-emerald-400">Top Up</th>
+                                            <th class="py-1.5 px-2 font-semibold text-right text-rose-400">Pakai</th>
+                                            <th class="py-1.5 px-2 font-semibold text-right text-primary">Saldo Akhir</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recap-user-list" class="divide-y divide-slate-800/40">
+                                        <!-- Injected by JS -->
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -381,28 +394,30 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <!-- History Section -->
                     <div class="lg:col-span-2 space-y-4">
-                        <h4 class="font-bold text-slate-300">Riwayat Penggunaan Token</h4>
+                        <h4 class="font-bold text-slate-300">Riwayat Penggunaan Token (Hari Ini)</h4>
                         <div class="glass-panel rounded-2xl overflow-hidden">
-                            <table class="w-full text-left min-w-[500px]">
-                                <thead>
-                                    <tr class="bg-slate-800/30 text-slate-400 text-xs uppercase tracking-wider">
-                                        <th class="px-6 py-4 font-semibold w-24">Tipe</th>
-                                        <th class="px-6 py-4 font-semibold">Aktivitas & User</th>
-                                        <th class="px-6 py-4 font-semibold text-right">Nominal</th>
-                                        <th class="px-6 py-4 font-semibold text-right">Waktu</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="token-history-tbody" class="divide-y divide-slate-800/60"></tbody>
-                            </table>
-                            <div id="token-empty" class="hidden py-16 text-center">
-                                <span class="material-symbols-outlined text-5xl text-slate-700 block mb-3">history</span>
-                                <p class="text-slate-500 font-semibold">Belum ada riwayat token di departemen ini.</p>
+                            <div class="max-h-[300px] overflow-y-auto custom-scrollbar">
+                                <table class="w-full text-left min-w-[500px]">
+                                    <thead class="bg-slate-800/90 text-slate-400 text-[10px] uppercase tracking-wider sticky top-0 z-10 backdrop-blur-md">
+                                        <tr>
+                                            <th class="px-4 py-2.5 font-semibold w-20">Tipe</th>
+                                            <th class="px-4 py-2.5 font-semibold">Aktivitas & User</th>
+                                            <th class="px-4 py-2.5 font-semibold text-right">Nominal</th>
+                                            <th class="px-4 py-2.5 font-semibold text-right">Waktu</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="token-history-tbody" class="divide-y divide-slate-800/60"></tbody>
+                                </table>
+                            </div>
+                            <div id="token-empty" class="hidden py-8 text-center">
+                                <span class="material-symbols-outlined text-4xl text-slate-700 block mb-2">history</span>
+                                <p class="text-slate-500 text-xs font-semibold">Belum ada riwayat hari ini.</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Rates Section -->
-                    <div class="space-y-4">
+                    <div class="space-y-4" id="rates-section">
                         <h4 class="font-bold text-slate-300 flex justify-between items-center">
                             <span>Tarif Aktivitas Sistem</span>
                             <button id="btn-save-rates" onclick="saveTokenRates()" class="hidden text-xs bg-primary/20 text-primary px-3 py-1 rounded hover:bg-primary/30 transition border border-primary/30 font-bold">Simpan</button>
@@ -1028,8 +1043,7 @@ function renderTokenRecap() {
     
     let activeDeptId = window.flowtaActiveDept || (window.flowtaUser ? window.flowtaUser.deptId : null);
     
-    // Filter by active dept & only get 'usage'
-    let deptUsages = rawHistory.filter(h => h.deptId === activeDeptId && h.type === 'usage');
+    let deptHistory = rawHistory.filter(h => h.deptId === activeDeptId);
     
     const now = new Date();
     let fromDate = new Date(0);
@@ -1043,45 +1057,82 @@ function renderTokenRecap() {
         fromDate.setHours(0,0,0,0);
     }
     
-    let filteredUsages = deptUsages;
+    let filteredHistory = deptHistory;
     if (period !== 'semua') {
-        filteredUsages = deptUsages.filter(h => new Date(h.timestamp) >= fromDate);
+        filteredHistory = deptHistory.filter(h => new Date(h.timestamp) >= fromDate);
     }
     
     let totalUsage = 0;
-    let userTotals = {};
     
-    filteredUsages.forEach(h => {
+    let deptsRaw = localStorage.getItem('flowta_departments');
+    let depts = deptsRaw ? JSON.parse(deptsRaw) : []; 
+    let dept = depts.find(d => d.id === activeDeptId);
+    let currentBalance = dept ? (parseFloat(dept.token) || 0) : 0;
+    
+    deptHistory.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+    let runningBaltmp = currentBalance;
+    const balancesAtStartOfTx = {};
+    
+    for (let i = 0; i < deptHistory.length; i++) {
+        const h = deptHistory[i];
         const nom = parseFloat(h.nominal) || 0;
-        totalUsage += nom;
-        const uName = h.userName || 'Unknown User';
-        if (!userTotals[uName]) userTotals[uName] = 0;
-        userTotals[uName] += nom;
+        balancesAtStartOfTx[h.id || i] = runningBaltmp;
+        
+        if (h.type === 'usage') {
+            runningBaltmp += nom; 
+        } else if (h.type === 'topup') {
+            runningBaltmp -= nom;
+        }
+    }
+
+    const dailyData = {};
+    filteredHistory.forEach((h, i) => {
+        const d = new Date(h.timestamp);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}-${mm}-${dd}`;
+        
+        if (!dailyData[dateStr]) {
+            dailyData[dateStr] = { topup: 0, usage: 0, lastBalance: 0, lastTime: 0, display: d.toLocaleDateString('id-ID', {day:'2-digit',month:'short',year:'numeric'}) };
+        }
+        
+        const nom = parseFloat(h.nominal) || 0;
+        if (h.type === 'usage') {
+            totalUsage += nom;
+            dailyData[dateStr].usage += nom;
+        } else if (h.type === 'topup') {
+            dailyData[dateStr].topup += nom;
+        }
+        
+        if (d.getTime() > dailyData[dateStr].lastTime) {
+            dailyData[dateStr].lastTime = d.getTime();
+            const originalIndex = deptHistory.findIndex(dh => dh === h);
+            dailyData[dateStr].lastBalance = balancesAtStartOfTx[h.id || originalIndex] || 0;
+        }
     });
     
     document.getElementById('recap-total-usage').textContent = totalUsage.toLocaleString('id-ID');
     
-    let sortedUsers = Object.keys(userTotals).map(u => ({ name: u, total: userTotals[u] })).sort((a,b) => b.total - a.total);
-    let userHtml = '';
+    const sortedDays = Object.keys(dailyData).sort((a,b) => new Date(b) - new Date(a));
+    let dailyHtml = '';
     
-    if (sortedUsers.length === 0) {
-        userHtml = '<p class="text-xs text-slate-500 italic">Belum ada penggunaan token di periode ini.</p>';
+    if (sortedDays.length === 0) {
+        dailyHtml = '<tr><td colspan="4" class="text-[11px] text-slate-500 italic py-4 text-center border-b border-white/5">Belum ada aktivitas di periode ini.</td></tr>';
     } else {
-        const maxTokens = sortedUsers[0].total; 
-        sortedUsers.forEach(u => {
-            const pct = maxTokens > 0 ? (u.total / maxTokens) * 100 : 0;
-            userHtml += `
-            <div class="flex items-center gap-3">
-                <div class="w-28 shrink-0 truncate text-xs font-semibold text-slate-300" title="${esc(u.name)}">${esc(u.name)}</div>
-                <div class="flex-1 h-3 bg-slate-800 rounded-full overflow-hidden">
-                    <div class="h-full bg-rose-500/80 rounded-full transition-all duration-700" style="width: ${pct}%"></div>
-                </div>
-                <div class="w-16 shrink-0 text-right text-xs font-bold text-rose-400">${u.total} Tok</div>
-            </div>`;
+        sortedDays.forEach(day => {
+            const data = dailyData[day];
+            dailyHtml += `
+            <tr class="hover:bg-slate-800/40 transition">
+                <td class="py-2 px-2 text-[10px] text-slate-300 font-medium">${esc(data.display)}</td>
+                <td class="py-2 px-2 text-right text-[10px] font-bold text-emerald-400">${data.topup > 0 ? '+'+data.topup.toLocaleString('id-ID') : '-'}</td>
+                <td class="py-2 px-2 text-right text-[10px] font-bold text-rose-400">${data.usage > 0 ? data.usage.toLocaleString('id-ID') : '-'}</td>
+                <td class="py-2 px-2 text-right text-[10px] font-bold text-primary">${data.lastBalance.toLocaleString('id-ID')}</td>
+            </tr>`;
         });
     }
     const listEl = document.getElementById('recap-user-list');
-    if (listEl) listEl.innerHTML = userHtml;
+    if (listEl) listEl.innerHTML = dailyHtml;
 }
 
 function renderTokenBalance() {
@@ -1104,8 +1155,13 @@ function renderTokenHistory() {
     const rawHistory = JSON.parse(localStorage.getItem('flowta_token_history')) || [];
     let histories = rawHistory;
     
+    // FILTER TODAY ONLY
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    histories = histories.filter(h => new Date(h.timestamp) >= today);
+    
     if (window.flowtaUser && window.flowtaUser.role !== 'Pemilik Sistem') {
-        histories = rawHistory.filter(h => h.userId === window.flowtaUser.id || h.type === 'topup');
+        histories = histories.filter(h => h.userId === window.flowtaUser.id || h.type === 'topup');
     }
     
     const tbody = document.getElementById('token-history-tbody');
@@ -1129,28 +1185,27 @@ function renderTokenHistory() {
             spkHtml = `
             <div class="mt-2 p-2 rounded-lg bg-slate-800/60 border border-slate-700/50 flex flex-col gap-0.5">
                 <span class="text-[10px] font-bold text-primary tracking-widest uppercase">${esc(h.spkInfo.spkNo || '-')}</span>
-                <span class="text-[11px] font-semibold text-slate-300 truncate w-48 lg:w-64" title="${esc(h.spkInfo.title)}">${esc(h.spkInfo.title || '-')}</span>
-                <span class="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5"><span class="material-symbols-outlined text-[11px]">inventory_2</span> ${esc(h.spkInfo.item || '-')}</span>
+                <span class="text-[11px] font-semibold text-slate-300 truncate w-40 lg:w-48" title="${esc(h.spkInfo.title)}">${esc(h.spkInfo.title || '-')}</span>
             </div>`;
         }
 
-        html += `<tr class="trow text-sm transition-colors hover:bg-white/5">
-            <td class="px-6 py-4 align-top pt-5">
-                <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${isUsage ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
+        html += `<tr class="trow text-xs transition-colors hover:bg-white/5">
+            <td class="px-4 py-3 align-top">
+                <span class="px-2 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider ${isUsage ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
                     ${isUsage ? 'Pemakaian' : 'Top Up'}
                 </span>
             </td>
-            <td class="px-6 py-4 align-top">
-                <div class="font-semibold text-slate-200">${esc(h.activity)}</div>
-                <div class="text-xs text-slate-500 mt-1"><span class="material-symbols-outlined text-[12px] align-middle mr-1">person</span>${esc(h.userName)}</div>
+            <td class="px-4 py-3 align-top">
+                <div class="font-semibold text-slate-200 text-xs">${esc(h.activity)}</div>
+                <div class="text-[10px] text-slate-500 mt-1"><span class="material-symbols-outlined text-[10px] align-middle mr-1">person</span>${esc(h.userName)}</div>
                 ${spkHtml}
             </td>
-            <td class="px-6 py-4 text-right align-top pt-5">
+            <td class="px-4 py-3 text-right align-top">
                 <span class="font-black ${color} flex items-center justify-end gap-1">
-                    <span class="material-symbols-outlined text-[16px]">${icon}</span> ${h.nominal}
+                    <span class="material-symbols-outlined text-[14px]">${icon}</span> ${h.nominal}
                 </span>
             </td>
-            <td class="px-6 py-4 text-right text-xs text-slate-400 font-mono align-top pt-5">${date}</td>
+            <td class="px-4 py-3 text-[10px] text-slate-400 text-right align-top whitespace-nowrap">${date}</td>
         </tr>`;
     });
     tbody.innerHTML = html;
@@ -1160,6 +1215,14 @@ function renderTokenRates() {
     const rates = JSON.parse(localStorage.getItem('flowta_token_rates')) || {};
     const container = document.getElementById('token-rates-list');
     const isPemilik = window.flowtaUser && window.flowtaUser.role === 'Pemilik Sistem';
+    
+    const ratesSec = document.getElementById('rates-section');
+    if (!isPemilik) {
+        if (ratesSec) ratesSec.style.display = 'none';
+        return; 
+    } else {
+        if (ratesSec) ratesSec.style.display = 'block';
+    }
     
     if (isPemilik) document.getElementById('btn-save-rates').classList.remove('hidden');
     
