@@ -244,9 +244,9 @@
             ];
         }
 
-        // Tampilkan 3 kolom pertama secara default
+        // Tampilkan semua kolom secara default
         allPhases.forEach((p, idx) => {
-            if (idx < 3) visiblePhases.add(p.id);
+            visiblePhases.add(p.id);
         });
 
         renderTogglers();
@@ -492,11 +492,12 @@
             hHtml += `<th class="px-4 py-3 min-w-[300px]">Silakan pilih kolom fase untuk ditampilkan</th>`;
         } else {
             cols.forEach(p => {
+                const shortTitle = p.title.length > 8 ? p.title.substring(0, 8) + '.' : p.title;
                 hHtml += `
-                <th class="px-4 py-3 min-w-[200px] border-r border-slate-800/60 align-middle">
+                <th class="px-1 py-3 min-w-[120px] w-[120px] border-r border-slate-800/60 align-middle">
                     <div class="flex flex-col items-center justify-center">
-                        <span class="font-bold text-white tracking-widest text-[11px]">${p.title}</span>
-                        <span class="text-[9px] text-slate-500 font-bold">${p.dept || '-'}</span>
+                        <span class="font-bold text-white tracking-widest text-[10px] uppercase truncate px-1" title="${p.title}">${shortTitle}</span>
+                        <span class="text-[8px] text-slate-500 font-bold">${p.dept || '-'}</span>
                     </div>
                 </th>`;
             });
@@ -568,7 +569,7 @@
                             const m = totalMins % 60;
                             durStr = (h === 0) ? `${m}mnt` : (m === 0 ? `${h}jam` : `${h}j ${m}m`);
                             
-                            badgeClass = 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400';
+                            badgeClass = 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400';
                             ringClass = '';
                         } else {
                             // hitung waktu berjalan saat ini dengan ditambah histori rekaman jika dia kembali ke fase
@@ -581,21 +582,15 @@
                         }
 
                         bHtml += `
-                        <td class="px-4 py-3 border-r border-slate-800/30 align-middle">
-                            <div class="flex flex-col items-center justify-center">
-                                <div class="px-2 py-1 rounded-md text-[10px] font-bold border ${badgeClass} ${ringClass} flex flex-col items-center w-[160px]">
-                                    <div class="flex justify-between w-full opacity-70 text-[9px]">
-                                        <span>IN</span>
-                                        <span>OUT</span>
-                                    </div>
-                                    <div class="flex justify-between items-center w-full mt-0.5">
-                                        <span>${startStr}</span>
-                                        <span class="text-slate-500 mx-1">➜</span>
-                                        <span class="${!phaseRec.end ? 'font-black drop-shadow-[0_0_5px_rgba(251,191,36,0.8)]' : ''}">${endStr}</span>
-                                    </div>
+                        <td class="px-1 py-2 border-r border-slate-800/30 align-middle">
+                            <div class="flex flex-col items-center justify-center px-1">
+                                <div class="w-[95%] py-1 rounded shrink-0 border ${badgeClass} ${ringClass} flex flex-col items-center gap-0.5 shadow-sm">
+                                    <span class="text-[9px] font-medium opacity-80 leading-none">${startStr}</span>
+                                    <span class="block w-4 h-[1px] bg-slate-600/50 my-[1px]"></span>
+                                    <span class="text-[9px] font-medium leading-none ${!phaseRec.end ? 'font-bold text-amber-400 drop-shadow-[0_0_3px_rgba(251,191,36,0.6)]' : ''}">${endStr}</span>
                                 </div>
-                                <span class="text-[10px] font-bold text-slate-400 mt-1 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-[13px]">timer</span> ${durStr}
+                                <span class="text-[9px] font-bold text-slate-400 mt-1 flex items-center gap-0.5">
+                                    <span class="material-symbols-outlined text-[11px]">timer</span> ${durStr}
                                 </span>
                             </div>
                         </td>`;
