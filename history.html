@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="en">
 <head>
     <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
@@ -134,31 +134,16 @@
                 <!-- FILTER BAR -->
                 <div class="glass-panel p-4 rounded-2xl space-y-4">
                     <!-- Period Quick Filters -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Periode:</span>
-                        <button class="filter-btn active" id="filter-btn-minggu" onclick="setQuickFilter('minggu')">
-                            <span class="flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-[15px]">date_range</span>
-                                Minggu Ini
-                            </span>
-                        </button>
-                        <button class="filter-btn" id="filter-btn-hari" onclick="setQuickFilter('hari')">
-                            <span class="flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-[15px]">today</span>
-                                Hari Ini
-                            </span>
-                        </button>
-                        <button class="filter-btn" id="filter-btn-bulan" onclick="setQuickFilter('bulan')">
-                            <span class="flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-[15px]">calendar_month</span>
-                                Bulan Ini
-                            </span>
-                        </button>
-                        <button class="filter-btn" id="filter-btn-range" onclick="setQuickFilter('range')">
-                            <span class="flex items-center gap-1.5">
-                                <span class="material-symbols-outlined text-[15px]">tune</span>
-                                Range Kustom
-                            </span>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Periode:</span>
+                        <button class="filter-btn active" id="filter-btn-hari" onclick="setQuickFilter('hari')">Hari Ini</button>
+                        <button class="filter-btn" id="filter-btn-kemarin" onclick="setQuickFilter('kemarin')">Kemarin</button>
+                        <button class="filter-btn" id="filter-btn-minggu" onclick="setQuickFilter('minggu')">Minggu Ini</button>
+                        <button class="filter-btn" id="filter-btn-minggulalu" onclick="setQuickFilter('minggulalu')">Minggu Lalu</button>
+                        <button class="filter-btn" id="filter-btn-bulan" onclick="setQuickFilter('bulan')">Bulan Ini</button>
+                        <button class="filter-btn" id="filter-btn-bulanlalu" onclick="setQuickFilter('bulanlalu')">Bulan Lalu</button>
+                        <button class="filter-btn flex items-center gap-1" id="filter-btn-range" onclick="setQuickFilter('range')">
+                            <span class="material-symbols-outlined text-[13px]">tune</span> Custom Range
                         </button>
                     </div>
 
@@ -239,7 +224,7 @@
 
     <script>
         // ====== STATE ======
-        let currentPeriod = 'minggu';
+        let currentPeriod = 'hari';
         let currentType = 'all';
         let rangeStart = null;
         let rangeEnd = null;
@@ -285,8 +270,13 @@
             if (period === 'hari') {
                 start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
                 end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            } else if (period === 'kemarin') {
+                const y = new Date(now);
+                y.setDate(now.getDate() - 1);
+                start = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 0, 0, 0);
+                end = new Date(y.getFullYear(), y.getMonth(), y.getDate(), 23, 59, 59, 999);
             } else if (period === 'minggu') {
-                const dayOfWeek = now.getDay(); // 0 = Sunday
+                const dayOfWeek = now.getDay(); 
                 const monday = new Date(now);
                 monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
                 monday.setHours(0, 0, 0, 0);
@@ -294,14 +284,26 @@
                 end = new Date(monday);
                 end.setDate(monday.getDate() + 6);
                 end.setHours(23, 59, 59, 999);
+            } else if (period === 'minggulalu') {
+                const dayOfWeek = now.getDay(); 
+                const lastMonday = new Date(now);
+                lastMonday.setDate(now.getDate() - ((dayOfWeek + 6) % 7) - 7);
+                lastMonday.setHours(0, 0, 0, 0);
+                start = lastMonday;
+                end = new Date(lastMonday);
+                end.setDate(lastMonday.getDate() + 6);
+                end.setHours(23, 59, 59, 999);
             } else if (period === 'bulan') {
                 start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
                 end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+            } else if (period === 'bulanlalu') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+                end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
             } else if (period === 'range' && rangeStart && rangeEnd) {
                 start = new Date(rangeStart + 'T00:00:00');
                 end = new Date(rangeEnd + 'T23:59:59');
             } else {
-                return null; // no filter
+                return null;
             }
             return { start, end };
         }
@@ -311,7 +313,7 @@
             currentPeriod = period;
 
             // Update button styles
-            ['hari','minggu','bulan','range'].forEach(p => {
+            ['hari','kemarin','minggu','minggulalu','bulan','bulanlalu','range'].forEach(p => {
                 const btn = document.getElementById('filter-btn-' + p);
                 if (btn) {
                     btn.classList.toggle('active', p === period);
@@ -359,7 +361,7 @@
 
         function updatePeriodLabel() {
             const labelEl = document.getElementById('period-label');
-            const labels = { hari: 'Hari Ini', minggu: 'Minggu Ini', bulan: 'Bulan Ini', range: 'Range Kustom' };
+            const labels = { hari: 'Hari Ini', kemarin: 'Kemarin', minggu: 'Minggu Ini', minggulalu: 'Minggu Lalu', bulan: 'Bulan Ini', bulanlalu: 'Bulan Lalu', range: 'Range Kustom' };
             labelEl.textContent = labels[currentPeriod] || 'Semua';
         }
 
@@ -452,46 +454,46 @@
                 const isLast = index === filtered.length - 1;
 
                 feedHtml += `
-                <div class="hist-item relative flex gap-4 p-4 hover:bg-white/[0.02] transition-colors" style="animation-delay: ${Math.min(index * 30, 300)}ms">
+                <div class="hist-item relative flex gap-3 p-3 hover:bg-white/[0.02] transition-colors" style="animation-delay: ${Math.min(index * 20, 200)}ms">
                     <!-- Timeline line -->
-                    ${!isLast ? `<div class="absolute left-[31px] top-14 bottom-0 w-[1px] bg-slate-800"></div>` : ''}
+                    ${!isLast ? `<div class="absolute left-[23px] top-10 bottom-0 w-[1px] bg-slate-800"></div>` : ''}
 
                     <!-- Icon -->
-                    <div class="shrink-0 size-10 rounded-full ${bgClass} flex items-center justify-center z-10 mt-1">
-                        <span class="material-symbols-outlined text-[18px]">${icon}</span>
+                    <div class="shrink-0 size-6 rounded-full ${bgClass} flex items-center justify-center z-10 mt-1">
+                        <span class="material-symbols-outlined text-[13px]">${icon}</span>
                     </div>
 
                     <!-- Content -->
-                    <div class="flex-1 min-w-0 pb-4">
-                        <div class="flex flex-wrap items-start justify-between gap-2 mb-1">
+                    <div class="flex-1 min-w-0 pb-1">
+                        <div class="flex flex-wrap items-start justify-between gap-1 mb-0.5">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <a href="${cardLink}" class="font-semibold text-slate-100 hover:text-primary transition-colors text-sm leading-tight">
+                                <a href="${cardLink}" class="font-bold text-slate-200 hover:text-primary transition-colors text-xs leading-tight">
                                     ${cardName}
                                 </a>
-                                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold border ${typeBadgeClass}">
+                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold border ${typeBadgeClass}">
                                     ${typeLabel}
                                 </span>
                             </div>
-                            <div class="flex flex-col items-end gap-0.5 shrink-0">
-                                <span class="text-xs font-bold text-primary" title="${fullDateStr}">
+                            <div class="flex flex-col items-end gap-0 shrink-0">
+                                <span class="text-[10px] font-bold text-primary" title="${fullDateStr}">
                                     ${timeAgoStr}
                                 </span>
-                                <span class="text-[10px] text-slate-500">${fullDateStr}</span>
+                                <span class="text-[9px] text-slate-500">${fullDateStr}</span>
                             </div>
                         </div>
 
-                        <p class="text-[13px] text-slate-400 mt-1 leading-relaxed">${cleanDesc || '—'}</p>
+                        <p class="text-[11px] text-slate-400 mt-1 leading-snug">${cleanDesc || '—'}</p>
 
-                        <div class="flex items-center gap-3 mt-2">
-                            <span class="flex items-center gap-1 text-[11px] text-slate-500">
-                                <span class="material-symbols-outlined text-[13px]">person</span>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="flex items-center gap-1 text-[9px] font-semibold tracking-wide text-slate-500 uppercase">
+                                <span class="material-symbols-outlined text-[11px]">person</span>
                                 ${userName}
                             </span>
                             ${hist.cardId ? `
-                            <span class="text-slate-700">•</span>
-                            <a href="${cardLink}" class="flex items-center gap-1 text-[11px] text-slate-500 hover:text-primary transition-colors">
-                                <span class="material-symbols-outlined text-[13px]">open_in_new</span>
-                                Lihat Detail
+                            <span class="text-slate-800 text-[9px]">•</span>
+                            <a href="${cardLink}" class="flex items-center gap-0.5 text-[9px] font-semibold text-slate-500 hover:text-primary transition-colors uppercase">
+                                <span class="material-symbols-outlined text-[11px]">open_in_new</span>
+                                Detail
                             </a>` : ''}
                         </div>
                     </div>
