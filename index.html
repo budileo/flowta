@@ -9,6 +9,8 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
     <script id="tailwind-config">
         tailwind.config = {
             darkMode: "class",
@@ -110,71 +112,90 @@
                 
                 <!-- SUMMARY METRICS -->
                 <section>
-                    <div class="flex flex-col gap-1 mb-6">
-                        <h2 class="text-3xl font-black tracking-tight">Status Workshop Hari Ini</h2>
-                        <p class="text-slate-500 dark:text-slate-400">Pemantauan real-time Produksi</p>
+                    <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+                        <div class="flex flex-col gap-1">
+                            <h2 class="text-3xl font-black tracking-tight">Monitoring Produksi</h2>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm" id="period-label">Memuat data...</p>
+                        </div>
+                        <!-- Period filter pills -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="setPeriod('today')"   id="p-today"   class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">Hari Ini</button>
+                            <button onclick="setPeriod('week')"    id="p-week"    class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">Minggu Ini</button>
+                            <button onclick="setPeriod('month')"   id="p-month"   class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30">Bulan Ini</button>
+                            <button onclick="setPeriod('year')"    id="p-year"    class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">Tahun Ini</button>
+                            <button onclick="setPeriod('all')"     id="p-all"     class="period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700">Semua Data</button>
+                            <!-- Custom range -->
+                            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 rounded-xl px-3 py-1.5 border border-slate-200 dark:border-slate-700">
+                                <span class="material-symbols-outlined text-slate-400 text-[15px]">date_range</span>
+                                <input id="range-from" type="date" class="bg-transparent tracking-tighter text-xs text-slate-600 dark:text-slate-300 border-none outline-none w-[110px] cursor-pointer p-0 m-0" title="Dari tanggal" />
+                                <span class="text-slate-400 text-xs">—</span>
+                                <input id="range-to"   type="date" class="bg-transparent tracking-tighter text-xs text-slate-600 dark:text-slate-300 border-none outline-none w-[110px] cursor-pointer p-0 m-0" title="Sampai tanggal" />
+                                <button onclick="if(window.consumeToken('Pencarian Data')) applyRange();" class="ml-1 px-2.5 py-1 rounded-lg bg-primary text-white text-[11px] font-bold hover:bg-indigo-500 transition-colors">Tampilkan</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <!-- Metric 1 -->
-                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                    
+                    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                        <!-- Metric 0: Total SPK -->
+                        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 size-24 bg-slate-500/10 rounded-full blur-2xl group-hover:bg-slate-500/20 transition-all"></div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="material-symbols-outlined text-slate-500 p-2 bg-slate-500/10 rounded-lg">inventory_2</span>
+                            </div>
+                            <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Total SPK</p>
+                            <p class="text-3xl font-bold mt-1 text-slate-800 dark:text-slate-100" id="stat-total">0</p>
+                        </div>
+
+                        <!-- Metric 1: Aktif -->
+                        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
                             <div class="absolute -right-4 -top-4 size-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
                             <div class="flex items-center justify-between mb-3">
                                 <span class="material-symbols-outlined text-primary p-2 bg-primary/10 rounded-lg">local_printshop</span>
-                                <span class="text-emerald-500 text-xs font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-md">
-                                    <span class="material-symbols-outlined text-[14px]">trending_up</span>+12
+                                <span id="pct-aktif" class="text-primary text-[11px] font-bold flex items-center gap-1 bg-primary/10 px-2 py-1 rounded-md">
+                                    0%
                                 </span>
                             </div>
-                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Total SPK Aktif</p>
-                            <p class="text-3xl font-bold mt-1" id="stat-total-aktif">0</p>
-                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                                <span class="size-2 rounded-full bg-primary"></span> Semua progress
-                            </div>
+                            <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Total SPK Aktif</p>
+                            <p class="text-3xl font-bold mt-1 text-slate-800 dark:text-slate-100" id="stat-total-aktif">0</p>
                         </div>
 
-                        <!-- Metric 2 -->
-                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                        <!-- Metric 2: Progress -->
+                        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
                             <div class="absolute -right-4 -top-4 size-24 bg-amber-500/10 rounded-full blur-2xl group-hover:bg-amber-500/20 transition-all"></div>
                             <div class="flex items-center justify-between mb-3">
                                 <span class="material-symbols-outlined text-amber-500 p-2 bg-amber-500/10 rounded-lg">autorenew</span>
-                                <span class="text-amber-500 text-xs font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-md">
-                                    <span class="material-symbols-outlined text-[14px]">bolt</span>Aktif
+                                <span id="pct-progress" class="text-amber-600 dark:text-amber-500 text-[11px] font-bold flex items-center gap-1 bg-amber-500/10 px-2 py-1 rounded-md">
+                                    0%
                                 </span>
                             </div>
-                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Sedang Dikerjakan</p>
-                            <p class="text-3xl font-bold mt-1 text-amber-500" id="stat-progress">0</p>
-                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                                <span class="size-2 rounded-full bg-amber-500 animate-pulse"></span> Di Luar Antrean Awal
-                            </div>
+                            <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Sedang Dikerjakan</p>
+                            <p class="text-3xl font-bold mt-1 text-amber-600 dark:text-amber-500" id="stat-progress">0</p>
                         </div>
 
-                        <!-- Metric 3 -->
-                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                        <!-- Metric 3: Batal -->
+                        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
                             <div class="absolute -right-4 -top-4 size-24 bg-secondary/10 rounded-full blur-2xl group-hover:bg-secondary/20 transition-all"></div>
                             <div class="flex items-center justify-between mb-3">
                                 <span class="material-symbols-outlined text-secondary p-2 bg-secondary/10 rounded-lg">cancel</span>
-                                <span class="text-secondary text-xs font-bold flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded-md">
-                                    <span class="material-symbols-outlined text-[14px]">warning</span>Batal
+                                <span id="pct-batal" class="text-secondary text-[11px] font-bold flex items-center gap-1 bg-secondary/10 px-2 py-1 rounded-md">
+                                    0%
                                 </span>
                             </div>
-                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">SPK Dibatalkan</p>
+                            <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">SPK Dibatalkan</p>
                             <p class="text-3xl font-bold mt-1 text-secondary" id="stat-batal">0</p>
-                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                                <span class="size-2 rounded-full bg-secondary"></span> Tidak Masuk Antrean
-                            </div>
                         </div>
 
-                        <!-- Metric 4 -->
-                        <div class="glass-panel p-5 rounded-2xl relative overflow-hidden group">
+                        <!-- Metric 4: Selesai -->
+                        <div class="glass-panel p-4 rounded-2xl relative overflow-hidden group">
                             <div class="absolute -right-4 -top-4 size-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all"></div>
                             <div class="flex items-center justify-between mb-3">
                                 <span class="material-symbols-outlined text-emerald-500 p-2 bg-emerald-500/10 rounded-lg">check_circle</span>
-                                <span class="text-emerald-500 text-xs font-bold flex items-center gap-1">Hari Ini</span>
+                                <span id="pct-selesai" class="text-emerald-600 dark:text-emerald-500 text-[11px] font-bold flex items-center gap-1 bg-emerald-500/10 px-2 py-1 rounded-md">
+                                    0%
+                                </span>
                             </div>
-                            <p class="text-slate-400 font-medium text-xs uppercase tracking-wider">Selesai / Siap Kirim</p>
-                            <p class="text-3xl font-bold mt-1" id="stat-selesai">0</p>
-                            <div class="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                                <span class="size-2 rounded-full bg-emerald-500"></span> Siap Diambil Klien
-                            </div>
+                            <p class="text-slate-500 dark:text-slate-400 font-medium text-[11px] uppercase tracking-wider">Selesai / Siap Kirim</p>
+                            <p class="text-3xl font-bold mt-1 text-emerald-600 dark:text-emerald-500" id="stat-selesai">0</p>
                         </div>
                     </div>
                 </section>
@@ -207,20 +228,15 @@
                     <div class="lg:col-span-2 space-y-6">
                         
                         <!-- Productivity Chart area -->
-                        <div class="glass-panel p-6 rounded-2xl">
-                            <div class="flex items-center justify-between mb-6">
+                        <div class="glass-panel p-6 rounded-2xl flex flex-col h-auto min-h-[350px]">
+                            <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <h3 class="text-xl font-bold text-slate-100">Kinerja Produksi</h3>
-                                    <p class="text-sm text-slate-400 mt-1">Produktivitas Produksi</p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button id="btn-chart-dibuat" onclick="renderChart('dibuat')" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 transition">SPK Dibuat</button>
-                                    <button id="btn-chart-selesai" onclick="renderChart('selesai')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">SPK Selesai</button>
-                                    <button id="btn-chart-batal" onclick="renderChart('batal')" class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition">SPK Batal</button>
+                                    <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">Kinerja Produksi</h3>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Perbandingan Produksi Harian</p>
                                 </div>
                             </div>
-                            <div class="h-[280px] w-full relative flex items-end justify-between px-2 gap-4" id="development-chart-container">
-                                <!-- Dynamic Chart Bars injected here -->
+                            <div class="flex-1 w-full relative">
+                                <canvas id="chart-kinerja-produksi"></canvas>
                             </div>
                         </div>
 
@@ -314,30 +330,139 @@
             return h > 0 ? `${d} hri ${h} jam` : `${d} hri`;
         };
 
-         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
-            // Load Data
-            let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
-            let histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+        // ─── PERIOD FILTER LOGIC ───
+        const PERIOD_IDS = ['today','week','month','year','all'];
+        let activePeriod = 'month';   // default Bulan Ini
+        let customFrom = null, customTo = null;
+        let productionChart = null; // Store chart instance
+
+        const periodStyle = {
+            active:   'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30',
+            inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700',
+        };
+
+        window.setPeriod = function(p) {
+            activePeriod = p;
+            customFrom = null; customTo = null;
+            PERIOD_IDS.forEach(k => {
+                const el = document.getElementById('p-'+k);
+                if (el) el.className = 'period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all ' + (k===p ? periodStyle.active : periodStyle.inactive);
+            });
+            refreshDashboard();
+        }
+
+        window.applyRange = function() {
+            const f = document.getElementById('range-from').value;
+            const t = document.getElementById('range-to').value;
+            if (!f || !t) { alert('Pilih tanggal awal dan akhir terlebih dahulu.'); return; }
+            customFrom = new Date(f + 'T00:00:00'); customTo = new Date(t + 'T23:59:59');
+            activePeriod = null;
+            PERIOD_IDS.forEach(k => {
+                const el = document.getElementById('p-'+k);
+                if (el) el.className = 'period-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all ' + periodStyle.inactive;
+            });
+            refreshDashboard();
+        }
+
+        window.getDateRange = function() {
+            const now = new Date();
+            if (customFrom && customTo) return { from: customFrom, to: customTo };
+            if (activePeriod === 'today') {
+                return { from: new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0),
+                         to:   new Date(now.getFullYear(),now.getMonth(),now.getDate(),23,59,59) };
+            }
+            if (activePeriod === 'week') {
+                const day = now.getDay(); 
+                const mon = new Date(now); mon.setDate(now.getDate() - (day===0?6:day-1)); mon.setHours(0,0,0,0);
+                const sun = new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+                return { from: mon, to: sun };
+            }
+            if (activePeriod === 'month') {
+                return { from: new Date(now.getFullYear(),now.getMonth(),1,0,0,0),
+                         to:   new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59) };
+            }
+            if (activePeriod === 'year') {
+                return { from: new Date(now.getFullYear(),0,1,0,0,0),
+                         to:   new Date(now.getFullYear(),11,31,23,59,59) };
+            }
+            return { from: null, to: null }; // 'all'
+        }
+
+        window.periodLabel = function() {
+            const m  = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agt','Sep','Okt','Nov','Des'];
+            const now = new Date();
+            if (customFrom && customTo)
+                return `Menampilkan data ${customFrom.getDate()} ${m[customFrom.getMonth()]} ${customFrom.getFullYear()} — ${customTo.getDate()} ${m[customTo.getMonth()]} ${customTo.getFullYear()}`;
+            if (activePeriod==='today')  return `Hari ini, ${now.getDate()} ${m[now.getMonth()]} ${now.getFullYear()}`;
+            if (activePeriod==='week') {
+                const { from, to } = window.getDateRange();
+                return `Minggu ini: ${from.getDate()} ${m[from.getMonth()]} — ${to.getDate()} ${m[to.getMonth()]} ${now.getFullYear()}`;
+            }
+            if (activePeriod==='month') return `Bulan ${m[now.getMonth()]} ${now.getFullYear()}`;
+            if (activePeriod==='year') return `Tahun ${now.getFullYear()}`;
+            return 'Semua waktu data produksi';
+        }
+
+        function filterRecordsByPeriod(cards, range) {
+            if (!range.from && !range.to) return cards;
+            return cards.filter(card => {
+                const ts = card.createdAt || card.updatedAt || null;
+                if (!ts) return false;
+                const d = new Date(ts);
+                return d >= range.from && d <= range.to;
+            });
+        }
+
+        function filterHistoriesByPeriod(hists, range) {
+            if (!range.from && !range.to) return hists;
+            return hists.filter(h => {
+                const d = new Date(h.timestamp);
+                return d >= range.from && d <= range.to;
+            });
+        }
+
+        window.refreshDashboard = function() {
+            document.getElementById('period-label').textContent = window.periodLabel();
+            const range = window.getDateRange();
+            
+            let allCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+            let allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
             let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [
                 { id: 1, title: 'Antrian' }, { id: 2, title: 'Proses' }
             ];
 
-            // 1. UPDATE METRICS
+            // Filter for dashboard global range
+            let kanbanCards = filterRecordsByPeriod(allCards, range);
+            let histories = filterHistoriesByPeriod(allHistories, range);
+
+            // 1. UPDATE SUMMARY BOXES & METRICS
             const activeCards = kanbanCards.filter(c => c.status !== 'BATAL' && c.status !== 'SELESAI');
             const batalCards = kanbanCards.filter(c => c.status === 'BATAL');
             const selesaiCards = kanbanCards.filter(c => c.status === 'SELESAI');
             
-            // Sedang dikerjakan (berarti sudah bukan di kolom ID paling awal, atau simply status aktif)
-            // Just assume anything active that is not in the very first phase is "In Progress"
             const firstPhaseId = phasesData.length > 0 ? phasesData[0].id : 1;
             const inProgressCards = activeCards.filter(c => c.phaseId !== firstPhaseId);
 
-            document.getElementById('stat-total-aktif').textContent = activeCards.length;
-            document.getElementById('stat-progress').textContent = inProgressCards.length;
-            document.getElementById('stat-batal').textContent = batalCards.length;
-            document.getElementById('stat-selesai').textContent = selesaiCards.length;
+            const totalSpk = kanbanCards.length;
+            const countAktif = activeCards.length;
+            const countProg = inProgressCards.length;
+            const countBatal = batalCards.length;
+            const countSelesai = selesaiCards.length;
 
-            // 1.5. COMPUTE DETAILED METRICS
+            document.getElementById('stat-total').textContent = totalSpk;
+            document.getElementById('stat-total-aktif').textContent = countAktif;
+            document.getElementById('stat-progress').textContent = countProg;
+            document.getElementById('stat-batal').textContent = countBatal;
+            document.getElementById('stat-selesai').textContent = countSelesai;
+
+            // Update Percentages relative to Total SPK
+            const calcPct = (v) => totalSpk === 0 ? 0 : Math.round((v / totalSpk) * 100);
+            document.getElementById('pct-aktif').innerHTML    = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(countAktif)}%`;
+            document.getElementById('pct-progress').innerHTML = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(countProg)}%`;
+            document.getElementById('pct-batal').innerHTML    = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(countBatal)}%`;
+            document.getElementById('pct-selesai').innerHTML  = `<span class="material-symbols-outlined text-[13px]">percent</span>${calcPct(countSelesai)}%`;
+
+            // 1.5. DETAILED METRICS
             let twSangatAman = 0, twAman = 0, twWarning = 0, twTerlambat = 0, twSangatTerlambat = 0;
             let pCritical = 0, pHigh = 0, pMedium = 0, pLow = 0;
             let pfOnTrack = 0, pfTertinggal = 0;
@@ -356,7 +481,6 @@
                     if (dl.level <= 3) pfOnTrack++;
                     else pfTertinggal++;
                 }
-
                 const prio = (c.priority || 'NORMAL').toUpperCase();
                 if(prio === 'CRITICAL') pCritical++;
                 else if(prio === 'HIGH') pHigh++;
@@ -365,7 +489,7 @@
             });
 
             selesaiCards.forEach(c => {
-                const completeLog = histories.find(h => h.cardId === c.id && h.type === 'complete');
+                const completeLog = allHistories.find(h => h.cardId === c.id && h.type === 'complete');
                 if (completeLog && (c.targetDate || c.dueDate)) {
                     const tMs = new Date(c.targetDate || c.dueDate).getTime();
                     const cMs = new Date(c.createdAt).getTime();
@@ -374,18 +498,11 @@
                     const targetJam = (tMs - cMs) / 3600000;
                     const realisasiJam = (sMs - cMs) / 3600000;
 
-                    let persen = 0;
-                    let valid = false;
-
+                    let persen = 0; let valid = false;
                     if (targetJam > 0) {
-                        if (realisasiJam >= 0) {
-                            persen = (realisasiJam / targetJam) * 100;
-                            valid = true;
-                        }
+                        if (realisasiJam >= 0) { persen = (realisasiJam / targetJam) * 100; valid = true; }
                     } else {
-                        // Target kadaluarsa sewaktu mulai
-                        persen = (sMs <= tMs) ? 100 : 999;
-                        valid = true;
+                        persen = (sMs <= tMs) ? 100 : 999; valid = true;
                     }
 
                     if (valid) {
@@ -399,7 +516,6 @@
                 }
             });
 
-            // UPDATE DOM PANELS
             document.getElementById('index-stat-tenggat').innerHTML = `
                 <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold">1. Sangat Aman</span><span class="font-bold border border-emerald-500/30 rounded px-2 bg-emerald-500/10 text-emerald-400">${twSangatAman} SPK</span></div>
                 <div class="flex justify-between items-center text-sm"><span class="text-sky-400 font-semibold">2. Aman</span><span class="font-bold border border-sky-500/30 rounded px-2 bg-sky-500/10 text-sky-400">${twAman} SPK</span></div>
@@ -411,7 +527,7 @@
                 <div class="flex justify-between items-center text-sm"><span class="text-rose-400 font-semibold">• Critical</span><span class="font-bold text-slate-300">${pCritical} SPK</span></div>
                 <div class="flex justify-between items-center text-sm"><span class="text-orange-400 font-semibold">• High</span><span class="font-bold text-slate-300">${pHigh} SPK</span></div>
                 <div class="flex justify-between items-center text-sm"><span class="text-amber-400 font-semibold">• Medium</span><span class="font-bold text-slate-300">${pMedium} SPK</span></div>
-                <div class="flex justify-between items-center text-sm"><span class="text-slate-400 font-semibold">• Low / Normal</span><span class="font-bold text-slate-300">${pLow} SPK</span></div>
+                <div class="flex justify-between items-center text-sm"><span class="text-slate-400 font-semibold">• Low</span><span class="font-bold text-slate-300">${pLow} SPK</span></div>
             `;
             document.getElementById('index-stat-performa').innerHTML = `
                 <div class="flex justify-between items-center text-sm"><span class="text-emerald-400 font-semibold"><span class="material-symbols-outlined text-[14px] align-middle mr-1">trending_up</span>ON TRACK</span><span class="font-bold border border-emerald-500/30 rounded px-2 bg-emerald-500/10 text-emerald-400">${pfOnTrack} SPK</span></div>
@@ -429,51 +545,33 @@
             // 2. UPDATE TABLE
             const tbBody = document.getElementById('dashboard-table-body');
             let tbHtml = '';
-            
-            // Limit to 15 cards, sort active first - explicitly excluding SELESAI and BATAL is usually done in the activeCards definition, so just use activeCards.
             const displayCards = [...activeCards].slice(0, 15);
-            
             if(displayCards.length === 0) {
-                tbHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-500">Belum ada data pesanan (SPK) yang tersimpan.</td></tr>`;
+                tbHtml = `<tr><td colspan="5" class="py-6 text-center text-slate-500">Belum ada data pesanan (SPK) pada periode ini.</td></tr>`;
             } else {
                 displayCards.forEach(card => {
-                    // Extract SPK No from title (assuming format "NO - Klien")
                     const titleParts = card.title.split(' ');
                     const spkNo = titleParts[0];
                     const spkTitleDesc = titleParts.length > 1 ? titleParts.slice(1).join(' ') : card.title;
-                    
                     const phase = phasesData.find(p => p.id === card.phaseId);
                     const phaseName = phase ? phase.title : 'Unknown';
                     
                     let statusBadge = `<span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-500 text-xs font-bold border border-amber-500/20">${phaseName}</span>`;
-                    if(card.status === 'BATAL') {
-                        statusBadge = `<span class="px-2.5 py-1 rounded-md bg-secondary/10 text-secondary text-xs font-bold border border-secondary/20">BATAL</span>`;
-                    }
                     let durationBadge = `<span class="text-xs text-slate-500">-</span>`;
-                    const cardHistories = histories.filter(h => h.cardId === card.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    const cardHistories = allHistories.filter(h => h.cardId === card.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     if (cardHistories.length > 0) {
-                        const firstEvent = cardHistories[cardHistories.length - 1]; // oldest
+                        const firstEvent = cardHistories[cardHistories.length - 1]; 
                         const startTime = firstEvent.timestamp;
-                        if (card.status === 'BATAL') {
-                            durationBadge = `<span class="text-xs text-slate-500">- Batal</span>`;
-                        } else if (card.status === 'SELESAI') {
-                            const finishEvent = cardHistories.find(h => h.type === 'complete') || cardHistories[0];
-                            const durationStr = window.calculateDurationStr(startTime, finishEvent.timestamp);
-                            durationBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/10 text-emerald-500">${durationStr}</span>`;
-                        } else {
-                            const durationStr = window.calculateDurationStr(startTime, new Date().toISOString());
-                            durationBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">${durationStr}</span>`;
-                        }
+                        const durationStr = window.calculateDurationStr(startTime, new Date().toISOString());
+                        durationBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold bg-primary/10 text-primary">${durationStr}</span>`;
                     }
-
                     const createEv = cardHistories.find(h => h.type === 'create');
                     const creatorName = createEv && createEv.user ? createEv.user : 'Sistem';
                     const createdAt = createEv ? createEv.timestamp : (card.createdAt || null);
 
                     const dl = window.calcDeadline(createdAt, card.dueDate);
-                    const isFinished = card.status === 'SELESAI' || card.status === 'BATAL';
-                    const dlText = isFinished ? (card.status === 'SELESAI' ? 'Selesai' : 'Dibatalkan') : dl.text;
-                    const targetClass = isFinished ? 'text-slate-400 font-medium' : (dl.level >= 4 ? `text-${dl.color}-400 font-bold` : `text-${dl.color}-400 font-medium`);
+                    const dlText = dl.text;
+                    const targetClass = (dl.level >= 4 ? `text-${dl.color}-400 font-bold` : `text-${dl.color}-400 font-medium`);
 
                     tbHtml += `
                     <tr class="text-sm hover:bg-white/5 transition-colors cursor-pointer" onclick="window.location.href='product-detail.html?id=${card.id}'">
@@ -487,8 +585,7 @@
                         <td class="py-4 ${targetClass}">${dlText}</td>
                         <td class="py-4">${durationBadge}</td>
                         <td class="py-4">${statusBadge}</td>
-                    </tr>
-                    `;
+                    </tr>`;
                 });
             }
             tbBody.innerHTML = tbHtml;
@@ -496,38 +593,22 @@
             // 3. UPDATE HISTORY FEED
             const actFeed = document.getElementById('dashboard-activity-feed');
             let feedHtml = '';
-            
-            // Limit to 20 histories
             const recentHistories = histories.slice(0, 20);
-            
             if(recentHistories.length === 0) {
-                 feedHtml = `<p class="text-slate-500 text-sm">Belum ada aktivitas terekam.</p>`;
+                 feedHtml = `<p class="text-slate-500 text-sm">Belum ada aktivitas terekam di periode ini.</p>`;
             } else {
                  recentHistories.forEach((hist, index) => {
                      let icon = 'history';
                      let bgClass = 'bg-slate-500/20 text-slate-400 border border-slate-500/30 ring-background-dark';
                      let lineClass = index === recentHistories.length - 1 ? '' : 'before:content-[\'\'] before:absolute before:left-[15px] before:top-2 before:bottom-[-24px] before:w-[1px] before:bg-slate-700';
+                     if (hist.type === 'create') { icon = 'add_task'; bgClass = 'bg-primary/20 text-primary border border-primary/30 ring-background-dark'; }
+                     else if (hist.type === 'move') { icon = 'sync_alt'; bgClass = 'bg-amber-500/20 text-amber-500 border border-amber-500/30 ring-background-dark'; }
+                     else if (hist.type === 'cancel') { icon = 'cancel'; bgClass = 'bg-secondary/20 text-secondary border border-secondary/30 ring-background-dark'; }
+                     else if (hist.type === 'complete') { icon = 'task_alt'; bgClass = 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 ring-background-dark'; }
                      
-                     if (hist.type === 'create') {
-                         icon = 'add_task';
-                         bgClass = 'bg-primary/20 text-primary border border-primary/30 ring-background-dark';
-                     } else if (hist.type === 'move') {
-                         icon = 'sync_alt';
-                         bgClass = 'bg-amber-500/20 text-amber-500 border border-amber-500/30 ring-background-dark';
-                     } else if (hist.type === 'cancel') {
-                         icon = 'cancel';
-                         bgClass = 'bg-secondary/20 text-secondary border border-secondary/30 ring-background-dark';
-                     } else if (hist.type === 'complete') {
-                         icon = 'task_alt';
-                         bgClass = 'bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 ring-background-dark';
-                     }
-                     
-                     // Helper formatting for datetime into "JAM LALU / 15 MNT LALU" etc is complex, we just use formatDateTime for now or display real timestamp
                      const d = new Date(hist.timestamp);
                      const timeStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-
-                     // To pull out card name from cardId
-                     const cardRelated = kanbanCards.find(c => c.id === hist.cardId);
+                     const cardRelated = allCards.find(c => c.id === hist.cardId);
                      const cardName = cardRelated ? cardRelated.title : hist.cardId;
 
                      feedHtml += `
@@ -543,146 +624,140 @@
                                  <span class="text-[10px] border border-slate-700 px-1.5 rounded text-slate-400">${hist.user}</span>
                              </div>
                          </div>
-                     </div>
-                     `;
+                     </div>`;
                  });
             }
             actFeed.innerHTML = feedHtml;
 
-            // 4. CHART RENDERING
-            window.renderChart = function(type) {
-                // Update Button Styles
-                const btnCols = ['dibuat', 'selesai', 'batal'];
-                btnCols.forEach(col => {
-                    const el = document.getElementById(`btn-chart-${col}`);
-                    if (!el) return;
-                    if (col === type) {
-                        el.className = "px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 transition";
-                    } else {
-                        el.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:bg-slate-800 transition";
-                    }
+            // 4. MULTI-SERIES CHART.JS RENDERING (Dibuat, Selesai, Batal)
+            const ctx = document.getElementById('chart-kinerja-produksi');
+            if (ctx) {
+                // Determine timeline array logic based on current view.
+                let dateLabels = [];
+                let dsDibuat = [];
+                let dsSelesai = [];
+                let dsBatal = [];
+                
+                // If "all" or > 90 days, we might just default to last 30 days for readability or monthly bins, but the requirements say "menampilkan data harian dalam waktu 1 bulan sesuai periode".
+                // We will build a daily array spanning from `range.from` to `range.to`. If range is open ("all"), we use last 30 days.
+                let startD = range.from ? new Date(range.from) : new Date();
+                let endD = range.to ? new Date(range.to) : new Date();
+                if (!range.from) { 
+                    startD.setDate(endD.getDate() - 30); 
+                    startD.setHours(0,0,0,0); 
+                }
+                
+                // Cap at 60 days to avoid exploding chart. If > 60 days, we aggregate or just limit array.
+                const diffDays = Math.ceil((endD - startD) / (1000 * 60 * 60 * 24));
+                const limitDays = Math.min(diffDays, 60); 
+
+                // Use the adjusted start date for calculation
+                let iterDate = new Date(endD);
+                iterDate.setDate(endD.getDate() - limitDays + 1);
+                
+                const dictDibuat = {}; const dictSelesai = {}; const dictBatal = {};
+                
+                // Count historical logs within range
+                allHistories.forEach(h => {
+                    const dStr = new Date(h.timestamp).toISOString().split('T')[0];
+                    if (h.type === 'create') dictDibuat[dStr] = (dictDibuat[dStr] || 0) + 1;
+                    if (h.type === 'complete') dictSelesai[dStr] = (dictSelesai[dStr] || 0) + 1;
+                    if (h.type === 'cancel') dictBatal[dStr] = (dictBatal[dStr] || 0) + 1;
                 });
 
-                // Prepare 7-day data initialized to 0
-                const daysOfWeek = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
-                const fullDaysOfWeek = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-                const monthsIndo = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                let dailyCounts = {};
-                let displayDays = []; // store objects of {label, dateStr, fullDateStr}
-                
-                // Get the last 7 dates
-                for (let i = 6; i >= 0; i--) {
-                    let d = new Date();
-                    d.setDate(d.getDate() - i);
-                    let label = daysOfWeek[d.getDay()];
-                    let fullDay = fullDaysOfWeek[d.getDay()];
-                    let fullDateStr = `${fullDay} ${d.getDate()} ${monthsIndo[d.getMonth()]} ${d.getFullYear()}`;
-                    let dateStr = d.toISOString().split('T')[0];
-                    dailyCounts[dateStr] = 0;
-                    displayDays.push({label, dateStr, fullDateStr});
+                for (let i = 0; i < limitDays; i++) {
+                    const iso = iterDate.toISOString().split('T')[0];
+                    const label = `${iterDate.getDate()}/${iterDate.getMonth()+1}`;
+                    dateLabels.push(label);
+                    dsDibuat.push(dictDibuat[iso] || 0);
+                    dsSelesai.push(dictSelesai[iso] || 0);
+                    dsBatal.push(dictBatal[iso] || 0);
+                    iterDate.setDate(iterDate.getDate() + 1);
                 }
 
-                if (type === 'dibuat') {
-                    histories.forEach(h => {
-                        if (h.type === 'create') {
-                            const dStr = new Date(h.timestamp).toISOString().split('T')[0];
-                            if (dailyCounts[dStr] !== undefined) dailyCounts[dStr]++;
+                if (productionChart) productionChart.destroy();
+                
+                productionChart = new Chart(ctx.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: dateLabels,
+                        datasets: [
+                            {
+                                label: 'SPK Dibuat',
+                                data: dsDibuat,
+                                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.8
+                            },
+                            {
+                                label: 'SPK Selesai',
+                                data: dsSelesai,
+                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.8
+                            },
+                            {
+                                label: 'SPK Batal',
+                                data: dsBatal,
+                                backgroundColor: 'rgba(244, 63, 94, 0.8)',
+                                borderRadius: 4,
+                                barPercentage: 0.8,
+                                categoryPercentage: 0.8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        scales: {
+                            x: { 
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#94a3b8', font: { size: 10 } }
+                            },
+                            y: { 
+                                grid: { color: 'rgba(255,255,255,0.05)' },
+                                ticks: { color: '#94a3b8', precision: 0, font: { size: 10 } },
+                                beginAtZero: true 
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: '#cbd5e1', boxWidth: 12, usePointStyle: true }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                titleColor: '#fff',
+                                bodyColor: '#cbd5e1',
+                                borderColor: 'rgba(255,255,255,0.1)',
+                                borderWidth: 1
+                            }
                         }
-                    });
-                } else if (type === 'selesai' || type === 'batal') {
-                    // For cancel/complete, we check the histories where type === cancel/complete
-                    const searchType = type === 'batal' ? 'cancel' : 'complete';
-                    histories.forEach(h => {
-                        if (h.type === searchType || (type === 'batal' && h.type === 'cancel')) {
-                            const dStr = new Date(h.timestamp).toISOString().split('T')[0];
-                            if (dailyCounts[dStr] !== undefined) dailyCounts[dStr]++;
-                        }
-                    });
-                }
-
-                // Render Chart
-                const chartContainer = document.getElementById('development-chart-container');
-                let chartHtml = '';
-                
-                // Find Max
-                let maxVal = 0;
-                for (const k in dailyCounts) {
-                    if (dailyCounts[k] > maxVal) maxVal = dailyCounts[k];
-                }
-                if(maxVal === 0) maxVal = 5; // Default max to show some small bars
-
-                let colorBasis = 'indigo-500';
-                if (type === 'selesai') colorBasis = 'emerald-500';
-                if (type === 'batal') colorBasis = 'secondary'; // pink/red
-                
-                // if it's secondary we map it since tailwind config is named secondary, let's use custom class if needed, or just arbitrary
-                let barClass = `bg-indigo-500/20 border-indigo-500/30 group-hover:bg-indigo-500/40`;
-                if (type === 'selesai') barClass = `bg-emerald-500/20 border-emerald-500/30 group-hover:bg-emerald-500/40`;
-                if (type === 'batal') barClass = `bg-rose-500/20 border-rose-500/30 group-hover:bg-rose-500/40`;
-
-                displayDays.forEach((dayObj, index) => {
-                    const count = dailyCounts[dayObj.dateStr];
-                    const percent = Math.max(5, (count / maxVal) * 90); // Min 5% height to be visible
-                    
-                    const isToday = index === 6;
-                    const labelColor = isToday ? 'text-primary font-bold' : 'text-slate-500 font-medium';
-                    
-                    let bgHtml = `<div class="w-full border rounded-t-lg h-[${percent}%] transition-all relative ${barClass}">`;
-                    if (count === 0 && !isToday) {
-                        bgHtml = `<div class="w-full bg-slate-800 border-slate-700 rounded-t-lg h-[15%] border-dashed relative">`;
                     }
-
-                    chartHtml += `
-                    <div class="flex flex-col items-center gap-1 flex-1 h-full justify-end group cursor-pointer">
-                        ${bgHtml}
-                            ${count > 0 ? `<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${count} SPK</div>` : `<div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${dayObj.fullDateStr}</div>`}
-                        </div>
-                        <div class="flex flex-col items-center mt-1 text-center">
-                            <span class="text-xs tracking-wide font-bold ${labelColor}">${dayObj.label}</span>
-                            <span class="text-[9px] text-slate-500 whitespace-nowrap mt-0.5" style="transform: scale(0.9);">${dayObj.fullDateStr}</span>
-                        </div>
-                    </div>
-                    `;
                 });
-
-                chartContainer.innerHTML = chartHtml;
-            };
+            }
 
             // 5. PHASE DISTRIBUTION CHART
-            window.renderPhaseDistribution = function() {
-                const phaseContainer = document.getElementById('dashboard-phase-distribution');
-                if (!phaseContainer) return;
-                
+            const phaseContainer = document.getElementById('dashboard-phase-distribution');
+            if (phaseContainer) {
                 let phaseHtml = '';
-                
-                // Active cards only (not cancelled or done)
-                const currentActiveCards = kanbanCards.filter(c => c.status !== 'BATAL' && c.status !== 'SELESAI');
-                
-                // Count cards per phase
                 const phaseCounts = {};
-                phasesData.forEach(p => {
-                    phaseCounts[p.id] = 0;
+                phasesData.forEach(p => { phaseCounts[p.id] = 0; });
+                
+                activeCards.forEach(c => {
+                    if (phaseCounts[c.phaseId] !== undefined) phaseCounts[c.phaseId]++;
                 });
                 
-                currentActiveCards.forEach(c => {
-                    if (phaseCounts[c.phaseId] !== undefined) {
-                        phaseCounts[c.phaseId]++;
-                    }
-                });
-                
-                // Find Max for bar width
-                let maxCards = 0;
-                for (let pid in phaseCounts) {
-                    if (phaseCounts[pid] > maxCards) maxCards = phaseCounts[pid];
-                }
-                if (maxCards === 0) maxCards = 1; // Prevent division by zero
+                let maxCards = Math.max(...Object.values(phaseCounts), 1);
                 
                 phasesData.forEach(p => {
                     const count = phaseCounts[p.id] || 0;
                     const widthPercent = (count / maxCards) * 100;
-                    const formattedWidth = Math.max(widthPercent, count > 0 ? 5 : 0); // At least 5% if > 0
+                    const formattedWidth = Math.max(widthPercent, count > 0 ? 5 : 0);
                     
-                    // Determine Color based on density/count
                     let barColorClass = 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]';
                     let textColorClass = 'text-emerald-400';
                     let statusLabel = '(Sedikit)';
@@ -710,31 +785,29 @@
                         <div class="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden ring-1 ring-white/5">
                             <div class="${barColorClass} h-2 rounded-full transition-all duration-700 ease-out" style="width: ${formattedWidth}%"></div>
                         </div>
-                    </div>
-                    `;
+                    </div>`;
                 });
-                
-                if (phasesData.length === 0) {
-                    phaseHtml = `<p class="text-sm text-slate-500">Belum ada fase terdefinisi.</p>`;
-                }
-                
+                if (phasesData.length === 0) phaseHtml = `<p class="text-sm text-slate-500">Belum ada fase terdefinisi.</p>`;
                 phaseContainer.innerHTML = phaseHtml;
             }
+        };
 
-            // Init charts
-            renderChart('dibuat');
-            renderPhaseDistribution();
-        });
-
-         document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+        document.addEventListener('DOMContentLoaded', async () => { 
+            await window.waitForSync(); 
+            
+            // Set init date form values for custom range fallbacks
+            const now = new Date();
+            const y = now.getFullYear(), mo = now.getMonth();
+            document.getElementById('range-from').value = `${y}-${(mo+1).toString().padStart(2,'0')}-01`;
+            const lastDay = new Date(y,mo+1,0).getDate();
+            document.getElementById('range-to').value = `${y}-${(mo+1).toString().padStart(2,'0')}-${lastDay.toString().padStart(2,'0')}`;
+            
             if (window.flowtaUser) {
                 document.getElementById('greeting-box').classList.remove('hidden');
                 document.getElementById('greeting-name').textContent = window.flowtaUser.name;
-                
                 const depts = JSON.parse(localStorage.getItem('flowta_departments')) || [];
                 const activeDeptId = localStorage.getItem('flowta_active_dept');
                 const myDept = depts.find(d => d.id === (activeDeptId || window.flowtaUser.deptId));
-                
                 if (myDept) {
                     document.getElementById('greeting-dept').textContent = myDept.name;
                     document.getElementById('greeting-token').textContent = myDept.token || '0';
@@ -743,6 +816,9 @@
                     document.getElementById('greeting-token').textContent = '∞';
                 }
             }
+
+            // Init dashboard based on default 'month'
+            window.setPeriod('month');
         });
     </script>
 </body>
