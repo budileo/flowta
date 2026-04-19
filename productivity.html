@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html class="dark" lang="en">
 <head>
     <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
@@ -141,59 +141,80 @@
                     <h2 class="text-3xl font-black tracking-tight uppercase">Reports: User Productivity</h2>
                     <p class="text-slate-500 dark:text-slate-400 mt-1">Analisis kinerja dan kontribusi tim produksi berdasarkan data aktivitas.</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <!-- Period Filter -->
-                    <div class="flex items-center gap-1 glass-card p-1 rounded-xl">
-                        <button class="filter-btn active" id="pb-7" onclick="setPeriod(7)">7 Hari</button>
-                        <button class="filter-btn" id="pb-30" onclick="setPeriod(30)">30 Hari</button>
-                        <button class="filter-btn" id="pb-90" onclick="setPeriod(90)">3 Bulan</button>
+                <div class="flex flex-wrap items-center gap-3" id="period-filter-container">
+                    <!-- Period Tabs -->
+                    <div class="flex items-center gap-2 flex-wrap bg-slate-800/40 p-1.5 rounded-2xl border border-slate-700/50">
+                        <button onclick="setPeriod('today')"      id="p-today"      class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Hari Ini</button>
+                        <button onclick="setPeriod('yesterday')"  id="p-yesterday"  class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Kemarin</button>
+                        <button onclick="setPeriod('week')"       id="p-week"       class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Minggu Ini</button>
+                        <button onclick="setPeriod('last_week')"  id="p-last_week"  class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Minggu Lalu</button>
+                        <button onclick="setPeriod('month')"      id="p-month"      class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border border-emerald-500/30">Bulan Ini</button>
+                        <button onclick="setPeriod('last_month')" id="p-last_month" class="period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-transparent hover:bg-slate-200 dark:hover:bg-slate-700">Bulan Lalu</button>
+                        
+                        <div class="flex items-center gap-1 bg-slate-900/50 rounded-xl px-2 py-1 ml-1 border border-slate-700">
+                            <span class="material-symbols-outlined text-slate-400 text-[14px] ml-1">event</span>
+                            <input type="date" id="range-from" class="bg-transparent border-none outline-none text-[11px] text-slate-400 w-24 p-0 m-0 text-center cursor-pointer">
+                            <span class="text-slate-500 text-xs">-</span>
+                            <input type="date" id="range-to" class="bg-transparent border-none outline-none text-[11px] text-slate-400 w-24 p-0 m-0 text-center cursor-pointer">
+                            <button onclick="if(window.consumeToken('Pencarian Data')) applyRange()" class="ml-1 px-2.5 py-1 rounded-lg bg-primary text-white hover:bg-indigo-500 transition-colors text-[10px] font-bold">Terapkan</button>
+                        </div>
                     </div>
-                    <button onclick="exportCSV()" class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition-all shadow-lg shadow-emerald-900/20">
-                        <span class="material-symbols-outlined text-[18px]">description</span>
+                    <button onclick="exportCSV()" class="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-900/20 whitespace-nowrap">
+                        <span class="material-symbols-outlined text-[16px]">description</span>
                         Export CSV
                     </button>
                 </div>
             </div>
 
             <!-- METRIC CARDS -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:0ms">
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="glass-card rounded-2xl p-5 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:0ms">
+                    <div class="absolute -right-4 -top-4 text-slate-500/10 transition-transform group-hover:scale-110">
+                        <span class="material-symbols-outlined text-8xl">inventory_2</span>
+                    </div>
+                    <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Total SPK</p>
+                    <div class="flex items-baseline gap-3 mt-1">
+                        <span class="text-3xl font-bold text-white" id="stat-spk">0</span>
+                    </div>
+                    <p class="text-[10px] text-slate-500 mt-1 stat-period-label">pada periode ini</p>
+                </div>
+                <div class="glass-card rounded-2xl p-5 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:80ms">
                     <div class="absolute -right-4 -top-4 text-primary/10 transition-transform group-hover:scale-110">
                         <span class="material-symbols-outlined text-8xl">bolt</span>
                     </div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Aktivitas</p>
+                    <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Total Aktivitas</p>
                     <div class="flex items-baseline gap-3 mt-1">
-                        <span class="text-4xl font-bold text-white" id="stat-total">0</span>
+                        <span class="text-3xl font-bold text-white" id="stat-total">0</span>
                     </div>
-                    <p class="text-[11px] text-slate-500 mt-1" id="stat-period-label">dalam 30 hari terakhir</p>
+                    <p class="text-[10px] text-slate-500 mt-1 stat-period-label">pada periode ini</p>
                 </div>
-                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:80ms">
+                <div class="glass-card rounded-2xl p-5 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:160ms">
                     <div class="absolute -right-4 -top-4 text-amber-500/10 transition-transform group-hover:scale-110">
                         <span class="material-symbols-outlined text-8xl">move_up</span>
                     </div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Perpindahan Fase</p>
+                    <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Pindah Fase</p>
                     <div class="flex items-baseline gap-3 mt-1">
-                        <span class="text-4xl font-bold text-white" id="stat-moves">0</span>
+                        <span class="text-3xl font-bold text-white" id="stat-moves">0</span>
                     </div>
                     <p class="text-[11px] text-slate-500 mt-1">pindah antar fase</p>
                 </div>
-                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:160ms">
+                <div class="glass-card rounded-2xl p-5 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:240ms">
                     <div class="absolute -right-4 -top-4 text-emerald-500/10 transition-transform group-hover:scale-110">
                         <span class="material-symbols-outlined text-8xl">task_alt</span>
                     </div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">SPK Diselesaikan</p>
+                    <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">Selesai</p>
                     <div class="flex items-baseline gap-3 mt-1">
-                        <span class="text-4xl font-bold text-white" id="stat-complete">0</span>
+                        <span class="text-3xl font-bold text-white" id="stat-complete">0</span>
                     </div>
                     <p class="text-[11px] text-slate-500 mt-1">order tuntas</p>
                 </div>
-                <div class="glass-card rounded-2xl p-6 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:240ms">
+                <div class="glass-card rounded-2xl p-5 flex flex-col gap-1 relative overflow-hidden group metric-card" style="animation-delay:320ms">
                     <div class="absolute -right-4 -top-4 text-cyan-500/10 transition-transform group-hover:scale-110">
                         <span class="material-symbols-outlined text-8xl">verified_user</span>
                     </div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Input QC</p>
+                    <p class="text-slate-400 text-[10px] font-semibold uppercase tracking-wider">QC</p>
                     <div class="flex items-baseline gap-3 mt-1">
-                        <span class="text-4xl font-bold text-white" id="stat-qc">0</span>
+                        <span class="text-3xl font-bold text-white" id="stat-qc">0</span>
                     </div>
                     <p class="text-[11px] text-slate-500 mt-1">entri quality control</p>
                 </div>
@@ -253,22 +274,26 @@
                         <span class="text-xs font-medium text-slate-500">Urutkan:</span>
                         <select id="sort-select" onchange="renderTable()" class="bg-slate-800/60 border border-slate-700/50 rounded-lg text-xs font-bold text-primary focus:ring-2 focus:ring-primary/30 focus:border-primary/50 px-2 py-1 cursor-pointer transition">
                             <option value="total">Total Aktivitas</option>
+                            <option value="create">Pembuatan SPK</option>
                             <option value="moves">Perpindahan Fase</option>
                             <option value="complete">SPK Selesai</option>
                             <option value="qc">Input QC</option>
+                            <option value="cancel">Batal SPK</option>
                         </select>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
                         <thead>
-                            <tr class="bg-slate-800/30 text-slate-400 text-xs uppercase tracking-wider">
-                                <th class="px-8 py-4 font-semibold">User</th>
-                                <th class="px-6 py-4 font-semibold text-center">Total</th>
-                                <th class="px-6 py-4 font-semibold text-center">Pindah Fase</th>
-                                <th class="px-6 py-4 font-semibold text-center">Selesai</th>
-                                <th class="px-6 py-4 font-semibold text-center">QC</th>
-                                <th class="px-8 py-4 font-semibold">Skor Produktivitas</th>
+                            <tr class="bg-slate-800/30 text-slate-400 flex flex-nowrap text-[10px] uppercase tracking-wider overflow-x-auto w-full">
+                                <th class="px-6 py-4 font-semibold w-40 min-w-40 sticky left-0 bg-slate-800 lg:static">User</th>
+                                <th class="px-3 py-4 font-semibold text-center w-20 min-w-20">Total</th>
+                                <th class="px-3 py-4 font-semibold text-center w-20 min-w-20 text-violet-400">Buat</th>
+                                <th class="px-3 py-4 font-semibold text-center w-24 min-w-24 text-amber-400">Pindah</th>
+                                <th class="px-3 py-4 font-semibold text-center w-20 min-w-20 text-emerald-400">Selesai</th>
+                                <th class="px-3 py-4 font-semibold text-center w-20 min-w-20 text-rose-400">Batal</th>
+                                <th class="px-3 py-4 font-semibold text-center w-20 min-w-20 text-cyan-400">QC</th>
+                                <th class="px-6 py-4 font-semibold flex-1 min-w-32">Skor Produktivitas</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-800" id="user-table-body">
@@ -300,34 +325,115 @@
     let allHistories = JSON.parse(localStorage.getItem('flowta_history')) || [];
     let allQcRecs    = JSON.parse(localStorage.getItem('flowta_qc'))      || [];
     let kanbanCards  = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
-    let currentDays  = 30;
+    
+    let currentPeriod = 'month';
+    let customFrom = null;
+    let customTo = null;
+    
     let filteredHistories = [];
     let filteredQcRecs    = [];
     let userStats = {};
 
     // ==================== PERIOD FILTER ====================
-    function setPeriod(days) {
-        currentDays = days;
-        ['7','30','90'].forEach(d => {
-            const btn = document.getElementById('pb-' + d);
-            if (btn) btn.classList.toggle('active', parseInt(d) === days);
+    const PERIOD_IDS = ['today','yesterday','week','last_week','month','last_month'];
+
+    const periodStyle = {
+        active:   'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-emerald-500/30',
+        inactive: 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-transparent hover:bg-slate-200 dark:hover:bg-slate-700',
+    };
+
+    window.setPeriod = function(period) {
+        currentPeriod = period;
+        customFrom = null; customTo = null;
+        PERIOD_IDS.forEach(k => {
+            const el = document.getElementById('p-'+k);
+            if (el) { el.className = 'period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ' + (k===period ? periodStyle.active : periodStyle.inactive); }
         });
-        const lbl = { 7: 'dalam 7 hari terakhir', 30: 'dalam 30 hari terakhir', 90: 'dalam 3 bulan terakhir' };
-        document.getElementById('stat-period-label').textContent = lbl[days] || '';
         compute();
+    };
+
+    window.applyRange = function() {
+        const f = document.getElementById('range-from').value;
+        const t = document.getElementById('range-to').value;
+        if (!f || !t) { alert('Pilih tanggal awal dan akhir.'); return; }
+        customFrom = new Date(f + 'T00:00:00');
+        customTo = new Date(t + 'T23:59:59');
+        currentPeriod = null;
+        PERIOD_IDS.forEach(k => {
+            const el = document.getElementById('p-'+k);
+            if (el) { el.className = 'period-btn px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ' + periodStyle.inactive; }
+        });
+        compute();
+    };
+
+    window.getDateRange = function() {
+        const now = new Date();
+        if (customFrom && customTo) return { from: customFrom, to: customTo };
+        
+        const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+        if (currentPeriod === 'today') return { from: new Date(y, m, d, 0, 0, 0), to: new Date(y, m, d, 23, 59, 59) };
+        if (currentPeriod === 'yesterday') {
+            const yd = new Date(now); yd.setDate(now.getDate() - 1);
+            return { from: new Date(yd.getFullYear(), yd.getMonth(), yd.getDate(), 0, 0, 0), to: new Date(yd.getFullYear(), yd.getMonth(), yd.getDate(), 23, 59, 59) };
+        }
+        if (currentPeriod === 'week') {
+            const day = now.getDay();
+            const mon = new Date(now); mon.setDate(d - (day === 0 ? 6 : day - 1)); mon.setHours(0,0,0,0);
+            const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+            return { from: mon, to: sun };
+        }
+        if (currentPeriod === 'last_week') {
+            const day = now.getDay();
+            const lastSun = new Date(now); lastSun.setDate(d - (day === 0 ? 6 : day - 1) - 1); lastSun.setHours(23,59,59,999);
+            const lastMon = new Date(lastSun); lastMon.setDate(lastSun.getDate() - 6); lastMon.setHours(0,0,0,0);
+            return { from: lastMon, to: lastSun };
+        }
+        if (currentPeriod === 'month') return { from: new Date(y, m, 1, 0, 0, 0), to: new Date(y, m + 1, 0, 23, 59, 59) };
+        if (currentPeriod === 'last_month') return { from: new Date(y, m - 1, 1, 0, 0, 0), to: new Date(y, m, 0, 23, 59, 59) };
+        
+        // fallback
+        return { from: new Date(0), to: new Date() };
+    };
+
+    function getCardCreatedAt(card) {
+        const ev = allHistories.find(h => h.cardId === card.id && h.type === 'create');
+        if (ev) return new Date(ev.timestamp);
+        if (card.createdAt) return new Date(card.createdAt);
+        return new Date(0);
     }
 
     // ==================== COMPUTE ALL STATS ====================
     function compute() {
-        const now = new Date();
-        const cutoff = new Date(now);
-        cutoff.setDate(cutoff.getDate() - currentDays);
+        const range = window.getDateRange();
+
+        // Update labels
+        let labelText = (customFrom && customTo) ? 'pada rentang kustom' : 'pada periode ini';
+        if (currentPeriod === 'today') labelText = 'hari ini';
+        if (currentPeriod === 'yesterday') labelText = 'kemarin';
+        if (currentPeriod === 'week') labelText = 'minggu ini';
+        if (currentPeriod === 'last_week') labelText = 'minggu lalu';
+        if (currentPeriod === 'month') labelText = 'bulan ini';
+        if (currentPeriod === 'last_month') labelText = 'bulan lalu';
+        
+        document.querySelectorAll('.stat-period-label').forEach(el => el.textContent = labelText);
 
         // Filter history (aktivitas umum: create, move, complete, cancel, dll)
-        filteredHistories = allHistories.filter(h => new Date(h.timestamp) >= cutoff);
+        filteredHistories = allHistories.filter(h => {
+            const d = new Date(h.timestamp);
+            return d >= range.from && d <= range.to;
+        });
 
-        // Filter QC records dari flowta_qc (sumber data yang sama dengan qc.html)
-        filteredQcRecs = allQcRecs.filter(q => new Date(q.timestamp) >= cutoff);
+        // Filter QC records
+        filteredQcRecs = allQcRecs.filter(q => {
+            const d = new Date(q.timestamp);
+            return d >= range.from && d <= range.to;
+        });
+
+        // Hitung SPK Created dari table history saja/atau dari cards
+        const spkCreated = kanbanCards.filter(c => {
+            const d = getCardCreatedAt(c);
+            return d >= range.from && d <= range.to;
+        }).length;
 
         // Global stats
         const moves    = filteredHistories.filter(h => h.type === 'move').length;
@@ -336,6 +442,7 @@
         const qcCount  = filteredQcRecs.length;
         const total    = filteredHistories.length;
 
+        document.getElementById('stat-spk').textContent      = spkCreated;
         document.getElementById('stat-total').textContent    = total;
         document.getElementById('stat-moves').textContent    = moves;
         document.getElementById('stat-complete').textContent = complete;
@@ -346,17 +453,18 @@
 
         filteredHistories.forEach(h => {
             const u = h.user || 'Sistem';
-            if (!userStats[u]) userStats[u] = { moves: 0, complete: 0, qc: 0, create: 0, total: 0 };
+            if (!userStats[u]) userStats[u] = { moves: 0, complete: 0, qc: 0, create: 0, cancel: 0, total: 0 };
             userStats[u].total++;
             if (h.type === 'move')     userStats[u].moves++;
             if (h.type === 'complete') userStats[u].complete++;
             if (h.type === 'create')   userStats[u].create++;
+            if (h.type === 'cancel')   userStats[u].cancel++;
         });
 
         // Tambahkan QC dari flowta_qc ke per-user stats
         filteredQcRecs.forEach(q => {
             const u = q.user || 'Sistem';
-            if (!userStats[u]) userStats[u] = { moves: 0, complete: 0, qc: 0, create: 0, total: 0 };
+            if (!userStats[u]) userStats[u] = { moves: 0, complete: 0, qc: 0, create: 0, cancel: 0, total: 0 };
             userStats[u].qc++;
             // Tambahkan ke total karena QC juga merupakan aktivitas
             userStats[u].total++;
@@ -391,6 +499,8 @@
 
         // Sort
         const sortedUsers = [...users].sort((a, b) => {
+            if (sortKey === 'create')   return userStats[b].create - userStats[a].create;
+            if (sortKey === 'cancel')   return userStats[b].cancel - userStats[a].cancel;
             if (sortKey === 'moves')    return userStats[b].moves - userStats[a].moves;
             if (sortKey === 'complete') return userStats[b].complete - userStats[a].complete;
             if (sortKey === 'qc')       return userStats[b].qc - userStats[a].qc;
@@ -425,28 +535,28 @@
             const colorClass = avatarColors[user.charCodeAt(0) % avatarColors.length];
 
             html += `
-            <tr class="hover:bg-slate-800/20 transition-colors">
-                <td class="px-8 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="size-10 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white text-sm font-bold shrink-0">
-                            ${initials}
-                        </div>
-                        <div>
-                            <p class="text-sm font-bold">${user}</p>
-                            <p class="text-[10px] text-slate-500 font-medium">${s.total} aktivitas total</p>
-                        </div>
+            html += `
+            <tr class="hover:bg-slate-800/20 transition-colors flex flex-nowrap w-full">
+                <td class="px-6 py-3 w-40 min-w-40 sticky left-0 bg-background-light dark:bg-background-dark lg:static flex items-center gap-3 border-r lg:border-r-0 border-slate-800">
+                    <div class="size-8 rounded-full bg-gradient-to-br ${colorClass} flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        ${initials}
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-xs font-bold truncate">${user}</p>
                     </div>
                 </td>
-                <td class="px-6 py-4 text-center font-bold text-sm">${s.total}</td>
-                <td class="px-6 py-4 text-center font-semibold text-sm text-amber-400">${s.moves}</td>
-                <td class="px-6 py-4 text-center font-semibold text-sm text-emerald-400">${s.complete}</td>
-                <td class="px-6 py-4 text-center font-semibold text-sm text-cyan-400">${s.qc}</td>
-                <td class="px-8 py-4">
-                    <div class="flex items-center gap-3">
-                        <div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden min-w-[80px]">
+                <td class="px-3 py-3 w-20 min-w-20 flex items-center justify-center font-bold text-xs">${s.total}</td>
+                <td class="px-3 py-3 w-20 min-w-20 flex items-center justify-center font-semibold text-xs text-violet-400">${s.create}</td>
+                <td class="px-3 py-3 w-24 min-w-24 flex items-center justify-center font-semibold text-xs text-amber-400">${s.moves}</td>
+                <td class="px-3 py-3 w-20 min-w-20 flex items-center justify-center font-semibold text-xs text-emerald-400">${s.complete}</td>
+                <td class="px-3 py-3 w-20 min-w-20 flex items-center justify-center font-semibold text-xs text-rose-400">${s.cancel}</td>
+                <td class="px-3 py-3 w-20 min-w-20 flex items-center justify-center font-semibold text-xs text-cyan-400">${s.qc}</td>
+                <td class="px-6 py-3 flex-1 min-w-32 flex items-center">
+                    <div class="flex items-center gap-3 w-full">
+                        <div class="flex-1 bg-slate-800 rounded-full h-1.5 overflow-hidden">
                             <div class="${barColor} h-full rounded-full score-bar" style="width: 0%" data-w="${scorePct}%"></div>
                         </div>
-                        <span class="text-sm font-bold ${textColor} w-10 text-right">${scorePct}%</span>
+                        <span class="text-xs font-bold ${textColor} w-8 text-right">${scorePct}%</span>
                     </div>
                 </td>
             </tr>`;
@@ -469,8 +579,13 @@
         const grid = document.getElementById('heatmap-grid');
 
         // Build a 7-column (Mon–Sun) heatmap for the last N weeks (up to 4 rows)
-        const now = new Date();
-        const weeks = Math.min(4, Math.ceil(currentDays / 7));
+        // Build a 7-column (Mon–Sun) heatmap for the heatmap period bounds
+        const range = window.getDateRange();
+        const startHeatmap = range.from || new Date((new Date()).getTime() - 30 * 24 * 60 * 60 * 1000);
+        const endHeatmap = range.to || new Date();
+        const datesDiff = Math.abs(endHeatmap - startHeatmap) / (1000 * 60 * 60 * 24);
+        
+        const weeks = Math.min(6, Math.max(1, Math.ceil(datesDiff / 7)));
         const totalCells = weeks * 7;
 
         // Count per date
@@ -484,13 +599,13 @@
 
         // Build cells, starting from (weeks*7) days ago aligned to Monday
         let cells = '';
-        // Find Monday of the week `weeks` weeks ago
-        const startDate = new Date(now);
-        // Go back to end of current week (Sunday)
-        const currentDayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+        // Find Monday of the week `weeks` weeks ago before endHeatmap
+        const startDate = new Date(endHeatmap);
+        // Go back to end of the week based on endHeatmap
+        const currentDayOfWeek = endHeatmap.getDay(); // 0=Sun, 1=Mon...
         // Offset to align to Mon=0 ... Sun=6
         const offsetToMonday = (currentDayOfWeek + 6) % 7; // days from Monday
-        startDate.setDate(now.getDate() - offsetToMonday - (weeks - 1) * 7);
+        startDate.setDate(endHeatmap.getDate() - offsetToMonday - (weeks - 1) * 7);
         startDate.setHours(0,0,0,0);
 
         let peakDate = null;
@@ -504,8 +619,9 @@
 
             if (count > peakCount) { peakCount = count; peakDate = cellDate; }
 
+            const now = new Date();
             const isToday = dateStr === now.toISOString().split('T')[0];
-            const isFuture = cellDate > now;
+            const isFuture = cellDate > endHeatmap;
 
             let bgClass, labelColor;
             if (isFuture) {
@@ -592,7 +708,7 @@
 
     // ==================== EXPORT CSV ====================
     function exportCSV() {
-        const rows = [['User','Total','Pindah Fase','SPK Selesai','Input QC','Skor (%)']];
+        const rows = [['User','Total Aktivitas','Buat SPK','Batal SPK','Pindah Fase','SPK Selesai','Input QC','Skor (%)']];
         const sortedUsers = Object.keys(userStats).sort((a,b) => userStats[b].total - userStats[a].total);
         const scores = sortedUsers.map(u => calcScore(userStats[u]));
         const maxScore = Math.max(...scores, 1);
@@ -600,7 +716,7 @@
         sortedUsers.forEach((user, i) => {
             const s = userStats[user];
             const pct = Math.round((scores[i] / maxScore) * 100);
-            rows.push([user, s.total, s.moves, s.complete, s.qc, pct + '%']);
+            rows.push([user, s.total, s.create, s.cancel, s.moves, s.complete, s.qc, pct + '%']);
         });
 
         const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -615,7 +731,14 @@
 
     // ==================== INIT ====================
      document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
-        setPeriod(30);
+        
+        const n = new Date();
+        const y = n.getFullYear(), mo = n.getMonth();
+        document.getElementById('range-from').value = `${y}-${(mo+1).toString().padStart(2,'0')}-01`;
+        const lastDay = new Date(y,mo+1,0).getDate();
+        document.getElementById('range-to').value = `${y}-${(mo+1).toString().padStart(2,'0')}-${lastDay.toString().padStart(2,'0')}`;
+        
+        setPeriod('month');
     });
 </script>
 </body>
