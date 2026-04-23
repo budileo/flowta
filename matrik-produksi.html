@@ -484,8 +484,7 @@
         // RENDER HEADER
         let hHtml = `
             <th class="px-4 py-3 min-w-[100px] w-[110px] sticky-col-1 bg-slate-900 border-r border-slate-700/50">No SPK</th>
-            <th class="px-4 py-3 min-w-[150px] w-[150px] sticky-col-2 bg-slate-900 border-r border-slate-700/50">Klien</th>
-            <th class="px-4 py-3 min-w-[160px] w-[160px] sticky-col-3 bg-slate-900 sticky-shadow border-r border-slate-700/80 text-center">Dibuat / Target</th>
+            <th class="px-4 py-3 min-w-[150px] w-[150px] sticky-col-2 bg-slate-900 sticky-shadow border-r border-slate-700/50">Klien</th>
         `;
 
         if (cols.length === 0) {
@@ -514,7 +513,7 @@
 
         // RENDER BODY
         if (displayData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="${3 + Math.max(1, cols.length)}" class="px-8 py-16 text-center text-slate-500">
+            tbody.innerHTML = `<tr><td colspan="${2 + Math.max(1, cols.length)}" class="px-8 py-16 text-center text-slate-500">
                 <span class="material-symbols-outlined text-4xl block mb-2 opacity-30">inbox</span>
                 <p class="text-sm">${matrixSearchQuery ? 'Pencarian tidak menemukan hasil apapun.' : 'Tidak ada SPK yang dibuat pada periode ini.'}</p>
             </td></tr>`;
@@ -532,14 +531,7 @@
             bHtml += `
             <tr onclick="window.location.href='product-detail.html?id=${row.id}'" class="hover:bg-primary/10 transition-colors group cursor-pointer bg-background-light dark:bg-slate-800/10">
                 <td class="px-4 py-3 font-bold text-xs sticky-col-1 bg-slate-800/80 group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/30 text-indigo-400 align-middle">${row.noSpk}</td>
-                <td class="px-4 py-3 font-semibold text-xs sticky-col-2 bg-slate-800/80 group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/30 truncate max-w-[150px] align-middle">${row.client}</td>
-                <td class="px-4 py-3 sticky-col-3 bg-slate-800/80 sticky-shadow group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/80 text-center align-middle">
-                    <div class="flex flex-col items-center justify-center gap-0.5 whitespace-nowrap text-slate-400">
-                        <span class="text-[10px]"><span class="material-symbols-outlined text-[12px] align-middle mr-1 relative -top-[1px]">add_circle</span>${tDibuat}</span>
-                        <span class="w-8 h-px bg-slate-700/50"></span>
-                        <span class="text-[10px] text-rose-400"><span class="material-symbols-outlined text-[12px] align-middle mr-1 relative -top-[1px]">flag</span>${tTarget}</span>
-                    </div>
-                </td>
+                <td class="px-4 py-3 font-semibold text-xs sticky-col-2 bg-slate-800/80 sticky-shadow group-hover:bg-slate-700/80 backdrop-blur border-r border-slate-700/30 truncate max-w-[150px] align-middle">${row.client}</td>
             `;
 
             // Phase Columns
