@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <script>if(!localStorage.getItem('flowta_currentUser')){document.documentElement.style.display='none';window.location.href='login.html';}</script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FLOWTA - Master SPK</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
+    <!-- SheetJS for Excel import/export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+    
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#6366f1",
+                        "secondary": "#f43f5e",
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: { "display": ["Inter"] },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);
+        }
+        .glass-nav {
+            background: rgba(15,23,42,0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148,163,184,0.5); }
+        
+        #drop-zone.dragover {
+            border-color: #6366f1;
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
+    <script src="sidebar.js"></script>
+    <script src="deadline-utils.js"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+    <!-- SIDEBAR (loaded dynamically) -->
+    <div id="sidebar-container"></div>
+
+    <!-- MAIN -->
+    <main class="flex-1 flex flex-col overflow-y-auto relative">
+        <!-- HEADER -->
+        <header class="glass-nav sticky top-0 z-30 px-8 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4 flex-1">
+                <button onclick="window.FlowtaSidebar.open()" class="lg:hidden flex items-center justify-center size-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors shrink-0">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+                <h1 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary">library_add</span>
+                    Master SPK
+                </h1>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="relative size-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-primary/10 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">notifications</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTENT -->
+        <div class="p-8 max-w-5xl mx-auto w-full space-y-8 pb-16">
+            
+            <div class="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <h2 class="text-3xl font-black tracking-tight">Bulk Upload SPK</h2>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1">Buat banyak SPK sekaligus dengan mengunggah file Excel.</p>
+                </div>
+            </div>
+
+            <!-- STEP 1: Download & Info -->
+            <div class="glass-panel p-6 rounded-2xl border-l-4 border-l-primary">
+                <div class="flex items-start justify-between gap-4 flex-col md:flex-row">
+                    <div>
+                        <h3 class="font-bold text-lg mb-2">1. Siapkan Data (Maks. 25 Data)</h3>
+                        <p class="text-sm text-slate-400 mb-4">Gunakan template Excel yang kami sediakan agar kolom sesuai dengan sistem. Pastikan kolom <strong class="text-slate-300">nama_klien</strong> dan <strong class="text-slate-300">item_produksi</strong> terisi. Kolom jenis_project diisi dengan NORMAL, VIP, atau VVIP.</p>
+                        <ul class="text-xs text-slate-500 list-disc list-inside space-y-1 mb-4">
+                            <li>Format file harus <strong>.xlsx</strong>.</li>
+                            <li>Batas maksimal dalam satu kali upload adalah <strong>25 data SPK</strong>.</li>
+                            <li>Setiap SPK yang divalidasi dan masuk akan mengurangi saldo Token Anda.</li>
+                        </ul>
+                    </div>
+                    <button onclick="downloadTemplate()" class="shrink-0 flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all">
+                        <span class="material-symbols-outlined">download</span>
+                        Download Template
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Upload Zone -->
+            <div class="glass-panel p-6 rounded-2xl">
+                <h3 class="font-bold text-lg mb-4">2. Unggah File Excel</h3>
+                <div id="drop-zone" class="border-2 border-dashed border-slate-600 rounded-xl p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all">
+                    <span class="material-symbols-outlined text-4xl text-slate-500 mb-3">upload_file</span>
+                    <p class="text-slate-300 font-medium mb-1">Klik atau seret file Excel ke area ini</p>
+                    <p class="text-xs text-slate-500">Mendukung .xlsx</p>
+                    <input type="file" id="file-input" class="hidden" accept=".xlsx, .xls" />
+                </div>
+            </div>
+
+            <!-- STEP 3: Preview -->
+            <div id="preview-section" class="glass-panel p-6 rounded-2xl hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-bold text-lg">3. Preview Data</h3>
+                    <div class="flex items-center gap-3 text-sm">
+                        <span class="px-3 py-1 bg-slate-800 rounded-lg text-slate-300 border border-slate-700">Total: <b id="prev-total">0</b></span>
+                        <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">Valid: <b id="prev-valid">0</b></span>
+                        <span class="px-3 py-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg">Error: <b id="prev-error">0</b></span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-700/50 rounded-xl">
+                    <table class="w-full text-left text-sm whitespace-nowrap">
+                        <thead class="bg-slate-800 text-slate-400 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3 font-semibold">Baris</th>
+                                <th class="px-4 py-3 font-semibold">Nama Klien</th>
+                                <th class="px-4 py-3 font-semibold">Item Produksi</th>
+                                <th class="px-4 py-3 font-semibold">Jenis Project</th>
+                                <th class="px-4 py-3 font-semibold">Target Selesai</th>
+                                <th class="px-4 py-3 font-semibold text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-tbody" class="divide-y divide-slate-700/50">
+                            <!-- Rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button id="btn-process" onclick="processUpload()" class="flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 transition-all opacity-50 pointer-events-none disabled">
+                        <span class="material-symbols-outlined">rocket_launch</span>
+                        Mulai Upload Data Valid
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div id="loading-overlay" class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden rounded-2xl">
+                <div class="size-12 border-4 border-slate-600 border-t-primary rounded-full animate-spin mb-4"></div>
+                <h3 class="text-xl font-bold text-white mb-2" id="loading-title">Memproses SPK...</h3>
+                <p class="text-slate-400 font-medium" id="loading-subtitle">Membuat 0 dari 0 SPK</p>
+                <div class="w-64 h-2 bg-slate-800 rounded-full mt-4 overflow-hidden">
+                    <div id="loading-bar" class="h-full bg-primary transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Riwayat Upload -->
+            <div class="glass-panel p-6 rounded-2xl">
+                <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400">history</span>
+                    Riwayat Bulk Upload
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="text-slate-400 border-b border-slate-700/50">
+                            <tr>
+                                <th class="pb-3 px-2 font-semibold">Waktu</th>
+                                <th class="pb-3 px-2 font-semibold">User</th>
+                                <th class="pb-3 px-2 font-semibold text-center">Total Diproses</th>
+                                <th class="pb-3 px-2 font-semibold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody" class="divide-y divide-slate-800">
+                            <!-- History rows injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</div>
+
+<script>
+    let parsedValidData = [];
+    let parsedErrorCount = 0;
+
+    // --- Format Date Helpers ---
+    function formatDateToLocal(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function formatTime(iso) {
+        const d = new Date(iso);
+        return d.getDate().toString().padStart(2,'0') + '/' + (d.getMonth()+1).toString().padStart(2,'0') + '/' + d.getFullYear() + ' ' + d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    }
+
+    // --- Template Download ---
+    function downloadTemplate() {
+        const templateData = [
+            {
+                no_spk: 'SPK-1001',
+                nama_klien: 'PT Contoh Makmur',
+                item_produksi: 'Brosur A4',
+                jenis_project: 'NORMAL',
+                deskripsi: 'Cetak 1000 lembar full color',
+                target_selesai: formatDateToLocal(new Date())
+            },
+            {
+                no_spk: '',
+                nama_klien: 'Toko Maju',
+                item_produksi: 'Spanduk 3x1',
+                jenis_project: 'VIP',
+                deskripsi: '',
+                target_selesai: ''
+            }
+        ];
+        
+        const ws = XLSX.utils.json_to_sheet(templateData);
+        ws['!cols'] = [{wch:15}, {wch:25}, {wch:20}, {wch:15}, {wch:35}, {wch:15}];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Template_SPK");
+        XLSX.writeFile(wb, "Template_Upload_SPK.xlsx");
+    }
+
+    // --- Drag and Drop Handling ---
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    // --- File Processing ---
+    function handleFile(file) {
+        if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+            alert('Format file tidak didukung. Harap unggah file Excel (.xlsx).');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON, treat empty rows correctly
+            const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+            validateAndPreview(json);
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function validateAndPreview(data) {
+        parsedValidData = [];
+        parsedErrorCount = 0;
+        const tbody = document.getElementById('preview-tbody');
+        tbody.innerHTML = '';
+
+        document.getElementById('preview-section').classList.remove('hidden');
+
+        if (data.length > 25) {
+            alert('File mengandung lebih dari 25 data. Hanya 25 baris pertama yang akan diproses.');
+            data = data.slice(0, 25);
+        }
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-6 text-center text-slate-500">File kosong atau format salah.</td></tr>`;
+            updatePreviewStats(0, 0, 0);
+            return;
+        }
+
+        data.forEach((row, index) => {
+            const klien = (row.nama_klien || '').toString().trim();
+            const item = (row.item_produksi || '').toString().trim();
+            const jenis = (row.jenis_project || 'NORMAL').toString().trim().toUpperCase();
+            const target = (row.target_selesai || '').toString().trim();
+            
+            let errors = [];
+            if (!klien) errors.push('Nama Klien kosong');
+            if (!item) errors.push('Item kosong');
+            if (!['NORMAL', 'VIP', 'VVIP'].includes(jenis)) errors.push('Jenis invalid');
+            
+            // Format check for date if present (rudimentary)
+            let parsedDate = null;
+            if (target) {
+                // If it's a number from excel date format
+                if (!isNaN(target)) {
+                    // Excel date serial number to JS Date
+                    parsedDate = new Date(Math.round((target - 25569) * 86400 * 1000));
+                } else {
+                    parsedDate = new Date(target);
+                }
+                if (isNaN(parsedDate.getTime())) {
+                    errors.push('Tanggal invalid');
+                }
+            }
+
+            const isValid = errors.length === 0;
+            if (isValid) {
+                parsedValidData.push({
+                    no_spk: (row.no_spk || '').toString().trim(),
+                    nama_klien: klien,
+                    item_produksi: item,
+                    jenis_project: jenis,
+                    deskripsi: (row.deskripsi || '').toString().trim(),
+                    target_selesai: parsedDate ? parsedDate.toISOString() : ''
+                });
+            } else {
+                parsedErrorCount++;
+            }
+
+            const rowClass = isValid ? '' : 'bg-rose-500/10 text-rose-200';
+            const statusHtml = isValid 
+                ? `<span class="flex items-center justify-center gap-1 text-emerald-400 text-xs"><span class="material-symbols-outlined text-[14px]">check_circle</span> Valid</span>`
+                : `<span class="flex items-center justify-center gap-1 text-rose-400 text-xs cursor-help" title="${errors.join(', ')}"><span class="material-symbols-outlined text-[14px]">error</span> Error</span>`;
+
+            tbody.innerHTML += `
+                <tr class="${rowClass}">
+                    <td class="px-4 py-3">${index + 1}</td>
+                    <td class="px-4 py-3 font-medium">${klien || '-'}</td>
+                    <td class="px-4 py-3">${item || '-'}</td>
+                    <td class="px-4 py-3 text-xs">${jenis}</td>
+                    <td class="px-4 py-3 text-xs">${target || '-'}</td>
+                    <td class="px-4 py-3 text-center">${statusHtml}</td>
+                </tr>
+            `;
+        });
+
+        updatePreviewStats(data.length, parsedValidData.length, parsedErrorCount);
+
+        const btnProcess = document.getElementById('btn-process');
+        if (parsedValidData.length > 0) {
+            btnProcess.classList.remove('opacity-50', 'pointer-events-none', 'disabled');
+        } else {
+            btnProcess.classList.add('opacity-50', 'pointer-events-none', 'disabled');
+        }
+    }
+
+    function updatePreviewStats(total, valid, err) {
+        document.getElementById('prev-total').textContent = total;
+        document.getElementById('prev-valid').textContent = valid;
+        document.getElementById('prev-error').textContent = err;
+    }
+
+    // --- Bulk Process ---
+    async function processUpload() {
+        if (parsedValidData.length === 0) return;
+        
+        // Setup Loading UI
+        const overlay = document.getElementById('loading-overlay');
+        const subtitle = document.getElementById('loading-subtitle');
+        const bar = document.getElementById('loading-bar');
+        overlay.classList.remove('hidden');
+        
+        let kanbanCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+        let histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+        let phasesData = JSON.parse(localStorage.getItem('flowta_phases')) || [];
+        let firstPhaseId = phasesData.length > 0 ? phasesData[0].id : 1;
+        
+        let successCount = 0;
+        let stopReason = null;
+
+        for (let i = 0; i < parsedValidData.length; i++) {
+            const data = parsedValidData[i];
+            
+            // Check token
+            let spkInfoObj = { spkNo: data.no_spk || 'AUTO', title: data.nama_klien, item: data.item_produksi };
+            
+            // Explicitly call the window.consumeToken logic without prompt.
+            // Wait, window.consumeToken automatically deducts and alerts. 
+            // If it returns false, it means no token.
+            // We use a silent token check if possible, or just use consumeToken.
+            // consumeToken shows alert. We can just let it show the alert and stop.
+            if (!window.consumeToken('Pembuatan SPK (Bulk)', spkInfoObj)) {
+                stopReason = 'Token tidak mencukupi.';
+                break;
+            }
+
+            // Generate Title
+            let finalTitle = data.no_spk ? `${data.no_spk} ${data.nama_klien}` : `AUTO-${Date.now().toString().slice(-4)} ${data.nama_klien}`;
+            
+            // Priority & Tag
+            let tagColor = 'indigo';
+            if (data.jenis_project === 'VIP') tagColor = 'amber';
+            if (data.jenis_project === 'VVIP') tagColor = 'fuchsia';
+
+            const newCard = {
+                id: 'CARD-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+                phaseId: firstPhaseId,
+                title: finalTitle,
+                type: data.item_produksi,
+                client: data.nama_klien,
+                spkNumber: data.no_spk || '',
+                projectType: data.jenis_project,
+                tagDesc: data.jenis_project,
+                tagColor: tagColor,
+                dueColor: 'slate',
+                dueDate: data.target_selesai,
+                dueDateDesc: '',
+                priority: 'Normal',
+                priorityIcon: 'drag_handle',
+                status: 'PROSES',
+                description: data.deskripsi,
+                createdAt: new Date().toISOString(),
+                deptId: window.flowtaUser ? window.flowtaUser.deptId : 1
+            };
+
+            kanbanCards.push(newCard);
+
+            histories.unshift({
+                id: 'HIST-' + Date.now(),
+                cardId: newCard.id,
+                type: 'create',
+                timestamp: new Date().toISOString(),
+                user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                desc: `SPK dibuat via Bulk Upload oleh <span class="font-medium text-primary">${window.flowtaUser ? window.flowtaUser.name : 'Sistem'}</span>`
+            });
+
+            successCount++;
+            
+            // Update UI
+            subtitle.textContent = `Membuat ${successCount} dari ${parsedValidData.length} SPK...`;
+            bar.style.width = `${(successCount / parsedValidData.length) * 100}%`;
+            
+            // Small delay to let UI render and simulate processing
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        // Save to LocalStorage (This triggers db.js sync hook)
+        if (successCount > 0) {
+            localStorage.setItem('flowta_kanban_cards', JSON.stringify(kanbanCards));
+            localStorage.setItem('flowta_history', JSON.stringify(histories));
+            
+            // Log Bulk History
+            let bulkHistory = JSON.parse(localStorage.getItem('flowta_bulk_history')) || [];
+            bulkHistory.unshift({
+                timestamp: new Date().toISOString(),
+                user: window.flowtaUser ? window.flowtaUser.name : 'Sistem',
+                total: successCount,
+                status: stopReason ? 'Parsial (' + stopReason + ')' : 'Sukses'
+            });
+            localStorage.setItem('flowta_bulk_history', JSON.stringify(bulkHistory));
+        }
+
+        overlay.classList.add('hidden');
+        
+        if (successCount > 0) {
+            alert(`Berhasil membuat ${successCount} SPK via Bulk Upload.${stopReason ? '\nCatatan: ' + stopReason : ''}`);
+            window.location.href = 'kanban.html';
+        } else {
+            alert(`Gagal membuat SPK. ${stopReason || ''}`);
+        }
+    }
+
+    // --- Render History ---
+    function renderHistory() {
+        const tbody = document.getElementById('history-tbody');
+        let bulkHistory = JSON.parse(localStorage.getItem('flowta_bulk_history')) || [];
+        
+        if (bulkHistory.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="px-2 py-6 text-center text-slate-500 text-sm">Belum ada riwayat upload.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        bulkHistory.slice(0, 10).forEach(h => {
+            const statusClass = h.status === 'Sukses' ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10';
+            html += `
+                <tr class="hover:bg-slate-800/30 transition-colors">
+                    <td class="px-2 py-3 text-xs text-slate-300">${formatTime(h.timestamp)}</td>
+                    <td class="px-2 py-3 font-medium text-slate-200">${h.user}</td>
+                    <td class="px-2 py-3 text-center font-bold">${h.total} SPK</td>
+                    <td class="px-2 py-3">
+                        <span class="px-2.5 py-1 rounded-md border border-current text-[10px] font-bold uppercase ${statusClass}">
+                            ${h.status}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => { 
+        await window.waitForSync(); 
+        renderHistory();
+    });
+</script>
+</body>
+</html>
