@@ -805,10 +805,17 @@
                         addBtnPy: 'py-1.5 text-[9px]', addPhaseH: 'h-[120px]', addPhaseIcon: 'text-xl', addPhaseText: 'text-[9px]'
                     };
                 }
-
-                // Update board container classes
+                // Update board container classes while preserving view state
+                const isHidden = kanbanBoard.classList.contains('hidden');
+                const isViewList = kanbanBoard.classList.contains('view-list');
+                
                 kanbanBoard.className = `flex-1 ${layout.boardPad} overflow-x-auto overflow-y-auto flex ${layout.boardGap} items-start kanban-board no-scrollbar relative z-10`;
-
+                
+                if (isHidden) kanbanBoard.classList.add('hidden');
+                if (isViewList) {
+                    kanbanBoard.classList.add('view-list');
+                    kanbanBoard.classList.remove('flex-row', layout.boardGap);
+                }
                 phasesData.forEach((phase) => {
                     let themeColor = colorMap[phase.colorClass] || phase.colorClass;
                     let bgDot = `bg-${themeColor}-500`;
@@ -1301,6 +1308,7 @@
 
             window.showContextMenuForCard = function(e, cardId) {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent document click listener from immediately closing it
                 activeCardIdForMenu = cardId;
                 
                 let html = '';
