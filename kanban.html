@@ -158,6 +158,30 @@
             z-index: 9999 !important;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3) !important;
         }
+
+        /* Context Menu Styles */
+        #kanban-context-menu {
+            display: none;
+            position: absolute;
+            z-index: 1000;
+            min-width: 180px;
+            padding: 0.5rem;
+            transform-origin: top left;
+            animation: menuFadeIn 0.2s ease;
+        }
+        #kanban-context-menu.show {
+            display: block;
+        }
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(-5px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .context-menu-item {
+            transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+        }
+        .context-menu-item:active {
+            transform: scale(0.97);
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="db.js"></script><script src="auth.js"></script>
     <script src="sidebar.js"></script>
@@ -485,6 +509,17 @@
                 </footer>
             </form>
         </div>
+    </div>
+
+    <!-- Context Menu HTML -->
+    <div id="kanban-context-menu" class="glass-panel rounded-xl shadow-2xl border border-slate-700/50 bg-slate-800/95 backdrop-blur-xl">
+        <div class="px-3 py-2 border-b border-slate-700/50 mb-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block flex items-center gap-1.5"><span class="material-symbols-outlined text-[14px]">swap_horiz</span> Pindah ke Fase</span>
+        </div>
+        <div id="context-menu-phases" class="flex flex-col gap-0.5 max-h-64 overflow-y-auto no-scrollbar">
+            <!-- Dynamic items injected here -->
+        </div>
+    </div>
 
     <!-- Javascript Layer -->
     <script>
@@ -623,6 +658,60 @@
         };
 
          document.addEventListener('DOMContentLoaded', async () => { await window.waitForSync(); 
+            // Realtime Sync for Multi-user
+            const sb = typeof getSupabase === 'function' ? getSupabase() : null;
+            if (sb && window.flowtaUser && window.flowtaUser.deptId) {
+                const deptId = window.flowtaUser.deptId;
+                const channel = sb.channel(`kanban_cards_sync_${deptId}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: '*',
+                            schema: 'public',
+                            table: 'kanban_cards',
+                            filter: `dept_id=eq.${deptId}`
+                        },
+                        (payload) => {
+                            console.log('[Realtime] Kanban Card change received:', payload);
+                            let localCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+                            
+                            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+                                const incoming = payload.new;
+                                const mapped = {
+                                    id: incoming.id, phaseId: incoming.phase_id, title: incoming.title, type: incoming.type || '',
+                                    client: incoming.client || '', spkNumber: incoming.spk_number || '',
+                                    projectType: incoming.project_type || 'NORMAL', tagDesc: incoming.tag_desc || '',
+                                    tagColor: incoming.tag_color || 'indigo', dueDateDesc: incoming.due_date_desc || '',
+                                    dueColor: incoming.due_color || 'slate', dueDate: incoming.due_date || '',
+                                    priority: incoming.priority || 'Normal', priorityIcon: incoming.priority_icon || 'drag_handle',
+                                    status: incoming.status || 'PROSES', description: incoming.description || '',
+                                    createdAt: incoming.created_at, deptId: incoming.dept_id
+                                };
+                                
+                                const idx = localCards.findIndex(c => c.id === mapped.id);
+                                if (idx > -1) {
+                                    localCards[idx] = mapped;
+                                } else {
+                                    localCards.push(mapped);
+                                }
+                            } else if (payload.eventType === 'DELETE') {
+                                localCards = localCards.filter(c => c.id !== payload.old.id);
+                            }
+                            
+                            localStorage.setItem('flowta_kanban_cards', JSON.stringify(localCards));
+                            kanbanCards = localCards; // update local ref
+                            
+                            if (window.renderKanban) window.renderKanban();
+                            if (window.renderHeatmap) window.renderHeatmap();
+                            const bKap = document.getElementById('kapasitas-board');
+                            if (window.renderKapasitas && bKap && !bKap.classList.contains('hidden')) {
+                                window.renderKapasitas();
+                            }
+                        }
+                    )
+                    .subscribe();
+            }
+
             const colorMap = {
                 'primary': 'indigo',
                 'emerald': 'emerald',
@@ -1198,6 +1287,104 @@
             // Expose globally so handleQcSubmit (outside this closure) can call them
             window.renderKanban = renderKanban;
             window.renderHeatmap = renderHeatmap;
+
+            // --- Context Menu Logic ---
+            let activeCardIdForMenu = null;
+            const contextMenu = document.getElementById('kanban-context-menu');
+            const phasesContainer = document.getElementById('context-menu-phases');
+
+            document.addEventListener('click', (e) => {
+                if (contextMenu && contextMenu.classList.contains('show')) {
+                    contextMenu.classList.remove('show');
+                }
+            });
+
+            kanbanBoard.addEventListener('contextmenu', (e) => {
+                const cardEl = e.target.closest('[data-card-id]');
+                if (!cardEl) return;
+                
+                e.preventDefault();
+                activeCardIdForMenu = cardEl.getAttribute('data-card-id');
+                
+                let html = '';
+                phasesData.forEach(phase => {
+                    const colorTheme = colorMap[phase.colorClass] || phase.colorClass;
+                    // Safely set text colors based on theme if needed, or stick to simple classes
+                    html += `
+                        <button class="context-menu-item w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/80 transition-all" onclick="window.moveCardFromContextMenu('${phase.id}')">
+                            <span class="w-2 h-2 rounded-full bg-${colorTheme}-500 shadow-[0_0_8px_theme(colors.${colorTheme}.500/50)]"></span>
+                            ${phase.title}
+                        </button>
+                    `;
+                });
+                phasesContainer.innerHTML = html;
+                
+                // Keep menu inside viewport bounds
+                contextMenu.classList.add('show');
+                const menuRect = contextMenu.getBoundingClientRect();
+                let left = e.pageX;
+                let top = e.pageY;
+                if (left + menuRect.width > window.innerWidth) {
+                    left = window.innerWidth - menuRect.width - 10;
+                }
+                if (top + menuRect.height > window.innerHeight) {
+                    top = window.innerHeight - menuRect.height - 10;
+                }
+                contextMenu.style.left = `${left}px`;
+                contextMenu.style.top = `${top}px`;
+            });
+
+            window.moveCardFromContextMenu = function(targetPhaseIdStr) {
+                const newPhaseId = parseInt(targetPhaseIdStr);
+                if (!activeCardIdForMenu) return;
+                
+                let localCards = JSON.parse(localStorage.getItem('flowta_kanban_cards')) || [];
+                const cardIndex = localCards.findIndex(c => c.id === activeCardIdForMenu);
+                
+                if (cardIndex !== -1) {
+                    const card = localCards[cardIndex];
+                    const oldPhaseId = card.phaseId;
+                    
+                    if (oldPhaseId === newPhaseId) return; // same phase
+                    
+                    const oldPhase = phasesData.find(p => p.id === oldPhaseId);
+                    const newPhase = phasesData.find(p => p.id === newPhaseId);
+                    const oldPhaseName = oldPhase ? oldPhase.title : 'Fase Awal';
+                    const newPhaseName = newPhase ? newPhase.title : 'Fase Baru';
+                    
+                    // Consume token
+                    let spkInfoObj = null;
+                    const parts = card.title.split(' ');
+                    spkInfoObj = { spkNo: parts[0], title: parts.slice(1).join(' '), item: card.type };
+                    if(!window.consumeToken('Drag Kanban', spkInfoObj)) return;
+
+                    // Update data
+                    card.phaseId = newPhaseId;
+                    localStorage.setItem('flowta_kanban_cards', JSON.stringify(localCards));
+                    kanbanCards = localCards; // update memory ref immediately
+                    
+                    // Log history
+                    const histories = JSON.parse(localStorage.getItem('flowta_history')) || [];
+                    histories.unshift({
+                        id: 'HIST-' + Date.now(),
+                        cardId: card.id,
+                        type: 'move',
+                        timestamp: new Date().toISOString(),
+                        user: (window.flowtaUser ? window.flowtaUser.name : 'Sistem'),
+                        desc: `Produk dipindah fase dari <span class="font-medium line-through">${oldPhaseName}</span> ke <span class="font-medium text-amber-600 dark:text-amber-400">${newPhaseName}</span> oleh <span class="font-medium text-primary dark:text-blue-400">${window.flowtaUser ? window.flowtaUser.name : 'Sistem'} / Context Menu</span>`
+                    });
+                    localStorage.setItem('flowta_history', JSON.stringify(histories));
+                    
+                    // Re-render
+                    renderKanban();
+                    renderHeatmap();
+                    const bKap = document.getElementById('kapasitas-board');
+                    if (window.renderKapasitas && bKap && !bKap.classList.contains('hidden')) {
+                        window.renderKapasitas();
+                    }
+                }
+                activeCardIdForMenu = null;
+            };
 
             // View Toggle Logic
             const btnBoard = document.getElementById('btn-board-view');
