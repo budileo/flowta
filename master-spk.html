@@ -201,11 +201,10 @@
     let parsedValidData = [];
     let parsedErrorCount = 0;
 
-    // --- Format Date Helpers ---
     function formatDateToLocal(date) {
         if (!date) return '';
         const d = new Date(date);
-        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
     }
 
     function formatTime(iso) {
@@ -230,7 +229,7 @@
                 item_produksi: 'Spanduk 3x1',
                 jenis_project: 'VIP',
                 deskripsi: '',
-                target_selesai: ''
+                target_selesai: formatDateToLocal(new Date())
             }
         ];
         
@@ -407,12 +406,8 @@
             // Check token
             let spkInfoObj = { spkNo: data.no_spk || 'AUTO', title: data.nama_klien, item: data.item_produksi };
             
-            // Explicitly call the window.consumeToken logic without prompt.
-            // Wait, window.consumeToken automatically deducts and alerts. 
-            // If it returns false, it means no token.
-            // We use a silent token check if possible, or just use consumeToken.
-            // consumeToken shows alert. We can just let it show the alert and stop.
-            if (!window.consumeToken('Pembuatan SPK (Bulk)', spkInfoObj)) {
+            // Call consumeToken and wait for it. Activity must match the cost definition.
+            if (!await window.consumeToken('Simpan Produk SPK', spkInfoObj)) {
                 stopReason = 'Token tidak mencukupi.';
                 break;
             }
@@ -440,10 +435,10 @@
                 dueDateDesc: '',
                 priority: 'Normal',
                 priorityIcon: 'drag_handle',
-                status: 'PROSES',
+                status: 'AKTIF',
                 description: data.deskripsi,
                 createdAt: new Date().toISOString(),
-                deptId: window.flowtaUser ? window.flowtaUser.deptId : 1
+                deptId: window.flowtaActiveDept || (window.flowtaUser ? window.flowtaUser.deptId : 1)
             };
 
             kanbanCards.push(newCard);
@@ -498,13 +493,22 @@
         const tbody = document.getElementById('history-tbody');
         let bulkHistory = JSON.parse(localStorage.getItem('flowta_bulk_history')) || [];
         
-        if (bulkHistory.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="4" class="px-2 py-6 text-center text-slate-500 text-sm">Belum ada riwayat upload.</td></tr>`;
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        
+        const filteredHistory = bulkHistory.filter(h => {
+            const d = new Date(h.timestamp);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
+
+        if (filteredHistory.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="px-2 py-6 text-center text-slate-500 text-sm">Belum ada riwayat upload di bulan ini.</td></tr>`;
             return;
         }
 
         let html = '';
-        bulkHistory.slice(0, 10).forEach(h => {
+        filteredHistory.slice(0, 50).forEach(h => {
             const statusClass = h.status === 'Sukses' ? 'text-emerald-400 bg-emerald-500/10' : 'text-amber-400 bg-amber-500/10';
             html += `
                 <tr class="hover:bg-slate-800/30 transition-colors">
