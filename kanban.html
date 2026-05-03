@@ -1299,17 +1299,13 @@
                 }
             });
 
-            kanbanBoard.addEventListener('contextmenu', (e) => {
-                const cardEl = e.target.closest('[data-card-id]');
-                if (!cardEl) return;
-                
+            window.showContextMenuForCard = function(e, cardId) {
                 e.preventDefault();
-                activeCardIdForMenu = cardEl.getAttribute('data-card-id');
+                activeCardIdForMenu = cardId;
                 
                 let html = '';
                 phasesData.forEach(phase => {
                     const colorTheme = colorMap[phase.colorClass] || phase.colorClass;
-                    // Safely set text colors based on theme if needed, or stick to simple classes
                     html += `
                         <button class="context-menu-item w-full text-left flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-700/80 transition-all" onclick="window.moveCardFromContextMenu('${phase.id}')">
                             <span class="w-2 h-2 rounded-full bg-${colorTheme}-500 shadow-[0_0_8px_theme(colors.${colorTheme}.500/50)]"></span>
@@ -1319,7 +1315,6 @@
                 });
                 phasesContainer.innerHTML = html;
                 
-                // Keep menu inside viewport bounds
                 contextMenu.classList.add('show');
                 const menuRect = contextMenu.getBoundingClientRect();
                 let left = e.pageX;
@@ -1332,6 +1327,12 @@
                 }
                 contextMenu.style.left = `${left}px`;
                 contextMenu.style.top = `${top}px`;
+            };
+
+            kanbanBoard.addEventListener('contextmenu', (e) => {
+                const cardEl = e.target.closest('[data-card-id]');
+                if (!cardEl) return;
+                window.showContextMenuForCard(e, cardEl.getAttribute('data-card-id'));
             });
 
             window.moveCardFromContextMenu = function(targetPhaseIdStr) {
@@ -1463,6 +1464,7 @@
                                     <th class="py-3 px-4 font-semibold">Tipe / Item Produksi</th>
                                     <th class="py-3 px-4 font-semibold">Label Status</th>
                                     <th class="py-3 px-4 font-semibold shrink-0">Waktu / Target Selesai</th>
+                                    <th class="py-3 px-4 font-semibold text-center shrink-0">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1471,7 +1473,7 @@
                 if (phaseCards.length === 0) {
                     html += `
                         <tr>
-                            <td colspan="4" class="py-8 text-center text-slate-500 text-sm">
+                            <td colspan="5" class="py-8 text-center text-slate-500 text-sm">
                                 <span class="material-symbols-outlined block text-3xl mb-2 opacity-30">inbox</span>    
                                 Belum ada antrean produksi di fase ini.
                             </td>
@@ -1488,10 +1490,9 @@
                         html += `
                             <tr class="border-b border-slate-700/30 hover:bg-slate-700/30 transition-colors group">
                                 <td class="py-3.5 px-4 font-bold text-slate-200">
-                                    <a href="product-detail.html?id=${card.id}" class="hover:text-primary transition-colors flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity text-primary">open_in_new</span>
+                                    <div class="flex items-center gap-2">
                                         ${card.title}
-                                    </a>
+                                    </div>
                                 </td>
                                 <td class="py-3.5 px-4 text-slate-400 text-[13px]">${card.type || '-'}</td>
                                 <td class="py-3.5 px-4">
@@ -1503,6 +1504,19 @@
                                     <div class="text-[12px] font-bold ${dl && dl.level >= 3 ? 'text-red-400' : 'text-slate-300'} flex items-center gap-1.5">
                                         <span class="material-symbols-outlined text-[16px]">event</span>
                                         ${dl ? dl.text : '-'}
+                                    </div>
+                                </td>
+                                <td class="py-3.5 px-4">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button onclick="window.openQcModal('${card.id}')" class="p-1.5 rounded bg-slate-700/50 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 transition-colors" title="Quality Control">
+                                            <span class="material-symbols-outlined text-[18px]">fact_check</span>
+                                        </button>
+                                        <button onclick="window.location.href='product-detail.html?id=${card.id}'" class="p-1.5 rounded bg-slate-700/50 hover:bg-primary/20 text-slate-400 hover:text-primary transition-colors" title="Detail Produk">
+                                            <span class="material-symbols-outlined text-[18px]">visibility</span>
+                                        </button>
+                                        <button onclick="window.showContextMenuForCard(event, '${card.id}')" class="p-1.5 rounded bg-slate-700/50 hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 transition-colors" title="Pindah Fase">
+                                            <span class="material-symbols-outlined text-[18px]">swap_horiz</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
